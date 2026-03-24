@@ -139,6 +139,20 @@ def aggregate_metrics(system: str, rows: list[dict]) -> dict:
     return summary
 
 
+def aggregate_strength_buckets(system: str, rows: list[dict]) -> list[dict]:
+    grouped: dict[str, list[dict]] = {}
+    for row in rows:
+        bucket = str(row.get("strength_bucket") or "neutral")
+        grouped.setdefault(bucket, []).append(row)
+
+    summaries: list[dict] = []
+    for bucket, bucket_rows in sorted(grouped.items()):
+        bucket_summary = aggregate_metrics(system, bucket_rows)
+        bucket_summary["strength_bucket"] = bucket
+        summaries.append(bucket_summary)
+    return summaries
+
+
 def print_detailed_summary(system_name: str, summary: dict, metric_rows: list[dict]) -> None:
     topic_scores: dict[str, list[float]] = {}
     for row in metric_rows:
@@ -189,14 +203,19 @@ def run_system(
         print(f"[{system_name}] {index}/{len(examples)} - {example.id}", flush=True)
         prediction = runner(example, system_config, timeout)
         predictions.append(prediction)
-        row = {"system": system_name}
+        row = {
+            "system": system_name,
+            "strength_bucket": example.strength_bucket,
+        }
         row.update(evaluate_prediction_v1(example, prediction, semantic_scorer=semantic_scorer))
         metric_rows.append(row)
 
     summary = aggregate_metrics(system_name, metric_rows)
+    bucket_summaries = aggregate_strength_buckets(system_name, metric_rows)
     output_payload = {
         "system": system_name,
         "summary": summary,
+        "strength_breakdown": bucket_summaries,
         "predictions": dataclass_to_dict(predictions),
     }
 
@@ -205,7 +224,10 @@ def run_system(
     print_detailed_summary(system_name, summary, metric_rows)
     print(f"  Saved: {metrics_path}", flush=True)
     print(f"  Saved: {output_path}", flush=True)
-    return summary
+    return {
+        "summary": summary,
+        "bucket_summaries": bucket_summaries,
+    }
 
 
 def main() -> None:
@@ -233,8 +255,9 @@ def main() -> None:
 
     systems = list(RUNNERS.keys()) if args.system == "all" else [args.system]
     summaries: list[dict] = []
+    strength_rows: list[dict] = []
     for system_name in systems:
-        summary = run_system(
+        result = run_system(
             system_name=system_name,
             system_config=config[system_name],
             examples=examples,
@@ -243,11 +266,13 @@ def main() -> None:
             results_dir=results_dir,
             semantic_scorer=semantic_scorer,
         )
-        summaries.append(summary)
+        summaries.append(result["summary"])
+        strength_rows.extend(result["bucket_summaries"])
 
     write_csv(results_dir / "comparison.csv", summaries)
     comparison_json = write_json(results_dir / "comparison.json", summaries)
     comparison_csv = results_dir / "comparison.csv"
+    strength_csv = write_csv(results_dir / "strength_breakdown.csv", strength_rows)
 
     print("\nSummary", flush=True)
     for summary in summaries:
@@ -260,6 +285,7 @@ def main() -> None:
         )
     print(f"\nSaved: {comparison_csv}", flush=True)
     print(f"Saved: {comparison_json}", flush=True)
+    print(f"Saved: {strength_csv}", flush=True)
 
 
 if __name__ == "__main__":

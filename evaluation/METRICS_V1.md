@@ -2,6 +2,16 @@
 
 V1 giữ lại toàn bộ metric chi tiết cũ, nhưng đổi công thức xếp hạng cuối cùng sang bộ trọng số mới.
 
+## Bộ test V1 cân bằng
+
+Bộ test V1 hiện có `72` câu và được chia đều thành `3` nhóm:
+
+- `24` câu `dense_shared`: nghiêng về thế mạnh chung của `rag` và `hybrid_rag`
+- `24` câu `graph`: nghiêng về thế mạnh kiến trúc của `graph_rag`
+- `24` câu `neutral`: nhóm trung lập để tránh benchmark chỉ thiên về một kiến trúc
+
+Evaluator sẽ ghi thêm breakdown theo từng nhóm này vào `evaluation/results_v1/strength_breakdown.csv`.
+
 ## Thiết lập `k`
 
 Benchmark hiện dùng:
@@ -53,3 +63,4 @@ Ngoài `overall_score`, V1 vẫn ghi lại:
 
 - Output gốc của từng hệ: `evaluation/outputs_v1/`
 - Metric và báo cáo tổng hợp: `evaluation/results_v1/`
+- Breakdown theo nhóm sức mạnh: `evaluation/results_v1/strength_breakdown.csv`
