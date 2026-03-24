@@ -1,0 +1,838 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NTU Hybrid RAG Chatbot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0c0f14;
+      --surface-1: #111620;
+      --surface-2: #161c28;
+      --surface-3: #1d2535;
+      --border:    rgba(255,255,255,0.07);
+      --border-hi: rgba(99,182,255,0.25);
+      --text:      #e8edf5;
+      --text-muted:#6b7a99;
+      --accent:    #3b82f6;
+      --accent-hi: #60a5fa;
+      --accent-glow: rgba(59,130,246,0.18);
+      --gold:      #f59e0b;
+      --gold-glow: rgba(245,158,11,0.15);
+      --danger:    #ef4444;
+      --user-bg:   #1e3a5f;
+      --user-border: rgba(59,130,246,0.35);
+      --ai-bg:     #141922;
+      --ai-border: rgba(255,255,255,0.07);
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --radius-sm: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Ambient background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 0%, rgba(59,130,246,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 50% at 90% 100%, rgba(245,158,11,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--surface-1);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .brand {
+      padding: 8px 6px 4px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+      flex-shrink: 0;
+    }
+
+    .brand h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+
+    .brand p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-lg);
+      padding: 13px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+      letter-spacing: 0.01em;
+    }
+
+    .new-chat-btn:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(59,130,246,0.3);
+    }
+
+    .new-chat-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .sidebar-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0 6px;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+    }
+
+    .history-list::-webkit-scrollbar { width: 4px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+    .history-card {
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .history-card:hover { background: var(--surface-2); border-color: var(--border); }
+
+    .history-card.active {
+      background: var(--surface-3);
+      border-color: var(--border-hi);
+    }
+
+    .ghost-btn.history-main {
+      flex: 1;
+      background: none;
+      border: none;
+      color: inherit;
+      padding: 11px 12px;
+      text-align: left;
+      cursor: pointer;
+      min-width: 0;
+      font-family: inherit;
+    }
+
+    .history-main strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .history-main span {
+      display: block;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .danger-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 0 12px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color 0.2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+    }
+
+    .danger-btn:hover:not(:disabled) { color: var(--danger); }
+    .danger-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .sidebar-empty {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .chat-header {
+      padding: 22px 32px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-1);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .chat-header-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: var(--surface-3);
+      border: 1px solid var(--border-hi);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .chat-header-text h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60vw;
+    }
+
+    .chat-header-text p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      background: var(--surface-3);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
+      color: var(--accent-hi);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 5px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+    /* Empty state */
+    .empty-state {
+      margin: auto;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 24px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+
+    .empty-state h3 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .empty-state p {
+      color: var(--text-muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .suggestion-chips {
+      margin-top: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .chip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent-hi);
+    }
+
+    /* Message rows */
+    .message-row { display: flex; width: 100%; }
+    .message-row.user { justify-content: flex-end; }
+    .message-row.assistant { justify-content: flex-start; }
+
+    .message-wrapper {
+      max-width: min(720px, 85%);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .message-row.user .message-wrapper { align-items: flex-end; }
+    .message-row.assistant .message-wrapper { align-items: flex-start; }
+
+    .bubble-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 0 6px;
+    }
+
+    .bubble {
+      border-radius: var(--radius-lg);
+      padding: 13px 16px;
+      line-height: 1.7;
+      font-size: 14.5px;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message-row.user .bubble {
+      background: var(--user-bg);
+      border: 1px solid var(--user-border);
+      color: #dbeafe;
+      border-bottom-right-radius: 6px;
+    }
+
+    .message-row.assistant .bubble {
+      background: var(--ai-bg);
+      border: 1px solid var(--ai-border);
+      color: var(--text);
+      border-bottom-left-radius: 6px;
+    }
+
+    /* Typing dots */
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 2px;
+    }
+
+    .typing span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.5;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.16s; }
+    .typing span:nth-child(3) { animation-delay: 0.32s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* Composer */
+    .composer {
+      border-top: 1px solid var(--border);
+      background: var(--surface-1);
+      padding: 16px 24px 20px;
+      flex-shrink: 0;
+    }
+
+    .composer-box {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 12px 12px 12px 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .composer-box:focus-within {
+      border-color: rgba(59,130,246,0.45);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 14.5px;
+      color: var(--text);
+      min-height: 28px;
+      max-height: 160px;
+      line-height: 1.6;
+    }
+
+    textarea::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--accent-hi);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(59,130,246,0.35);
+    }
+
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .composer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding: 0 6px;
+    }
+
+    .status-line {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-height: 16px;
+      transition: color 0.2s;
+    }
+
+    .status-line.error { color: var(--danger); }
+
+    .composer-hint {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      opacity: 0.7;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .messages { padding: 16px; }
+      .chat-header { padding: 16px; }
+      .composer { padding: 12px; }
+      .bubble { font-size: 14px; }
+    }
+
+    /* Fade-in animation for messages */
+    .message-row {
+      animation: fadeUp 0.22s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <div class="brand-icon">🎓</div>
+          <h1>NTU Bot</h1>
+        </div>
+        <p>Hệ thống tư vấn tuyển sinh thông minh. Lịch sử hội thoại được lưu ngay trong trình duyệt.</p>
+      </div>
+
+      <button id="newChatBtn" class="new-chat-btn" type="button">
+        <span>＋</span> Cuộc trò chuyện mới
+      </button>
+
+      <span class="sidebar-label">Lịch sử</span>
+      <div id="historyList" class="history-list"></div>
+    </aside>
+
+    <main class="main">
+      <header class="chat-header">
+        <div class="chat-header-icon">💬</div>
+        <div class="chat-header-text">
+          <h2 id="chatTitle">Cuộc trò chuyện mới</h2>
+          <p>Nhấn Enter để gửi · Shift + Enter để xuống dòng</p>
+        </div>
+        <div class="header-badge">🔍 Hybrid RAG</div>
+      </header>
+
+      <div id="messages" class="messages"></div>
+
+      <footer class="composer">
+        <div class="composer-box">
+          <textarea id="messageInput" placeholder="Nhập câu hỏi tuyển sinh của bạn..." rows="1"></textarea>
+          <button id="sendBtn" class="send-btn" type="button" aria-label="Gửi tin nhắn">↑</button>
+        </div>
+        <div class="composer-footer">
+          <div id="statusLine" class="status-line"></div>
+          <span class="composer-hint">Ví dụ: Điểm chuẩn ngành CNTT năm 2025?</span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY  = "ntu_hybrid_rag_chat_sessions";
+    const ACTIVE_KEY   = "ntu_hybrid_rag_active_session";
+
+    const historyList  = document.getElementById("historyList");
+    const messagesEl   = document.getElementById("messages");
+    const titleEl      = document.getElementById("chatTitle");
+    const inputEl      = document.getElementById("messageInput");
+    const sendBtn      = document.getElementById("sendBtn");
+    const statusLine   = document.getElementById("statusLine");
+    const newChatBtn   = document.getElementById("newChatBtn");
+
+    let sessions = loadSessions();
+    let activeSessionId = loadActiveSessionId();
+    let isSending = false;
+
+    if (!sessions.length) sessions = [createSession()];
+    if (!sessions.some(s => s.id === activeSessionId)) activeSessionId = sessions[0].id;
+
+    persistState();
+    render();
+
+    newChatBtn.addEventListener("click", () => {
+      const s = createSession();
+      sessions.unshift(s);
+      activeSessionId = s.id;
+      persistState();
+      render();
+      inputEl.focus();
+    });
+
+    sendBtn.addEventListener("click", () => void handleSend());
+    inputEl.addEventListener("input", autoResize);
+    inputEl.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend(); }
+    });
+
+    autoResize();
+
+    // ── helpers ──────────────────────────────────────────────
+    function createSession() {
+      return { id: generateId(), title: "Cuộc trò chuyện mới", messages: [] };
+    }
+
+    function generateId() {
+      return window.crypto?.randomUUID?.() ?? "s-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+    }
+
+    function loadSessions() {
+      try { const r = localStorage.getItem(STORAGE_KEY); const p = r ? JSON.parse(r) : []; return Array.isArray(p) ? p : []; }
+      catch { return []; }
+    }
+
+    function loadActiveSessionId() { return localStorage.getItem(ACTIVE_KEY); }
+
+    function persistState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      localStorage.setItem(ACTIVE_KEY, activeSessionId);
+    }
+
+    function getActiveSession() { return sessions.find(s => s.id === activeSessionId) || sessions[0]; }
+
+    function updateSessionTitle(session) {
+      const first = session.messages.find(m => m.role === "user");
+      if (!first) { session.title = "Cuộc trò chuyện mới"; return; }
+      const t = first.content.replace(/\s+/g, " ").trim();
+      session.title = t.length > 44 ? t.slice(0, 44) + "…" : t;
+    }
+
+    function deleteSession(id) {
+      sessions = sessions.filter(s => s.id !== id);
+      if (!sessions.length) sessions = [createSession()];
+      if (!sessions.some(s => s.id === activeSessionId)) activeSessionId = sessions[0].id;
+      persistState(); render();
+    }
+
+    function selectSession(id) { activeSessionId = id; persistState(); render(); }
+
+    // ── render ───────────────────────────────────────────────
+    function render() {
+      renderSidebar();
+      renderMessages();
+      titleEl.textContent = getActiveSession().title;
+      autoResize();
+    }
+
+    function renderSidebar() {
+      historyList.innerHTML = "";
+      if (!sessions.length) {
+        const d = document.createElement("div");
+        d.className = "sidebar-empty";
+        d.textContent = "Chưa có cuộc trò chuyện nào.";
+        historyList.appendChild(d);
+        return;
+      }
+      sessions.forEach(session => {
+        const card = document.createElement("div");
+        card.className = "history-card" + (session.id === activeSessionId ? " active" : "");
+
+        const openBtn = document.createElement("button");
+        openBtn.type = "button";
+        openBtn.className = "ghost-btn history-main";
+        openBtn.disabled = isSending;
+        openBtn.innerHTML = "<strong></strong><span></span>";
+        openBtn.querySelector("strong").textContent = session.title;
+        const last = session.messages[session.messages.length - 1];
+        openBtn.querySelector("span").textContent = last
+          ? last.content.replace(/\s+/g, " ").trim() || "Tiếp tục hội thoại"
+          : "Chưa có tin nhắn";
+        openBtn.addEventListener("click", () => selectSession(session.id));
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "danger-btn";
+        delBtn.disabled = isSending;
+        delBtn.title = "Xoá cuộc trò chuyện";
+        delBtn.textContent = "✕";
+        delBtn.addEventListener("click", () => deleteSession(session.id));
+
+        card.appendChild(openBtn);
+        card.appendChild(delBtn);
+        historyList.appendChild(card);
+      });
+    }
+
+    function renderMessages() {
+      const session = getActiveSession();
+      messagesEl.innerHTML = "";
+
+      if (!session.messages.length) {
+        messagesEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🏫</div>
+            <h3>Xin chào! Tôi là NTU Bot</h3>
+            <p>Tôi có thể giúp bạn giải đáp mọi thắc mắc về tuyển sinh Trường Đại học Nha Trang. Hãy đặt câu hỏi ngay!</p>
+            <div class="suggestion-chips">
+              <button class="chip" onclick="fillInput(this)">Điểm chuẩn năm 2025 là bao nhiêu?</button>
+              <button class="chip" onclick="fillInput(this)">Ngành nào có nhiều học bổng nhất?</button>
+              <button class="chip" onclick="fillInput(this)">Học phí một năm là bao nhiêu?</button>
+              <button class="chip" onclick="fillInput(this)">Hồ sơ đăng ký cần những gì?</button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      session.messages.forEach(msg => {
+        const row = document.createElement("div");
+        row.className = "message-row " + msg.role;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-wrapper";
+
+        const meta = document.createElement("div");
+        meta.className = "bubble-meta";
+        meta.textContent = msg.role === "user" ? "Bạn" : "NTU Bot";
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+
+        if (msg.loading) {
+          bubble.innerHTML = `<div class="typing" aria-label="Đang trả lời"><span></span><span></span><span></span></div>`;
+        } else {
+          bubble.textContent = msg.content;
+        }
+
+        wrapper.appendChild(meta);
+        wrapper.appendChild(bubble);
+        row.appendChild(wrapper);
+        messagesEl.appendChild(row);
+      });
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // ── send ────────────────────────────────────────────────
+    async function handleSend() {
+      if (isSending) return;
+      const query = inputEl.value.trim();
+      if (!query) return;
+
+      const session = getActiveSession();
+      session.messages.push({ role: "user", content: query });
+      const placeholder = { role: "assistant", content: "", loading: true, sources: [] };
+      session.messages.push(placeholder);
+      updateSessionTitle(session);
+      persistState();
+      render();
+
+      setComposerState(true);
+      inputEl.value = "";
+      autoResize();
+      setStatus("Đang truy xuất tài liệu và sinh câu trả lời...");
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        });
+        const payload = await res.json();
+        if (!res.ok) throw new Error(payload.error || "Không thể xử lý câu hỏi.");
+        placeholder.loading = false;
+        placeholder.content = payload.answer;
+        placeholder.sources = payload.sources || [];
+        setStatus("Đã trả lời xong.");
+      } catch (err) {
+        placeholder.loading = false;
+        placeholder.content = err.message || "Đã xảy ra lỗi.";
+        placeholder.sources = [];
+        setStatus(placeholder.content, true);
+      } finally {
+        persistState();
+        render();
+        setComposerState(false);
+        inputEl.focus();
+      }
+    }
+
+    function setComposerState(disabled) {
+      isSending = disabled;
+      sendBtn.disabled = disabled;
+      inputEl.disabled = disabled;
+      newChatBtn.disabled = disabled;
+    }
+
+    function setStatus(msg, isError = false) {
+      statusLine.textContent = msg;
+      statusLine.className = "status-line" + (isError ? " error" : "");
+    }
+
+    function autoResize() {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + "px";
+    }
+
+    function fillInput(btn) {
+      inputEl.value = btn.textContent;
+      autoResize();
+      inputEl.focus();
+    }
+  </script>
+</body>
+</html>

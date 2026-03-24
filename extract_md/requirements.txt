@@ -1,0 +1,6 @@
+PyMuPDF
+requests
+beautifulsoup4
+lxml
+# Optional for dynamic tab/collapse web content:
+# playwright

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NTU Admissions GraphRAG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <div class="grain"></div>
+
+  <div class="page-shell">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="history-panel">
+      <div class="sidebar-top">
+        <div class="brand-mark">
+          <span class="brand-icon">⚑</span>
+          <span class="brand-name">NTU</span>
+        </div>
+
+        <div class="history-hero">
+          <p class="history-kicker">Tuyển sinh 2025</p>
+          <h1>Trợ lý<br><em>tư vấn</em></h1>
+          <p class="history-copy">
+            Hỏi về chỉ tiêu, điểm chuẩn, phương thức tuyển sinh và mọi thông tin liên quan đến Đại học Nha Trang.
+          </p>
+          <button id="new-chat-btn" class="new-chat-btn" type="button">
+            <span class="btn-icon">+</span>
+            Cuộc trò chuyện mới
+          </button>
+        </div>
+      </div>
+
+      <section class="history-section">
+        <div class="section-heading">
+          <span>Lịch sử</span>
+          <span id="chat-count-badge" class="count-badge">0</span>
+        </div>
+        <div id="chat-list" class="history-list"></div>
+      </section>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="conversation-panel">
+
+      <header class="conversation-header">
+        <div class="header-left">
+          <p class="conversation-kicker">GraphRAG · Đang hoạt động</p>
+          <h2 id="chat-title">Cuộc trò chuyện mới</h2>
+        </div>
+        <div class="header-hint">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7.25" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 7v5M8 5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Câu trả lời được tổng hợp từ dữ liệu tuyển sinh chính thức của NTU
+        </div>
+      </header>
+
+      <section id="messages" class="messages-board"></section>
+
+      <form id="chat-form" class="composer-panel">
+        <div class="composer-inner">
+          <textarea
+            id="question-input"
+            name="question"
+            rows="3"
+            placeholder="Ví dụ: Ngành Marketing 2025 có bao nhiêu chỉ tiêu?"
+          ></textarea>
+          <div class="composer-actions">
+            <span class="composer-hint">Enter để xuống dòng · Nhấn Gửi khi sẵn sàng</span>
+            <button id="send-btn" class="send-btn" type="submit">
+              Gửi
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </main>
+  </div>
+
+  <script>
+    window.__INITIAL_STATE__ = {
+      sessions: {{ sessions | tojson }},
+      activeSession: {{ active_session | tojson }},
+    };
+  </script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

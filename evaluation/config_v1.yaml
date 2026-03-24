@@ -1,0 +1,30 @@
+{
+  "dataset_path": "evaluation/dataset/testset.json",
+  "outputs_dir": "evaluation/outputs_v1",
+  "results_dir": "evaluation/results_v1",
+  "request_timeout_seconds": 180,
+  "connect_timeout_seconds": 10,
+  "semantic": {
+    "enabled": true,
+    "base_url": "http://127.0.0.1:11434/v1",
+    "model": "bge-m3:latest"
+  },
+  "baseline": {
+    "name": "baseline",
+    "base_url": "http://127.0.0.1:8001",
+    "health_endpoint": "/health",
+    "chat_endpoint": "/api/chat"
+  },
+  "hybrid": {
+    "name": "hybrid",
+    "base_url": "http://127.0.0.1:8000",
+    "health_endpoint": "/health",
+    "chat_endpoint": "/api/chat"
+  },
+  "graphrag": {
+    "name": "graphrag",
+    "base_url": "http://127.0.0.1:8502",
+    "health_endpoint": "/health",
+    "chat_endpoint": "/api/chat"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "ntu-pure-rag-baseline",
+  "version": 1,
+  "corpus": {
+    "scope": "all",
+    "txt_root": "C:\\Users\\Admin\\OneDrive\\Desktop\\workspace\\llm_project\\extract_md\\data_txt",
+    "chunk_root": "C:\\Users\\Admin\\OneDrive\\Desktop\\workspace\\llm_project\\extract_md\\data_chunks",
+    "chunk_profile": "balanced",
+    "min_chars": 120,
+    "max_chars": 700,
+    "max_sections_per_chunk": 2,
+    "chunk_count": 820
+  },
+  "models": {
+    "chat": "llama3.1:8b",
+    "embedding": "bge-m3:latest"
+  },
+  "retrieval": {
+    "top_n": 6,
+    "similarity_threshold": 0.25,
+    "vector_search_mode": "default",
+    "chat_mode": "chat"
+  },
+  "generation": {
+    "temperature": 0.1,
+    "history": 1
+  },
+  "prompt": "Bạn là chatbot hỗ trợ tư vấn tuyển sinh của Trường Đại học Nha Trang.\nChỉ được trả lời bằng thông tin có trong ngữ cảnh được cung cấp. Không suy đoán, không tự bịa, không dùng kiến thức ngoài.\n\nQuy tắc trả lời:\n- Trả lời trực tiếp vào câu hỏi, ngắn gọn, đúng trọng tâm.\n- Không nhắc đến tài liệu, bảng, biểu, nguồn, chunk, metadata hay quá trình truy xuất.\n- Không viết các cụm như \"theo tài liệu\", \"theo bảng\", \"tham khảo\", \"xem thêm\".\n- Nếu câu hỏi là fact ngắn như email, số điện thoại, mã trường, chỉ tiêu, thời hạn: trả lời đúng fact đó thật gọn.\n- Với câu hỏi số liệu, chỉ nêu con số khi tên ngành, chương trình và năm khớp rõ ràng.\n- Nếu ngữ cảnh không đủ chắc chắn hoặc không có câu trả lời trực tiếp, phải trả đúng câu từ chối được chỉ định và dừng lại.\nTrả lời bằng tiếng Việt.",
+  "query_refusal_response": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có."
+}

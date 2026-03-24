@@ -1,0 +1,899 @@
+# Quy Che Tuyen Sinh
+## Thong tin chung (tinh dén thoi diem xay dung ke hoach tuyen sinh)
+### Ten co so dao tao:
+### Ma truong:
+### Dia chi cac tru so (tru so chinh va phan hieu):
+### Dia chi trang thong tin dien tur cuia co so dao tao:
+### Dia chi cac trang mang xa hoi cua co so dao tao (c6 thong tin tuyen sinh):
+### S6 dien thoai lien he tuyen sinh:
+### Tinh hinh viec lam cua sinh vien sau khi tot nghiep
+Duong link cong khai viec lam cua sinh vien sau khi tot nghiep tren trang thong
+tin dien t’r cua CSDT:
+Ket qua khao sat sinh vien co viec lam trong khoang thoi gian 12 thang ke tir khi
+dugc cong nhan tot nghiep duroc xac dinh theo ting nganh, linh vrc dao tao, duoc khao
+sat ? nam lien ke truoc nam tuyen sinh, doi turong khao sat la sinh vien da tot nghiep ?
+nam truoc cach nam tuyen sinh mot nam.
+So SV trung
+Tile SV tot
+Linh
+S6 SV tot
+Trinh do
+Chi tieu
+tuyen nhap
+nghiep da co
+vrc/nganh
+tuyen sinh
+nghiep
+dao tao
+viec lam
+dao tao
+hoc
+Linh vrc...
+Ten nganh
+Linh vrc...
+Tong
+### Thong tin ve tuyen sinh chinh quy cua 2 nam gan nhat
+Duong link cong khai thong tin ve tuyen sinh chinh quy cua 2 nam gan nhat tren
+trang thong tin dien t'r cuaCSDT:
+#### Phuong thurc tuyen sinh cua 2 nam gan nhat (thi tuyen, xet tuyen hoac ket
+hop thi tuyen va xet tuyen)
+#### Diem trung tuyen cua 2 nam gan nhat
+Nam ...
+Linh vrc/
+Phuong
+(Vi du: 2020)
+(Vi du: 2021)
+Nganh/Nhom
+Diem
+#### S6
+thirc xet
+#### TT
+nganh/to hop xet
+Chi
+tuyen
+nhap
+trung
+nhap
+tieu
+tuyen
+hpc
+hoc
+Linh vuc 1/nhom
+1.
+nganh/nganh
+- Nganh 1
+T6 hop 1:
+T6 hop 2:
+T6 hop 3:
+- Nganh 2
+- Nganh 3
+- Nganh 4
+2.
+Linh vuc 2/nhom
+nganh/nganh
+3.
+Linh vuc 3/nhom
+nganh/nganh
+4.
+Tong
+tuyen sinh
+va daotao
+tuyen sinh
+gan nhat
+voi nam
+. :IaSo eno m ueip un Suoy Suen uen (un onuo gi 9o oey oep ps oo ngu) 1yn onuo gu ur qG reyy Suoo yu Suong 'tI
+:IaSo eno n ueip u Suou suen uan (un onuo gt o oei oep os oo ngu) yus ugn u gyo Ano reuy suo yu suona '1
+Nam
+bat
+nEp
+tao
+Co quan co
+n buon
+hanh hoac
+quyen cho
+chu ban
+tham
+phep
+:Iaso eno n ueip un Suou Suen uen poei oep os oo eno qurs uzAn guo Ano yeuy suoo yu Suona Z1
+.........
+:Iaso eno n ugip un suou Suen uan oei oep daqd sonp queu onu quep reuy sugo yul suona
+Duong link cong khai cac dieu kien dam bao chat luong tren trang thong tin dien tiu cua CSDT: .
+Ngay thang
+ban chuyen
+ten nganh
+(gan nhat)
+hanh van
+namban
+hoac ten nganh
+chuyen doi ma
+So van ban
+(gan nhat)
+### Thong tin danh muc nganh duoc phep dao tao:
+Ngay thang
+nam ban
+phép m?
+hanh van
+ban cho
+quesu
+### Dieu kien bao dam chat luong (Mau so 03)
+ban m?
+So van
+nganh
+Ma
+Thuchientirnam2023
+nganh
+Tén
+#### T
+#### ：
+#### E
+To hop xet tuyen
+chinh
+Mon
+#### (15)
+T hop
+mon
+#### (14)
+oq m uqnn op oYuy uou ogoLdL dgodgou enbYLaHL wp enbu x uou du gn:?In onp ugΛm x dou9Lz
+chinh
+Mon
+#### (13)
+tuyen 3
+#### (12)
+mon
+hop
+chinh
+Mon
+#### (I1)
+tuyen 2
+#### (01)
+hop
+mon
+(uAm nx ea un yu dou py ogoy uaAm nax uzAn u) us uAn ong suonud '&'1
+chinh
+Mon
+tuyen² 1
+hop
+mon
+ip)
+kien)
+tiéu
+Chi
+phuong
+tuyén
+thirc
+Ten
+phuong
+tuyen
+thurc
+Ma
+xet
+#### Boi tuong, dieu kien tuyén sinh.
+### Tuyen sinh chinh quy dai hoc
+I1. Tuyen sinh dao tao chinh quy
+nganh/
+nganh
+nhom
+tuyen
+Ten
+xet
+#### Pham vi tuyen sinh.
+nganh xet
+nganh/
+nhom
+tuyen
+Ma
+Trinh
+#### P
+tao
+#### LL
+#### E
+#### Nguong dau vao.
+#### Cac thong tin can thiet khac de thi sinh dy tuyen vao cac nganh cua truong:
+ma trurong, ma nganh/ nhom nganh xet tuyen, ma phurong thurc xet tuyen, to hop xet
+tuyen va quy dinh chenh lech diem xet tuyen gitra cac to hop; cac dieu kien phu sur
+dung trong xet tuyen.
+#### T6 chtrc tuyen sinh: Thoi gian; hinh thuc, dieu kien nhan ho so dyr
+tuyen/thi tuyen; cac dieu kien xet tuyen/thi tuyen.
+#### Chinh sach ru tien: Xet tuyen thang; uru tien xet tuyen.
+#### Le phi xét tuyen/thi tuyen.
+#### Hoc phi dy kién voi sinh vien chinh quy; lo trinh tang hoc phi toi da cho
+tirng nam (neu co).
+#### Thoi gian dy kien tuyen sinh cac dot trong nam.
+#### Cac noi dung khac (khong trai quy dinh hién hanh).
+#### Thong tin tuyen sinh cac nganh dao tao dac thu c6 nhu cau cao ve nhan lrc
+oonu tep eno iou ex - y yuy uun teud ngo nok sun dep sou lep op yun
+##### Thong tin ve doanh nghiep hop tac dao tao.
+##### Cac thong tin trien khai ap dung co ché dao tao dac thu c6 nhu cau cao
+ve nhan lrc trinh do dai hoc. (khong trai cac quy dinh hien hanh).
+#### Tai chinh:
+##### Tong nguon thu hop phap/nam cua truong;
+##### Tong chi phi dao tao trung binh 1 sinh vien/nam cua nam lien truoc nam tuyen
+sinh.
+sunn m du i suonn np loa Anb quo sou iep on oep qus uan 7
+cap tr? lén
+#### Doi turong, dieu kien tuyen sinh.
+#### Pham vi tuyen sinh.
+#### Phurong thurc tuyen sinh (thi tuyen, xet tuyen hoac ket hop thi tuyen va xet tuyen).
+#### Chi tieu tuyen sinh: Chi tieu theo nganh, theo ting phuong thurc xet tuyen
+va trinh do dao tao.
+Coquan
+Ma
+Ngay
+#### S6
+co tham
+Nam
+Ten
+phuon
+Chi
+thang
+Ten
+Ma
+quyen cho
+bat
+nganh
+tieu
+van
+Trinh
+gthirc
+phurong
+nganh
+nam
+dau
+ban
+phep hoac
+xet
+(dyr
+do dao
+#### TT
+thirc xet
+ban
+xet
+truong ty
+tuyen
+kien)
+dao
+tao
+Anb
+tuyen
+hanh
+chu ban
+dinh
+tao
+van ban
+hanh
+#### (11)
+#### (8)
+#### (9)
+#### (10)
+#### (4)
+#### (5)
+#### (7)
+#### (3)
+#### (6)
+#### (2)
+#### (1)
+1.
+2.
+#### Nguong dau vao.
+#### Cac thong tin can thiet khac de thi sinh dy tuyen vao cac nganh cua trurong.
+#### To churc tuyen sinh: Thoi gian; dieu kien nhan ho so dy tuyen, hinh thurc nhan
+ho so dy tuyen /thi tuyen; cac dieu kien xet tuyen/thi tuyen, to hop mon thi/bai thi doi voi
+ting nganh dao tao.
+#### Chinh sach uu tien: Xet tuyen thang; uu tien xet tuyen.
+#### Le phi xet tuyen/thi tuyen.
+#### Hoc phi dy kién voi sinh vien; 1o trinh tang hoc phi toi da cho timg nam (néu
+co).
+#### Thoi gian dy kien tuyen sinh cac dot trong nam.
+#### Cac noi dung khac (khong trai quy dinh hien hanh).
+## Tuyen sinh dao tao vira hoc vira lam: (Mau so 01)
+Duong link cong khai tuyen sinh dao tao viua hoc vua lam tren trang thong tin dien
+tur cua CSDT....
+## Tuyen sinh dao tao tir xa: (Mau so 02)
+Duong link cong khai tuyen sinh dao tao tir xa tren trang thong tin dien t'r cua
+CSDT...
+Can bo ke khai
+Ngay......thing
+nam 202...
+### THU TRUONG DON VI
+(Ghi ro ho ten, so dien thoai lien he, dia chi
+Email)
+Mau so03:Bao cao cac dieu kien dam bao chat lugng
+#### CAC DIEU KIEN BAO DAM CHAT LUONG
+### Quy m6 dao tao hinh thurc chinh quy den ngay 31/12/.... (Nguoi hoc)
+Ma linh
+Quy mo
+#### STT
+Trinh do/linh vurc/nganh dao tao
+vurc/nganh
+dao tao
+#### SAU DAIHQC
+#### A
+Tien st
+Linh vuc...
+#### 1.1
+#### 1.1.1
+Nganh...
+Thac si
+Linh vuc...
+#### 2.1
+Nganh....
+#### 2.1.1
+#### DAIHOC
+#### B
+Dai hoc chinh quy
+Chinh quy
+#### 3.1
+Cac nganh dao tao dac thu co nhu cau cao vé
+#### 3.1.1
+nhan Iuc trinh do dai hoc
+#### 3.1.1.1
+Linh vuc ...
+Nganh...
+#### 3.1.1.1.1
+Cac nganh dao tao (trir nganh dao tao dac thu c6
+#### 3.1.2
+nhu cau cao ve nhan lyc trinh do dai hoc)
+Linh vuyc ...
+#### 3.1.2.1
+#### 3.1.2.1.1
+Nganh...
+Doi tuong tir trung cap len dai hoc
+#### 3.2
+Linh vuc...
+#### 3.2.1
+Nganh...
+#### 3.2.1.1
+Doi turong tir cao dang len dai hoc
+#### 3.3
+Linh vuc...
+#### 3.3.1
+Nganh...
+#### 3.3.1.1
+Dao tao doivoi nguoi da tot nghiep trinh do dai hoc
+#### 3.4
+tr?lén
+Linh vuc...
+#### 3.4.1
+Nganh....
+#### 3.4.1.1
+Dai hoc vira lam vira hoc
+Vira lam vira hoc
+#### 4.1
+Linh vurc...
+#### 4.1.1
+#### 4..1.1.1
+Nganh...
+Doi turong tir trung caplen dai hoc
+#### 4.2
+Linh virc...
+#### 4.2.1
+Nganh....
+#### 4.2.1.1
+Doi turong tir cao dang len dai hoc
+#### 4.3
+Linh vurc...
+#### 4.3.1
+Nganh...
+#### 4.3.1.1
+Dao tao doi voi nguoi da tot nghiep trinh do dai hoc tr?
+#### 4.4
+lén
+#### 4.2.1
+Linh vuc...
+Ma linh
+Quy mo
+Trinh do/ linh vyc/ nganh dao tao
+#### STT
+vurc/nganh
+dao tao
+Nganh...
+#### 4.2.1.1
+T'ir xa
+Linh vuc...
+#### 5.1
+Nganh.
+#### 5.1.1
+#### CAODANGNGANHGIAODUCMAMNON
+#### C
+Cao dang chinh quy
+Chinh quy
+#### 6.1
+Doi tuong tie trung cap len cao dang
+#### 6.2
+Dao tao doi voi nguoi da tot nghiep trinh do cao
+#### 6.3
+Sup
+Cao dang vira lam vira hoc
+Vua lamvira hoc
+#### 7.1
+Doi tuongtie trungcaplencao dang
+#### 7.2
+Dao tao doivoi nguoi datotnghiep trinh do cao
+#### 7.3
+dang
+### Co so vat chat phuc vu dao tao va nghien ciru:
+#### Thong ke so luong, dien tich dat, dien tich san xay dung, ky tuc xa:
+- Tong dien tich dat cua truong (ha):
+- S6 cho o ky tuc xa sinh vien (neu co).
+- Dien tich san xay dung tryc tiep phuc vu dao tao thuoc so htru cua truong
+tinh trén mot sinh vién chinh quy:
+#### S6
+Dien tich san
+#### TT
+Loai phong
+xay dung (m2)
+luong
+Hoi truong, giang duong, phong hoc cac loai, phong da nang,
+phong lam viec cua giao su, pho giao su, giang vien cua co
+so dao tao
+Hoi trrong, phong hoc lon tren 200 cho
+1.1.
+Phong hoc ti 100 - 200 cho
+1.2.
+Phong hoc tir 50 - 100 cho
+1.3.
+So phong hoc duoi 50 cho
+1.4.
+S6 phong hoc da phuong tien
+#### 1.5
+Phong lam viec cua giao su, pho giao su, giang vien cua co
+#### 1.6
+so dao tao
+2.
+Thu vien, trung tam hoc lieu
+Trung tam nghien ciru, phong thi nghiem, thyc nghiem, co
+3.
+so thyc hanh, thuc tap, luyen tap
+Tong
+#### Cac thong tin khac
+Ten nganh dai hoc
+#### Danh sach giang vien thinh giang tham gia giang day va tinh chi tieu tuyen sinh trinh do dai hoc, trinh do cao dang nganh Giao
+Ngon ngir Anh
+Nganh tham gia giang day
+Giao duc Mam non
+Ngon ngiur Anh
+Ngon ngu
+mon dao
+Chuyen
+Chuyen mon
+Tin hoc
+tao
+Anh
+daotao
+Tin hoc
+chuyen
+ThS
+chuyen mon
+Trinh do
+ThS
+Churc danh
+khoa hoc
+#### GS
+Churc danh
+khoa hoc
+Co quan
+cong tac
+Tong so giang vien
+Ho va ten
+Nguyen Thi B
+Nguyén Thi B
+toan truong
+toan trrong
+Tran Van A
+duc Mam non.
+Stt
+Phy lue II: Mau phieu dang ky xet tuyen
+Phu luc MI: Uu tien trong xet tuyen
+Uu tien trong xet tuyen duroc cap nhat hang nam (neu co) theo Quy che tuyen sinh
+cua Bo GDDT.
+Phan I. Phan chia khu vurc tuyen sinh
+Mo ta khu vurc va dieu kien
+Khu vrc
+Cac xa khu vrc I, I1, MI va cac xa co thon dac biet kh6 khan thuoc vung dan
+Khu vrc 1
+toc va mien nui; cac xa dac biet kh6 khan vung bai ngang ven bien va hai
+#### (KV1)
+dao; cac xa dac biet kho khan, xa bien gioi, xa an toan khu vao dien dau tur
+cua Chuong trinh 135 theo quy dinh cua Thu tuong Chinh phu.
+Cac dia phuong khong thuoc KV1, KV2, KV3;
+Khu vyc 2
+nong thon
+#### (KV2-NT)
+Cac thi xa, thanh pho tryc thuoc tinh; cac thi xa, huyen ngoai thanh cua
+Khu vrc 2
+thanh pho trrc thuoc Trung urong (trir cac xa thuoc KV1).
+#### (KV2)
+Cac quan noi thanh cua thanh pho tryrc thuoc Trung uong.
+Khu vuc 3
+#### (KV3)
+Phan I. Doi tuong chinh sach ru tien
+Doi turong
+M6 ta doi tuong, dieu kien
+Nhom UT1
+Cong dan Viet Nam la nguoi dan toc thieu so co noi thuong tru trong thoi
+gian hoc THPT hoac trung cap tren 18 thang tai Khu vrc 1.
+Cong nhan tryrc tiép san xuat da lam viec lien tuc 5 nam tr? len, trong d6 c6
+bang khen.
+a) Thuong binh, benh binh, nguoi c6 "Giay chirng nhan nguoi duoc
+huong chinh sach nhu thurong binh;
+b) Quan nhan; si quan, ha si quan, chien si nghia vu trong Cong an nhan
+dan tai ngu duoc cur di hoc co thoi gian phuc vu tir 12. thang tr? lén tai
+Khu vrc 1;
+## Quan nhan; si quan, ha si quan, chien si nghia vu trong Cong an nhan
+dan tai ngui duroc cur di hoc co thoi gian phuc vu tir 18 thang tr? 1én;
+## Quan nhan; si quan, ha si quan, chién si nghia vu trong Cong an nhan
+dan da xuat ngu, duoc cong nhan hoan thanh nghia vu phuc vu tai ngu
+theo quy dinh;
+a) Than nhan liet si;
+b) Con thuong binh, con benh binh, con cua nguoi dugc huong chinh sach
+nhu thurong binh bi suy giam kha nang lao dong tir 81% tr? lén;
+## Con cua nguoi hoat dong khang chien bi nhiem chat doc hoa hoc bi suy
+giam kha nang lao dong 81% tr? lén;
+## Con cua Anh hung Luc luong vui trang nhan dan; con cua Anh huing
+Lao dong trong thoi ky khang chien;
+## Con cua nguoi hoat dong khang chien bi di dang, di tat do hau qua cua
+chat doc h6a hoc dang huong tro cap hang thang.
+NhomUT2
+a) Thanh nien xung phong tap trung duoc cir di hoc;
+b) Quan nhan; si quan, ha si quan, chién si nghia vy trong Cong an nhan
+dan tai ngu duoc cur di hoc co thoi gian phuc vu duoi 12 thang & Khu vuc 1
+va duoi 18 thang khu vuc khac;
+## Chi huy truong, Chi huy pho ban chi huy quan sy xa, phuong, thi tran;
+Thon doi truong, Trung doi trrong Dan quan tr ve nong cot, Dan quan ty
+ve da hoan thanh nghia vu tham gia Dan quan tr ve nong cot tir 12 thang
+tro lén, dy thi vao nganh Quan sy co so. Thoi han toi da dugc hurong uu
+'XYg Aeau up nsu yenx quip ygxnb Ay Aeau n ex sue 81 eI uan
+a) Cong dan Viet Nam la nguoi dan toc thieu so co noi thurong tru o ngoai
+khu vrc da quy dinh thuoc doi tuong 01;
+b) Con thuong binh, con benh binh, con cua nguoi dugc huong chinh sach
+nhu thuong binh bi suy giam kha nang lao dong duoi 81%;
+## Con cua nguoi hoat dong khang chien bi nhiem chat doc hoa hoc co ty
+lé suy giam kha nang lao dong duoi 81%.
+a) Nguoi khuyet tat nang co giay xac nhan khuyet tat cua co quan co tham
+quyen cap theo quy dinh tai Thong tu lien tich s6 37/2012/TTLT-
+BLDTBXH-BYT-BTC-BGDDT ngay 28 thang 12 nam 2012 cua B6 La0
+dong - Thuong binh va Xa hoi, Bo Y té, Bo Tai chinh va Bo GDDT quy
+dinh ve viec xac dinh murc do khuyét tat do Hoi dong xac dinh murc do
+khuyet tat thuc hien;
+pq deo qu deo m yi yuy ueud yuey po nyi oonn m nn suop oen yonn (9
+tro len dugc cong nhan danh hieu tho gioi, nghe nhan, dugc cap bang hoac
+huy hieu Lao dong sang tao cua Tong Lien doan Lao dong Viet Nam hoac
+Trung uong Doan TNCS Ho Chi Minh;
+0l oup queau oo ona uan np ui on weu e np Xep luei yp u oi (o
+giao vien;
+## Y ta, dugc ta, ho ly, y si, dieu duong vien, ho sinh vien, ky thuat
+vien, nguoi c6 bang trung cap Dugc da cong tac du 3 nam tro lén dy
+tuyen vao dung nganh tot nghiép thuoc linh vyrc sirc khoe.
+Phu luc IV: Quy trinh tuyen sinh
+Can cir
+Noi dung
+Thoi gian
+San pham
+Don vi
+Ghi chu
+Buroc
+dau ra
+phaply
+thyc hien
+thuc hien
+thre hien
+Tong ket
+Thong tu so
+Thang 10
+Tong ket
+Bao cao
+### P.DTDH,
+tong ket
+- thang 11
+lam can cur
+cong tac
+#### BTK
+#### 08/2022/TT-
+xac dinh
+cong tac
+cua nam
+hang nam
+#### HDTS
+#### BGDT,
+ket qua dat
+- Thong tu so
+tuyen sinh
+duqc, kho
+#### 04/2016/TT-
+cua nam
+khan, ton
+tuyen sinh
+#### BGDDT
+va Ké
+tai tir d6
+dinh
+quy
+co giai
+hoach,
+danh
+gia
+chat
+phap trong
+phuong
+luong
+nam sau
+#### CTDT
+huong nam
+sau
+Xay dung
+Thang 11
+Bao
+cao
+#### P.DTDH
+Ban
+tong
+ket
+- thang 12
+Phuong
+phuong
+tuyen sinh
+huong
+hang nam
+buoc 1
+tuyen sinh
+de trinh Hoi
+nam sau
+dong
+trurong
+thong qua
+Co the
+Thong tu so
+#### P.DTDH,
+Xac dinh
+Bao cao xac
+Thang 11
+- thang 12
+thuc hien
+#### P.KHTC,
+chi tiéu
+dinh chi
+#### 03/2022/TT-
+dong thoi
+tuyen sinh
+#### P.TC-NS,
+tieu tuyen
+#### BGDT;
+hang nam
+Phuong
+cung voi
+#### P.CTSV,
+sinh
+Buoc 2
+#### P.CNTT,
+huong tuyen
+durqc
+#### P.DBCL,
+sinh
+thong
+#### P.TT-PC
+HDTt
+#### TT.PVTH
+enb
+Cong bo
+Thong tur so
+Xay dung
+De an tuyen
+#### P.DTDH,
+Thang 02
+cong khai
+Dean
+- thang 03
+#### TT.PVTH,
+sinh duoc
+#### 08/2022/TT-
+tren web
+tuyen sinh
+#### BGDT;
+ban hanh
+#### P.CNTT
+hang nam
+va cac
+Bao cao xac
+thong tin
+dinh chi tieu
+tuyen sinh
+truyen
+Ké
+thong khac
+hoach
+tuyen
+sinh
+hang
+nam
+cua Bo
+De an tuyen
+Xay dung
+Thong bao
+#### P.DTDH,
+Thang 03
+De an
+- thang 05
+Thong bao
+sinh
+tuyen sinh
+#### BTK
+Ké
+gom chi
+tuyen sinh
+hoach
+tuyen sinh
+hang nam
+tuyen
+sinh
+tieu, nganh,
+phuong
+Noi dung
+San pham
+Thoi gian
+Can cir
+Don vi
+Ghi chu
+Buoc
+dau ra
+thurc hien
+thure hien
+phap ly
+thurc hien
+hang
+thurc, thoi
+nam
+gian dang
+cua Bo
+ky, cach
+thurc dang
+ky... dugc
+ban hanh
+To churc
+Thong
+Du lieu thi
+Thang 03
+#### ‘HGLG'
+bao
+sinh dang
+- thang 08
+tuyen sinh
+dang ky
+#### BTK
+ky xet
+hang nam
+Ké
+hoach
+xet tuyen
+tuyen;
+tuyen
+sinh
+va/hoac
+thong bao
+hang
+Thong bao
+nam
+diem san
+cua Bo
+diem san
+xet tuyen
+Dtu lieu dang
+Tochurc
+Thang 08
+#### P.DTDH,
+Dt lieu thi
+ky xet tuyen
+sinh trung
+- thang 09
+xet tuyen
+#### P.CNTT,
+Thong tur so
+va thong
+tuyén;
+hang nam
+#### BTK
+bao trung
+Thong bao
+#### 08/2022/TT-
+trung tuyen
+tuyen
+#### BGDT
+Du lieu dang
+To churc
+Thang 08
+#### P.DTDH,
+Danh sach
+ky xet tuyen
+thi sinh
+- thang 10
+#### P.KHTC
+nhap hoc
+Thong tu so
+trung tuyen
+cho thi
+#### P.CTSV,
+hang nam
+sinh trung
+#### 08/2022/TT-
+#### P.CNTT,
+tuyen
+#### TT.PVTH,
+#### BGDT
+#### DTN/HSV
+Thuc hien
+De an tuyen
+#### P.DTDH,
+Thong bao
+Thang 09
+Thong bao
+- thang 11
+sinh;
+lai cac
+xet tuyen
+tuyen sinh
+#### BTK
+bo sung
+Ké
+gom chi
+buoc 6, 7,
+hang nam
+hoach
+tuyen
+(néu co)
+tieu, nganh,
+sinh
+### nhu tren
+hang
+phuong
+nam
+cua Bo;
+thurc, thoi
+Du lieu thi
+gian dang
+trung
+sinh
+ky, cach
+tuyen
+thurc dang
+va
+nhap hoc
+ky...duqc
+ban hanh
+Cong
+Xay dung
+Thi sinh
+Thang 11
+#### P.DTDH,
+van
+vé
+nhap hoc du
+- thang 12
+#### BTK
+cuaE
+Bao cao va
+Bo
+chi tieu;
+bao
+cao
+hoan thanh
+hang nam
+Bao cao thi
+tuyen sinh;
+cong tac
+Ke
+hoach
+sinh nhap
+tuyen sinh
+tuyen
+sinh
+hoc
+hang
+nam
+cua Bo
+Phy luc V: Cac trang thong tin dien tir cua Trurong
+### Trang thong tin tuyen sinh: http://tuyensinh.ntu.edu.vn
+### Trang dang ky xet tuyen: http://xettuyen.ntu.edu.vn
+3.Trang fanpage tuyen sinh: https://www.facebook.com/tuyensinhdhnt
+### Trang fanpage Truong DH Nha Trang:
+https://www.facebook.com/nhatranguniversity
+### Email tuyen sinh: tuyensinh@ntu.edu.vn
+6.Dien thoai: 0258.3831147; 0258.3831148

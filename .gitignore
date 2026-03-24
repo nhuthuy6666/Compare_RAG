@@ -1,0 +1,15 @@
+@'
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.log
+*.out
+*.err
+.env
+**/.env
+.qdrant_state.json
+evaluation/results/
+evaluation/results_v1/
+'@ | Set-Content .gitignore

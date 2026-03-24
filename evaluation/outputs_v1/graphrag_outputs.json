@@ -1,0 +1,2492 @@
+{
+  "system": "graphrag",
+  "summary": {
+    "system": "graphrag",
+    "samples": 49,
+    "refusal_correct": 0.5102,
+    "exact_match": 0.0612,
+    "token_f1": 0.3475,
+    "char_similarity": 0.4474,
+    "semantic_similarity": 0.583,
+    "keyword_coverage": 0.3197,
+    "answer_relevance": 0.434,
+    "context_relevance": 0.3843,
+    "faithfulness": 0.1395,
+    "hallucination_rate": 0.8605,
+    "source_hint_hit": 0.0408,
+    "source_keyword_coverage": 0.2622,
+    "precision_at_1": 0.1633,
+    "precision_at_3": 0.1497,
+    "precision_at_5": 0.1469,
+    "recall_at_1": 0.1531,
+    "recall_at_3": 0.2041,
+    "recall_at_5": 0.2857,
+    "f1_at_1": 0.1565,
+    "f1_at_3": 0.1673,
+    "f1_at_5": 0.1816,
+    "hit_rate_at_3": 0.2041,
+    "mrr": 0.2007,
+    "map": 0.2782,
+    "ndcg_at_3": 0.8882,
+    "ndcg_at_5": 0.9342,
+    "answer_quality": 0.3032,
+    "retrieval_quality": 0.3151,
+    "recall_at_k": 0.2041,
+    "context_precision": 0.1497,
+    "overall_score": 0.2308,
+    "latency_ms": 16634.0994,
+    "errors": 0
+  },
+  "predictions": [
+    {
+      "system": "graphrag",
+      "example_id": "methods_2025",
+      "question": "Trường Đại học Nha Trang xét tuyển năm 2025 theo mấy phương thức?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Bảng 2 -> Is -> Phương thức tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Trong -> 2 năm gần nhất",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Is -> Method of selection",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Of -> Bảng 2",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Bằng phương thức -> Điểm thi thpt năm 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17893.685800023377,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "methods_2024",
+      "question": "Năm 2024 trường xét tuyển theo mấy phương thức?",
+      "answer": "Điểm thi thpt năm 2024 và Xét tuyển thẳng (theo quy chế của BGD&ĐT)",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Bảng 2 -> Is -> Phương thức tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Trong -> 2 năm gần nhất",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Is -> Method of selection",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Of -> Bảng 2",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Bằng phương thức -> Điểm thi thpt năm 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 18577.41680019535,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "methods_pt_names_2025",
+      "question": "Năm 2025, PT1, PT2 và PT3 lần lượt là những phương thức nào?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển thẳng theo quy chế của bgd&đt; -> Is -> Pt1",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tổ chức tuyển sinh -> Đối với -> Pt1",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Pt1 -> Is -> Xét tuyển thẳng theo quy chế của bgd&đt",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Pt3 -> Is -> Phurong thurc 3",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Pt3 -> Đối với -> None",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16683.474800083786,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "methods_pt4_2024",
+      "question": "Trong đề án 2024, PT4 là phương thức nào?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Phương thức -> Đối tượng tuyển sinh -> Thí sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Bằng phương thức -> Điểm thi thpt năm 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Thí sinh đã được công nhận tốt nghiệp cao đẳng của việt nam -> Hồ sơ bao gồm",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17435.216900194064,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "phone_2025",
+      "question": "Số điện thoại liên hệ tuyển sinh của trường là gì?",
+      "answer": "0258.3831148",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16315.817499998957,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "phone_secondary",
+      "question": "Trên trang phương thức, đối tượng, phạm vi tuyển sinh có số điện thoại nào khác?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Bảng 2 -> Is -> Phương thức tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Trong -> 2 năm gần nhất",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Is -> Method of selection",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Of -> Bảng 2",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17711.760099977255,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "email_tuyensinh",
+      "question": "Email tuyển sinh của Trường Đại học Nha Trang là gì?",
+      "answer": "Email tuyển sinh của Trường Đại học Nha Trang là tuyensinh@ntu.edu.vn.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12365.720599889755,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "website_admissions",
+      "question": "Địa chỉ trang thông tin tuyển sinh của trường là gì?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17322.14429997839,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "fanpage_tuyensinh",
+      "question": "Fanpage tuyển sinh của trường được ghi như thế nào?",
+      "answer": "Fanpage tuyển sinh đại học Nha Trang là https://www.facebook.com/tuyensinhdhnt.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12716.70540003106,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "dorm_capacity",
+      "question": "Ký túc xá của trường có bao nhiêu chỗ ở?",
+      "answer": "Ký túc xá của trường có 3.500 chỗ ở.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trườ ng đại học nha trang -> Is organizing -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Vinh tho -> Is a district of -> Nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Ntu -> De an tuyen sinh -> 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17480.58130010031,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "quota_2024",
+      "question": "Tổng chỉ tiêu tuyển sinh năm 2024 của trường là bao nhiêu?",
+      "answer": "Chưa tìm thấy thông tin về tổng chỉ tiêu tuyển sinh năm 2024 trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trườ ng đại học nha trang -> Is organizing -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tổng chỉ tiêu -> Là 4.517 chỉ tiêu -> Has",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7954196929931641
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tổng chỉ tiêu -> Là -> 4.517 chỉ tiêu",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7954196929931641
+          }
+        }
+      ],
+      "latency_ms": 19997.085300041363,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "school_code",
+      "question": "Mã cơ sở đào tạo trong tuyển sinh của trường là gì?",
+      "answer": "Tsn.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thí sinh -> Trúng tuyển -> Đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thí sinh trúng tuyển -> Của -> Đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16543.478099862114,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "school_name",
+      "question": "Tên cơ sở đào tạo được ghi là gì?",
+      "answer": "Tên cơ sở đào tạo được ghi là Trường Đại học Nha Trang.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Đại học nha trang -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Học kỳ 1/2025-2026 -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường đại học nha trang -> Ban hành quy chế đào tạo trình độ đại học -> Quyết định 1052",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quyết định 1052 -> Ban hành quy chế đào tạo trình độ đại học -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường đại học nha trang -> Có website -> Http://tuyensinh.ntu.edu.vn/",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16986.733099911362,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "admission_scope",
+      "question": "Phạm vi tuyển sinh của trường là ở đâu?",
+      "answer": "Phạm vi tuyển sinh của Trường Đại học Nha Trang là Toàn quốc.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trườ ng đại học nha trang -> Is organizing -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Đại học nha trang -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Học kỳ 1/2025-2026 -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16845.657700207084,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "admission_scope_2024",
+      "question": "Trong đề án tuyển sinh 2024, phạm vi tuyển sinh được ghi là gì?",
+      "answer": "Toàn quốc.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tổng chỉ tiêu -> Là 4.517 chỉ tiêu -> Has",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8058581352233887
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tổng chỉ tiêu -> Là -> 4.517 chỉ tiêu",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8058581352233887
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thí sinh -> Tham gia tuyển sinh đại học -> Theo quy định tại quy chế tuyển sinh hiện hành",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7874960899353027
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Is -> Toàn quốc",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7826404571533203
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Is in -> Toàn quốc",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7826404571533203
+          }
+        }
+      ],
+      "latency_ms": 16740.220999810845,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "admission_scope_workstudy",
+      "question": "Phạm vi tuyển sinh đào tạo vừa học vừa làm là gì?",
+      "answer": "Phạm vi tuyển sinh đào tạo vừa học vừa làm là Toàn quốc.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Toàn quốc -> Is",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Có mã tuyển sinh: tsn -> Has",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Is -> Toàn quốc",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Is in -> Toàn quốc",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phạm vi tuyển sinh -> Tuyển sinh trên toàn quốc -> Quy mô 3.800 chỉ tiêu đại học chính quy",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17489.387499867007,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "scope_and_code",
+      "question": "Mã cơ sở đào tạo trong tuyển sinh và phạm vi tuyển sinh của trường là gì?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "7480201 phe -> Là -> Mã ngành công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.806488037109375
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Hệ thống thông tin quản lý -> Có mã ngành 7340405 và tên ngành -> Chương trình đào tạo là hệ thống thông tin quản lý",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8064651489257812
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Kỹ thuật biển -> Là -> Ngành đào tạo của mã ngành 7520206",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8044567108154297
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã ngành -> 7520122 -> Object",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8037042617797852
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "7620303 -> Is -> Mã ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8037042617797852
+          }
+        }
+      ],
+      "latency_ms": 18121.982199838385,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "contact_combo",
+      "question": "Cho tôi số điện thoại và email tuyển sinh của trường.",
+      "answer": "Số điện thoại tuyển sinh là 0258.3831148, Email tuyển sinh là tuyensinh@ntu.edu.vn.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17944.54749999568,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "web_phone_combo",
+      "question": "Trang thông tin tuyển sinh và số điện thoại liên hệ tuyển sinh của trường là gì?",
+      "answer": "Trang thông tin tuyển sinh của trường Đại học Nha Trang nằm trong phần \"Thông tin chung\" trên website. Số điện thoại liên hệ tuyển sinh là 0258.3831148. Email liên hệ tuyển sinh là tuyensinh@ntu.edu.vn.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trườ ng đại học nha trang -> Is organizing -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Điện thoại -> Is -> 0258.3831148",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8515963554382324
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phòng đào tạo đại học -> Is located in -> Thành phố nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8281106948852539
+          }
+        }
+      ],
+      "latency_ms": 19417.51219984144,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "ielts_55",
+      "question": "Với IELTS 5.5 thì được quy đổi và cộng điểm như thế nào?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trườ ng đại học nha trang -> Is organizing -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Bang -> Quy định về -> Điểm công đối với thí sinh có chứng chỉ ielts (academic",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7597999572753906
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Cac thong tin can thiét khac de thi sinh dyr tuyen vao co so dao tao -> Is -> Ielts preparation information",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7391157150268555
+          }
+        }
+      ],
+      "latency_ms": 16552.153599914163,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "pt3_scale_2025",
+      "question": "Phương thức PT3 năm 2025 dùng thang điểm xét tuyển nào?",
+      "answer": "Chưa tìm thấy thông tin về phương thức PT3 năm 2025 trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Pt3 -> Is -> Phurong thurc 3",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Pt3 -> Đối với -> None",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Pt3 -> Là đối tượng của -> Hình thức đăng ký xét tuyển",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển bằng điểm học bạ thpt -> Là -> Tổ hợp 4 môn học",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8018007278442383
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thời gian xét tuyển -> Là -> 06/5/2024 – 25/6/2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7859911918640137
+          }
+        }
+      ],
+      "latency_ms": 17364.107199944556,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "pt2_scale_2025",
+      "question": "Phương thức PT2 năm 2025 dùng những thang điểm nào?",
+      "answer": "Chưa tìm thấy thông tin về phương thức PT2 năm 2025 trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Nam 2024 -> Dequ hoc tieu -> Phuong thire tuyen",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7664241790771484
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Nam 2024 -> Is -> Year",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7664241790771484
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Diem thi tot -> Is -> Criterion for",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.76641845703125
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tiéng -> Thuộc -> Chương trình",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.76519775390625
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Nam 2023 -> Là -> Năm nhập học",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7641210556030273
+          }
+        }
+      ],
+      "latency_ms": 17345.129400026053,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "address_2025",
+      "question": "Địa chỉ trụ sở của Trường Đại học Nha Trang là gì?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Đại học nha trang -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Học kỳ 1/2025-2026 -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường đại học nha trang -> Ban hành quy chế đào tạo trình độ đại học -> Quyết định 1052",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quyết định 1052 -> Ban hành quy chế đào tạo trình độ đại học -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường đại học nha trang -> Có website -> Http://tuyensinh.ntu.edu.vn/",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17628.168999915943,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "consult_law",
+      "question": "Ai tư vấn ngành Luật và Luật kinh tế, liên hệ thế nào?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Luật -> Là -> Chuyên ngành của luật kinh tế",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Luật -> Is -> Chuyên ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12671.57129989937,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "consult_cntt",
+      "question": "Ai tư vấn ngành Công nghệ thông tin và liên hệ ra sao?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "7480201 -> Tên ngành/ctđt/ nhóm ngành xét tuyển -> Công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Is -> Chuyên ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Fpt telecom khánh hòa -> Offers -> Công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Is -> Nhóm ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Tổ hợp a00; a01; c01; d01 -> 120",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17259.29049984552,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "consult_accounting",
+      "question": "Ngành Kế toán do ai tư vấn và số điện thoại là gì?",
+      "answer": "Ngành Kế toán được tư vấn bởi Thầy Bùi Chí Thành. Số điện thoại của Thầy Bùi Chí Thành là 0989 639 211.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Tư vấn tuyển sinh -> Của -> Đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tư vấn tuyển sinh -> Là -> Đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tài chính - ngân hàng -> Là -> Chuyên ngành của kế toán",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7897176742553711
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quản trị khách sạn -> Is -> Ngành nghề được tư vấn bởi cô ninh thị kim anh",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7790522575378418
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Kỹ thuật cơ điện tử -> Is -> Ngành nghề được tư vấn bởi thầy nguyễn hữu nghĩa",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7692327499389648
+          }
+        }
+      ],
+      "latency_ms": 17717.044899938628,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "quota_cntt_special_2025",
+      "question": "Năm 2025, Công nghệ thông tin chương trình đào tạo đặc biệt có bao nhiêu chỉ tiêu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "7480201 -> Tên ngành/ctđt/ nhóm ngành xét tuyển -> Công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Is -> Chuyên ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Fpt telecom khánh hòa -> Offers -> Công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Is -> Nhóm ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Tổ hợp a00; a01; c01; d01 -> 120",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16842.56780007854,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "quota_hotel_special_2025",
+      "question": "Năm 2025, Quản trị khách sạn chương trình đào tạo đặc biệt có bao nhiêu chỉ tiêu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Quản trị khách sạn -> Tổ hợp xét tuyển -> A01; d01; d07; d96",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quản trị khách sạn -> Là -> Ngành đào tạo",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quản trị khách sạn -> Mã ngành/nhóm ngành xét tuyển -> 7810201",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quản trị khách sạn -> Is -> Ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quản trị khách sạn -> Tên phương thức xét tuyển -> Xét tuyển thẳng (theo quy chế của bgd&đt",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12417.723400052637,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "quota_khoa_hoc_thuy_san_2025",
+      "question": "Năm 2025, ngành Khoa học thủy sản có bao nhiêu chỉ tiêu?",
+      "answer": "Chưa tìm thấy thông tin về năm 2025 trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Khoa học thủy sản -> Is -> Lĩnh vực/ nhóm ngành/ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Khoa học thủy sản -> Là thế mạnh -> Ntu de an tuyen sinh 2030",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Khoa học thủy sản -> Is -> Lĩnh vực/ngành đào tạo",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã ngành 7620303 -> Có -> Khoa học thủy sản",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Khoa học thủy sản -> Có -> Chuyên ngành khai thác thủy sản",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17612.26600012742,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "quota_quan_ly_thuy_san_2025",
+      "question": "Năm 2025, ngành Quản lý thủy sản có bao nhiêu chỉ tiêu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Quản lý thủy sản -> Has -> Số svtn 5",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quản lý thủy sản -> Is advised by -> Thầy trần văn hào",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã ngành -> 7520122 -> Object",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "7620303 -> Is -> Mã ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã ngành -> Là -> 7810103",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17161.266200011596,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "score_marketing_2025_math1",
+      "question": "Theo bảng điểm 2025, ngành Marketing có điểm thi TN THPT bao nhiêu ở tổ hợp có môn Toán hệ số 1?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "580 -> 88 -> Là điểm đgnl đhqg-hcm 2025 của công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7487525939941406
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "A00; a01; c01; d90 -> Là -> Tổ hợp xét điểm thi thpt 2024 của ngành kỹ thuật biển",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7428798675537109
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Marketing -> Mã ngành/nhóm ngành xét tuyển -> 7340115",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7405166625976562
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Marketing -> Tên ngành/ctđt/ nhóm ngành xét tuyển -> Marketing",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7405166625976562
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Marketing -> Is -> Ten chuong trinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7405166625976562
+          }
+        }
+      ],
+      "latency_ms": 16650.446000043303,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "score_english_condition_2025",
+      "question": "Theo bảng điểm 2025, ngành Ngôn ngữ Anh có điểm điều kiện tiếng Anh là bao nhiêu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Ngôn ngữ anh -> Là -> Chuyên ngành của đại học",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Ngôn ngữ anh -> Is -> Tên ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Ngôn ngữ anh -> Là -> Chuyên ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Ngôn ngữ anh -> Is -> Lĩnh vực/ngành đào tạo",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Ngôn ngữ anh -> Is -> Lĩnh vực/ nhóm ngành/ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16672.943100100383,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "score_cntt_special_dgnl_2025",
+      "question": "Theo bảng điểm 2025, Công nghệ thông tin chương trình đặc biệt có điểm ĐGNL ĐHQG-HCM là bao nhiêu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "7480201 -> Tên ngành/ctđt/ nhóm ngành xét tuyển -> Công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Is -> Chuyên ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Fpt telecom khánh hòa -> Offers -> Công nghệ thông tin",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Is -> Nhóm ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Công nghệ thông tin -> Tổ hợp a00; a01; c01; d01 -> 120",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17800.051799975336,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "score_oto_2024_thpt",
+      "question": "Theo bảng điểm 2024, ngành Kỹ thuật ô tô có điểm thi TN THPT là bao nhiêu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Kỹ thuật ô tô -> Mã ngành -> 7520130",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "7520130 -> Tên ngành/ctđt/ nhóm ngành xét tuyển -> Kỹ thuật ô tô",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Kỹ thuật ô tô -> Is -> Ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Kỹ thuật ô tô -> Là -> Ngành đào tạo của trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Kỹ thuật ô tô -> Là -> Ngành của trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12134.899999946356,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "email_2024_combo",
+      "question": "Trong đề án tuyển sinh 2024, trường công bố những email liên hệ nào?",
+      "answer": "Chúng tôi chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Email -> Là -> Tuyensinh@ntu.edu.vn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Email -> Is -> Tuyensinh@ntu.edu.vn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Email -> Is -> Phuongtv@ntu.edu.vn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Điện thoại -> Is -> 0258.3831148",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8057422637939453
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "To van phuong -> Is -> Contact person",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8030071258544922
+          }
+        }
+      ],
+      "latency_ms": 16444.904299918562,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "fanpage_2024_url",
+      "question": "Trong đề án 2024, fanpage tuyển sinh được ghi bằng đường link nào?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Fanpage -> Is located at -> Https://www.facebook.com/tuyensinhdhnt",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Fanpage -> Là -> Tuyển sinh đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Https://www.facebook.com/tuyensinhdhnt -> Is -> Fanpage",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Fanpage -> Is -> Tuyển sinh đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Fanpage -> Tuyển sinh đại học nha trang -> Là",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17001.54670001939,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "facility_library_count",
+      "question": "Trường có bao nhiêu thư viện hoặc trung tâm học liệu?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã sinh viên và mật khẩu đăng nhập -> Có thể tìm thấy tại -> Thư viện",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thư viện -> Là -> Http://thuvien.ntu.edu.vn/",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thống kê về học liệu trong thư viện -> Is -> Section_path",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8108224868774414
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thống kê về học liệu trong thư viện -> Has section -> Bang 4",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.8108224868774414
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phòng học đa phương tiện -> Có số lượng -> 8",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7989397048950195
+          }
+        }
+      ],
+      "latency_ms": 19601.312500191852,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "facility_large_classrooms",
+      "question": "Trường có bao nhiêu hội trường hoặc phòng học lớn trên 200 chỗ?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Phòng học -> Has number of rooms -> 167",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Cơ sở vật chất -> Phục vụ đào tạo -> Phòng học",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phòng học -> Phục vụ đào tạo -> Đào tạo",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Thống kê hội trường -> Phục vụ đào tạo -> Phòng học",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phòng học -> Has quantity -> 167",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17147.90440001525,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "out_of_scope_scholarship",
+      "question": "Trường có học bổng du học Nhật Bản toàn phần cho tân sinh viên không?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mục -> Dành cho -> Tân sinh viên",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tân sinh viên -> Được hướng dẫn đào tạo bởi -> Bang 1",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tân sinh viên -> Tham gia -> Các hoạt động",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Đại học nha trang -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Học kỳ 1/2025-2026 -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17459.04009998776,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "out_of_scope_bus",
+      "question": "Trường có xe buýt miễn phí đón tân sinh viên mỗi ngày không?",
+      "answer": "Chưa tìm thấy thông tin về việc trường có xe buýt miễn phí đón tân sinh viên.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16926.981800002977,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "out_of_scope_dorm_fee",
+      "question": "Phí ở ký túc xá mỗi tháng là bao nhiêu?",
+      "answer": "Chưa tìm thấy thông tin về phí ở ký túc xá trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Vinh tho -> Is a district of -> Nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trườ ng đại học nha trang -> Is organizing -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Học phí -> Khoảng -> 5 - 6 triệu đồng/1 học kỳ",
+          "metadata": {
+            "heading_path": "",
+            "score": 0.7960515022277832
+          }
+        }
+      ],
+      "latency_ms": 17286.194199929014,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "fee_application_2024",
+      "question": "Lệ phí xét tuyển theo đề án tuyển sinh 2024 là bao nhiêu cho 1 nguyện vọng?",
+      "answer": "Lệ phí xét tuyển là 25.000 đ/1 nguyện vọng.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Bộ gd&đt -> Quy định -> Lệ phí xét tuyển",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường -> Quy định -> Lệ phí xét tuyển",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Lệ phí xét tuyển -> Là -> 25.000 đ/1 nguyện vọng",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Lệ phí xét tuyển -> Là -> 400.000 đ/sv",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Bằng phương thức -> Điểm thi thpt năm 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16451.527499826625,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "tuition_standard_2024",
+      "question": "Học phí chương trình chuẩn theo đề án tuyển sinh 2024 khoảng bao nhiêu một học kỳ?",
+      "answer": "Khoảng 5 - 6 triệu đồng/1 học kỳ.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Chi phí đào tạo -> Gấp đôi -> Chương trình chuẩn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Chương trình chuẩn -> Mã ngành -> 7520114",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Chương trình chuẩn -> Là -> Mã ngành",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Chương trình chuẩn -> Thuộc -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Chương trình chuẩn -> Là -> Mã ngành của trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17727.910599904135,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "tuition_special_2024",
+      "question": "Học phí chương trình đặc biệt trong đề án tuyển sinh 2024 khoảng bao nhiêu một học kỳ?",
+      "answer": "Học phí chương trình đặc biệt khoảng 5 - 6 triệu đồng/1 học kỳ.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Bằng phương thức -> Điểm thi thpt năm 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Xét tuyển -> Thí sinh đã được công nhận tốt nghiệp cao đẳng của việt nam -> Hồ sơ bao gồm",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Ntu -> De an tuyen sinh -> 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "De an tuyen sinh -> Năm -> 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Nam -> Là -> 2024",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 17830.488299950957,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "address_submit_dossier_2024",
+      "question": "Địa chỉ nộp hồ sơ khi nộp qua đường bưu điện hoặc tại trường (đề án tuyển sinh 2024) là gì?",
+      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 18450.42180013843,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "email_contact_phuongtv_2025",
+      "question": "Trong Thông tin tuyển sinh 2025, email phuongtv@ntu.edu.vn được ghi là gì?",
+      "answer": "Email phuongtv@ntu.edu.vn được ghi là Email của To Văn Phương.",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Bảng 2 -> Is -> Phương thức tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Trong -> 2 năm gần nhất",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Is -> Method of selection",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Phương thức tuyển sinh -> Of -> Bảng 2",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12395.212200004607,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "email_admissions_quyche",
+      "question": "Theo Quy chế tuyển sinh, email tuyển sinh của trường là gì?",
+      "answer": "Tuyensinh@ntu.edu.vn",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 16832.123999949545,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "phone_admissions_quyche",
+      "question": "Theo Quy chế tuyển sinh, số điện thoại liên hệ tuyển sinh được ghi là gì?",
+      "answer": "0258.3831148",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Is -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Mã trường -> Là -> Tsn",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tsn -> Is -> Mã trường",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Tuyển sinh -> Tại -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Website -> Has information about -> Tuyển sinh",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12097.789699910209,
+      "error": null
+    },
+    {
+      "system": "graphrag",
+      "example_id": "xettuyen_website_quyche",
+      "question": "Theo Quy chế tuyển sinh, trang đăng ký xét tuyển được ghi là link nào?",
+      "answer": "Đăng ký xét tuyển có link tại Https://xettuyen.ntu.edu.vn/",
+      "sources": [
+        {
+          "label": "graph_fact",
+          "content": "Đại học nha trang -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Học kỳ 1/2025-2026 -> Địa điểm -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường đại học nha trang -> Ban hành quy chế đào tạo trình độ đại học -> Quyết định 1052",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Quyết định 1052 -> Ban hành quy chế đào tạo trình độ đại học -> Trường đại học nha trang",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        },
+        {
+          "label": "graph_fact",
+          "content": "Trường đại học nha trang -> Có website -> Http://tuyensinh.ntu.edu.vn/",
+          "metadata": {
+            "heading_path": "",
+            "score": 1.0
+          }
+        }
+      ],
+      "latency_ms": 12998.759699985385,
+      "error": null
+    }
+  ]
+}

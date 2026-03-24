@@ -1,0 +1,9 @@
+https://tuyensinh.ntu.edu.vn/%C4%91e-an-tuyen-sinh/gioi-thieu-truong
+https://tuyensinh.ntu.edu.vn/%C4%91e-an-tuyen-sinh/co-so-vat-chat
+https://tuyensinh.ntu.edu.vn/%C4%91e-an-tuyen-sinh/to-chuc-tuyen-sinh
+https://tuyensinh.ntu.edu.vn/de-an-tuyen-sinh/phuong-thuc-doi-tuong-pham-vi-ts
+https://tuyensinh.ntu.edu.vn/%C4%91e-an-tuyen-sinh/hop-tac-doanh-nghiep
+https://tuyensinh.ntu.edu.vn/de-an-tuyen-sinh/tuyen-sinh-lien-thong-bang-2
+https://tuyensinh.ntu.edu.vn/diem-trung-tuyen-cac-nam
+https://tuyensinh.ntu.edu.vn/tu-van
+https://tuyensinh.ntu.edu.vn/nhap-hoc
