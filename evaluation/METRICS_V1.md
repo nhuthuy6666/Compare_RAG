@@ -51,5 +51,5 @@ Ngoài `overall_score`, V1 vẫn ghi lại:
 
 ## Thư mục kết quả
 
-- Kết quả V1: `evaluation/results_v1/`, `evaluation/outputs_v1/`
-- Kết quả legacy: `evaluation/results/`, `evaluation/outputs/`
+- Output gốc của từng hệ: `evaluation/outputs_v1/`
+- Metric và báo cáo tổng hợp: `evaluation/results_v1/`

@@ -23,7 +23,7 @@ RNG = random.Random(42)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute bootstrap reliability reports from evaluation results.")
-    parser.add_argument("--config", default="evaluation/config.yaml", help="Path to config file.")
+    parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     return parser.parse_args()
 
 

@@ -3,16 +3,16 @@
   "summary": {
     "system": "baseline",
     "samples": 49,
-    "refusal_correct": 0.7959,
-    "exact_match": 0.0,
-    "token_f1": 0.5458,
-    "char_similarity": 0.552,
-    "semantic_similarity": 0.7513,
-    "keyword_coverage": 0.6242,
-    "answer_relevance": 0.5828,
+    "refusal_correct": 0.898,
+    "exact_match": 0.0204,
+    "token_f1": 0.5322,
+    "char_similarity": 0.5519,
+    "semantic_similarity": 0.7595,
+    "keyword_coverage": 0.6088,
+    "answer_relevance": 0.5836,
     "context_relevance": 0.59,
-    "faithfulness": 0.666,
-    "hallucination_rate": 0.334,
+    "faithfulness": 0.6667,
+    "hallucination_rate": 0.3333,
     "source_hint_hit": 0.5102,
     "source_keyword_coverage": 0.8313,
     "precision_at_1": 0.7755,
@@ -29,12 +29,12 @@
     "map": 0.9265,
     "ndcg_at_3": 0.9004,
     "ndcg_at_5": 0.9211,
-    "answer_quality": 0.4735,
+    "answer_quality": 0.4697,
     "retrieval_quality": 0.7956,
     "recall_at_k": 0.8776,
     "context_precision": 0.7279,
-    "overall_score": 0.7074,
-    "latency_ms": 12863.8667,
+    "overall_score": 0.7078,
+    "latency_ms": 14379.2004,
     "errors": 0
   },
   "predictions": [
@@ -42,7 +42,7 @@
       "system": "baseline",
       "example_id": "methods_2025",
       "question": "Trường Đại học Nha Trang xét tuyển năm 2025 theo mấy phương thức?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Theo bảng điểm trúng tuyển của Trường Đại học Nha Trang, trường xét tuyển theo hai phương thức là thi tốt nghiệp THPT và đánh giá năng lực ĐGNL.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-diem-trung-tuyen-cac-nam.txt#5",
@@ -99,14 +99,14 @@
           }
         }
       ],
-      "latency_ms": 14859.20329997316,
+      "latency_ms": 16770.19580011256,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "methods_2024",
       "question": "Năm 2024 trường xét tuyển theo mấy phương thức?",
-      "answer": "Theo tài liệu, trường xét tuyển theo 4 phương thức:\n\n- PT1: Xét tuyển thẳng theo quy chế của BGD&ĐT;\n- PT2: Xét tuyển dựa vào Điểm đánh giá năng lực của ĐHQG-HCM và điểm đánh giá năng lực của ĐHQG-HN năm 2024;\n- PT3: Xét tuyển dựa vào Điểm học bạ (Kết quả học tập ở THPT);\n- PT4: Xét tuyển dựa vào Điểm thi Tốt nghiệp THPT năm 2024.",
+      "answer": "Xét tuyển theo 4 phương thức:\n\n- PT1: Xét tuyển thẳng theo quy chế của BGD&ĐT;\n- PT2: Xét tuyển dựa vào Điểm đánh giá năng lực của ĐHQG-HCM và điểm đánh giá năng lực của ĐHQG-HN năm 2024;\n- PT3: Xét tuyển dựa vào Điểm học bạ (Kết quả học tập ở THPT);\n- PT4: Xét tuyển dựa vào Điểm thi Tốt nghiệp THPT năm 2024.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#61",
@@ -163,7 +163,7 @@
           }
         }
       ],
-      "latency_ms": 19159.60990008898,
+      "latency_ms": 19270.662700058892,
       "error": null
     },
     {
@@ -227,7 +227,7 @@
           }
         }
       ],
-      "latency_ms": 16423.50859986618,
+      "latency_ms": 16570.691799977794,
       "error": null
     },
     {
@@ -291,14 +291,14 @@
           }
         }
       ],
-      "latency_ms": 14687.330499989912,
+      "latency_ms": 15069.939500186592,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "phone_2025",
       "question": "Số điện thoại liên hệ tuyển sinh của trường là gì?",
-      "answer": "Điện thoại liên hệ tuyển sinh của trường là 0258.3831148; 0258.2212579.",
+      "answer": "Số điện thoại liên hệ tuyển sinh của trường là 0258.3831148; 0258.2212579.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#9",
@@ -355,14 +355,14 @@
           }
         }
       ],
-      "latency_ms": 12984.230200061575,
+      "latency_ms": 13432.684199884534,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "phone_secondary",
       "question": "Trên trang phương thức, đối tượng, phạm vi tuyển sinh có số điện thoại nào khác?",
-      "answer": "ĐT còn 0258 2212 579.",
+      "answer": "ĐT: 0258 2212 579.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#9",
@@ -419,7 +419,7 @@
           }
         }
       ],
-      "latency_ms": 12162.916400004178,
+      "latency_ms": 12545.504700159654,
       "error": null
     },
     {
@@ -483,7 +483,7 @@
           }
         }
       ],
-      "latency_ms": 12983.608399983495,
+      "latency_ms": 13201.190300052986,
       "error": null
     },
     {
@@ -547,14 +547,14 @@
           }
         }
       ],
-      "latency_ms": 11951.895300066099,
+      "latency_ms": 12342.798099853098,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "fanpage_tuyensinh",
       "question": "Fanpage tuyển sinh của trường được ghi như thế nào?",
-      "answer": "Fanpage tuyển sinh của trường Đại học Nha Trang được ghi là https://www.facebook.com/tuyensinhdhnt/.",
+      "answer": "https://www.facebook.com/tuyensinhdhnt",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#8",
@@ -611,7 +611,7 @@
           }
         }
       ],
-      "latency_ms": 11771.370899863541,
+      "latency_ms": 12362.097200006247,
       "error": null
     },
     {
@@ -675,7 +675,7 @@
           }
         }
       ],
-      "latency_ms": 13490.465399809182,
+      "latency_ms": 14258.639199892059,
       "error": null
     },
     {
@@ -739,7 +739,7 @@
           }
         }
       ],
-      "latency_ms": 14054.495700169355,
+      "latency_ms": 14762.065999908373,
       "error": null
     },
     {
@@ -803,7 +803,7 @@
           }
         }
       ],
-      "latency_ms": 13693.876300007105,
+      "latency_ms": 14308.333300054073,
       "error": null
     },
     {
@@ -867,7 +867,7 @@
           }
         }
       ],
-      "latency_ms": 11998.119299998507,
+      "latency_ms": 12972.44259994477,
       "error": null
     },
     {
@@ -931,7 +931,7 @@
           }
         }
       ],
-      "latency_ms": 11689.559899969026,
+      "latency_ms": 12895.186900161207,
       "error": null
     },
     {
@@ -995,7 +995,7 @@
           }
         }
       ],
-      "latency_ms": 12185.62990007922,
+      "latency_ms": 13954.274100018665,
       "error": null
     },
     {
@@ -1059,14 +1059,14 @@
           }
         }
       ],
-      "latency_ms": 11576.7800998874,
+      "latency_ms": 13049.497100058943,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "scope_and_code",
       "question": "Mã cơ sở đào tạo trong tuyển sinh và phạm vi tuyển sinh của trường là gì?",
-      "answer": "Mã cơ sở đào tạo trong tuyển sinh là TSN. Phạm vi tuyển sinh của trường là tuyển sinh trên toàn quốc với quy mô 3.800 chỉ tiêu đại học chính quy.",
+      "answer": "Mã cơ sở đào tạo trong tuyển sinh là TSN. Phạm vi tuyển sinh của trường là Tuyển sinh trên toàn quốc với quy mô 3.800 chỉ tiêu Đại học chính quy.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-de-an-tuyen-sinh-phuong-thuc-doi-tuong-pham-vi-ts.txt#1",
@@ -1123,14 +1123,14 @@
           }
         }
       ],
-      "latency_ms": 14497.343600029126,
+      "latency_ms": 15630.32709993422,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "contact_combo",
       "question": "Cho tôi số điện thoại và email tuyển sinh của trường.",
-      "answer": "Số điện thoại liên hệ tuyển sinh: 0258.3831148; 0258.2212579\nEmail: tuyensinh@ntu.edu.vn hoặc daotao@ntu.edu.vn",
+      "answer": "Số điện thoại liên hệ tuyển sinh là 0258.3831148; 0258.2212579. Email tuyển sinh là daotao@ntu.edu.vn hoặc tuyensinh@ntu.edu.vn.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#9",
@@ -1187,7 +1187,7 @@
           }
         }
       ],
-      "latency_ms": 13197.111299959943,
+      "latency_ms": 14573.738800128922,
       "error": null
     },
     {
@@ -1251,14 +1251,14 @@
           }
         }
       ],
-      "latency_ms": 13451.2517999392,
+      "latency_ms": 15355.059999972582,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "ielts_55",
       "question": "Với IELTS 5.5 thì được quy đổi và cộng điểm như thế nào?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "thong-tin-tuyen-sinh-2025.txt#85",
@@ -1315,14 +1315,14 @@
           }
         }
       ],
-      "latency_ms": 12992.13800020516,
+      "latency_ms": 13911.915800068527,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "pt3_scale_2025",
       "question": "Phương thức PT3 năm 2025 dùng thang điểm xét tuyển nào?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Phương thức PT3 xét tuyển dựa vào Điểm học bạ (Kết quả học tập ở THPT), không có thông tin về thang điểm cụ thể.",
       "sources": [
         {
           "label": "thong-tin-tuyen-sinh-2025.txt#93",
@@ -1379,14 +1379,14 @@
           }
         }
       ],
-      "latency_ms": 12350.912599824369,
+      "latency_ms": 15331.255399854854,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "pt2_scale_2025",
       "question": "Phương thức PT2 năm 2025 dùng những thang điểm nào?",
-      "answer": "Toan*2, Ngir van, Tieng Anh.",
+      "answer": "Toán*2, Ngữ văn, Tiếng Anh.",
       "sources": [
         {
           "label": "thong-tin-tuyen-sinh-2025.txt#285",
@@ -1443,7 +1443,7 @@
           }
         }
       ],
-      "latency_ms": 10837.907299865037,
+      "latency_ms": 12663.708100095391,
       "error": null
     },
     {
@@ -1507,14 +1507,14 @@
           }
         }
       ],
-      "latency_ms": 10555.241199908778,
+      "latency_ms": 13095.982200000435,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "consult_law",
       "question": "Ai tư vấn ngành Luật và Luật kinh tế, liên hệ thế nào?",
-      "answer": "Cô Hoàng Thị Thơm và Cô Hoàng Thị Thơm không có thông tin liên hệ. Tuy nhiên, có một người tên là Cô Hoàng Thị Thơm ở TT 3 với thông tin liên hệ là 0983 019 882 thomht@ntu.edu.vn.\n\nTuy nhiên, có một người tên là Cô Hoàng Thị Thơm ở TT 3 và Cô Hoàng Thị Thơm không có thông tin liên hệ.",
+      "answer": "Cô Hoàng Thị Thơm tư vấn ngành Chuyên ngành Kỹ thuật điều khiển và tự động hoá. \n\nCô Hoàng Thị Thơm có thông tin liên hệ là 0983 019 882 - thomht@ntu.edu.vn.\n\nNgoài ra, Cô Hoàng Thị Thơm cũng có thể được liên hệ qua nhóm Zalo tư vấn tuyển sinh Đại học Nha Trang với mã nhóm https://zalo.me/g/tsdhgr993.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-tu-van.txt#6",
@@ -1571,14 +1571,14 @@
           }
         }
       ],
-      "latency_ms": 17209.37589998357,
+      "latency_ms": 19485.4315998964,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "consult_cntt",
       "question": "Ai tư vấn ngành Công nghệ thông tin và liên hệ ra sao?",
-      "answer": "Thầy Bùi Chí Thành, số điện thoại 0989 639 211, email thanhbc@ntu.edu.vn.",
+      "answer": "Thầy Trần Văn Hào, số điện thoại 0915 839 250.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-tu-van.txt#10",
@@ -1635,7 +1635,7 @@
           }
         }
       ],
-      "latency_ms": 13460.618100129068,
+      "latency_ms": 15011.39790005982,
       "error": null
     },
     {
@@ -1699,14 +1699,14 @@
           }
         }
       ],
-      "latency_ms": 13056.621399940923,
+      "latency_ms": 15057.498699985445,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "quota_cntt_special_2025",
       "question": "Năm 2025, Công nghệ thông tin chương trình đào tạo đặc biệt có bao nhiêu chỉ tiêu?",
-      "answer": "Theo bảng thông tin về các ngành và chuyên ngành của Đại học Nha Trang năm 2024, trong đó có thông tin về tổ hợp xét tuyển và chỉ tiêu cho từng ngành. \n\nVì vậy, để trả lời câu hỏi này, ta cần tìm kiếm thông tin về \"Công nghệ thông tin chương trình đào tạo đặc biệt\" trong bảng thông tin.\n\nTheo bảng thông tin, mã ngành của Công nghệ thông tin chương trình đào tạo đặc biệt là 7480201A và tổ hợp xét tuyển là A01; D01; D07; D96. Năm 2022, chỉ tiêu cho ngành này là 250 và năm 2023 là 267.\n\nDo đó, số lượng chỉ tiêu cho \"Công nghệ thông tin chương trình đào tạo đặc biệt\" trong năm 2025 sẽ tiếp tục tăng lên 267 như năm 2023.",
+      "answer": "Theo bảng Bang 1, năm 2025, Công nghệ thông tin (chương trình đặc biệt) có 250 chỉ tiêu.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#48",
@@ -1763,14 +1763,14 @@
           }
         }
       ],
-      "latency_ms": 22033.078499836847,
+      "latency_ms": 15449.408800108358,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "quota_hotel_special_2025",
       "question": "Năm 2025, Quản trị khách sạn chương trình đào tạo đặc biệt có bao nhiêu chỉ tiêu?",
-      "answer": "Tra cứu bảng TT: 34; Tên ngành/CTĐT: Quản trị khách sạn; Mã ngành: 7810201; Số văn bản mở ngành/ chuyển đổi ngành: 897; Ngày tháng năm ban hành văn bản: 03/8/2019; Trường; tự chủ; ban hành; hoặc CQ; có thẩm; quyền; cho phép: ĐHNT; Năm bắt đầu đào tạo: 2019; Năm đã; tuyển; sinh và; đào tạo; gần nhất; với năm; TS: 2023.\n\nVậy Quản trị khách sạn chương trình đào tạo đặc biệt có 150 chỉ tiêu.",
+      "answer": "Tra cứu bảng TT: 34 trong tài liệu \"Điểm trúng tuyển các năm của Trường Đại học Nha Trang\" với mã ngành là 7810201 và tên ngành/CTĐT là Quản trị khách sạn. \n\nTrong đó, thông tin về số lượng chỉ tiêu cho chương trình đào tạo đặc biệt năm 2025 không được đề cập. Tuy nhiên, có thể thấy rằng trong bảng TT: 34, trường đã mở ngành/ chuyển đổi ngành với số văn bản 897 vào ngày 03/8/2019 và bắt đầu đào tạo từ năm 2019.\n\nDo đó, câu hỏi về chỉ tiêu của Quản trị khách sạn chương trình đào tạo đặc biệt năm 2025 không thể trả lời chính xác dựa trên thông tin trong tài liệu.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#48",
@@ -1827,14 +1827,14 @@
           }
         }
       ],
-      "latency_ms": 19940.952599979937,
+      "latency_ms": 23719.354700064287,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "quota_khoa_hoc_thuy_san_2025",
       "question": "Năm 2025, ngành Khoa học thủy sản có bao nhiêu chỉ tiêu?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-diem-trung-tuyen-cac-nam.txt#100",
@@ -1891,14 +1891,14 @@
           }
         }
       ],
-      "latency_ms": 12625.27530011721,
+      "latency_ms": 15228.048500139266,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "quota_quan_ly_thuy_san_2025",
       "question": "Năm 2025, ngành Quản lý thủy sản có bao nhiêu chỉ tiêu?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-diem-trung-tuyen-cac-nam.txt#100",
@@ -1955,7 +1955,7 @@
           }
         }
       ],
-      "latency_ms": 12600.195599952713,
+      "latency_ms": 15052.9358999338,
       "error": null
     },
     {
@@ -2019,7 +2019,7 @@
           }
         }
       ],
-      "latency_ms": 16617.865399923176,
+      "latency_ms": 18485.94279983081,
       "error": null
     },
     {
@@ -2083,7 +2083,7 @@
           }
         }
       ],
-      "latency_ms": 12333.529100054875,
+      "latency_ms": 14296.014700084925,
       "error": null
     },
     {
@@ -2147,7 +2147,7 @@
           }
         }
       ],
-      "latency_ms": 13221.19680000469,
+      "latency_ms": 15736.218900186941,
       "error": null
     },
     {
@@ -2211,7 +2211,7 @@
           }
         }
       ],
-      "latency_ms": 13705.26499999687,
+      "latency_ms": 15847.936700098217,
       "error": null
     },
     {
@@ -2275,7 +2275,7 @@
           }
         }
       ],
-      "latency_ms": 10937.350700143725,
+      "latency_ms": 12760.182600002736,
       "error": null
     },
     {
@@ -2339,14 +2339,14 @@
           }
         }
       ],
-      "latency_ms": 10315.33159990795,
+      "latency_ms": 12398.994899820536,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "facility_library_count",
       "question": "Trường có bao nhiêu thư viện hoặc trung tâm học liệu?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Trường có 3 thư viện, trung tâm học liệu.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-e-an-tuyen-sinh-co-so-vat-chat.txt#8",
@@ -2403,14 +2403,14 @@
           }
         }
       ],
-      "latency_ms": 10945.767200086266,
+      "latency_ms": 13611.698199994862,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "facility_large_classrooms",
       "question": "Trường có bao nhiêu hội trường hoặc phòng học lớn trên 200 chỗ?",
-      "answer": "Theo bảng thống kê, số lượng hội trường, phòng học lớn trên 200 chỗ là 04 (Bảng 3) và 3 (Bảng 14).",
+      "answer": "04",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-e-an-tuyen-sinh-co-so-vat-chat.txt#7",
@@ -2467,14 +2467,14 @@
           }
         }
       ],
-      "latency_ms": 12537.318099988624,
+      "latency_ms": 12970.010499935597,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "out_of_scope_scholarship",
       "question": "Trường có học bổng du học Nhật Bản toàn phần cho tân sinh viên không?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#136",
@@ -2531,14 +2531,14 @@
           }
         }
       ],
-      "latency_ms": 9650.364599889144,
+      "latency_ms": 12884.697000030428,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "out_of_scope_bus",
       "question": "Trường có xe buýt miễn phí đón tân sinh viên mỗi ngày không?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#137",
@@ -2595,14 +2595,14 @@
           }
         }
       ],
-      "latency_ms": 9833.934800000861,
+      "latency_ms": 12441.910600056872,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "out_of_scope_dorm_fee",
       "question": "Phí ở ký túc xá mỗi tháng là bao nhiêu?",
-      "answer": "Chưa tìm thấy thông tin về phí ở ký túc xá trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-e-an-tuyen-sinh-co-so-vat-chat.txt#5",
@@ -2659,7 +2659,7 @@
           }
         }
       ],
-      "latency_ms": 10375.303300097585,
+      "latency_ms": 12560.960599919781,
       "error": null
     },
     {
@@ -2723,14 +2723,14 @@
           }
         }
       ],
-      "latency_ms": 10046.032600104809,
+      "latency_ms": 12431.419499916956,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "tuition_standard_2024",
       "question": "Học phí chương trình chuẩn theo đề án tuyển sinh 2024 khoảng bao nhiêu một học kỳ?",
-      "answer": "Học phí chương trình chuẩn khoảng 5 - 6 triệu đồng/1 học kỳ, tùy theo số tín chỉ SV đăng ký học.",
+      "answer": "Học phí khoảng 5 - 6 triệu đồng/1 học kỳ, tùy theo số tín chỉ SV đăng ký học.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#138",
@@ -2787,7 +2787,7 @@
           }
         }
       ],
-      "latency_ms": 11223.53299986571,
+      "latency_ms": 12791.869099950418,
       "error": null
     },
     {
@@ -2851,14 +2851,14 @@
           }
         }
       ],
-      "latency_ms": 11757.851700065657,
+      "latency_ms": 13928.449400002137,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "address_submit_dossier_2024",
       "question": "Địa chỉ nộp hồ sơ khi nộp qua đường bưu điện hoặc tại trường (đề án tuyển sinh 2024) là gì?",
-      "answer": "Số 02, Nguyễn Đình Chiểu, phường Vĩnh Thọ, Tp. Nha Trang, Khánh Hòa.",
+      "answer": "Phòng Đào tạo Đại học - Trường Đại học Nha Trang. Địa chỉ: Số 02, Nguyễn Đình Chiểu, phường Vĩnh Thọ, Tp. Nha Trang, Khánh Hòa.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#129",
@@ -2915,14 +2915,14 @@
           }
         }
       ],
-      "latency_ms": 11183.587200008333,
+      "latency_ms": 14011.81669998914,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "email_contact_phuongtv_2025",
       "question": "Trong Thông tin tuyển sinh 2025, email phuongtv@ntu.edu.vn được ghi là gì?",
-      "answer": "Chưa tìm thấy chắc chắn trong tài liệu hiện có.",
+      "answer": "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có.",
       "sources": [
         {
           "label": "ntu-de-an-tuyen-sinh-2024-web.txt#7",
@@ -2979,7 +2979,7 @@
           }
         }
       ],
-      "latency_ms": 10026.307900203392,
+      "latency_ms": 12468.640699982643,
       "error": null
     },
     {
@@ -3043,7 +3043,7 @@
           }
         }
       ],
-      "latency_ms": 10476.562399882823,
+      "latency_ms": 12853.853800101206,
       "error": null
     },
     {
@@ -3107,14 +3107,14 @@
           }
         }
       ],
-      "latency_ms": 10348.649699939415,
+      "latency_ms": 12868.414799915627,
       "error": null
     },
     {
       "system": "baseline",
       "example_id": "xettuyen_website_quyche",
       "question": "Theo Quy chế tuyển sinh, trang đăng ký xét tuyển được ghi là link nào?",
-      "answer": "Đăng ký xét tuyển trực tuyến tại: https://xettuyen.ntu.edu.vn/",
+      "answer": "xettuyen.ntu.edu.vn",
       "sources": [
         {
           "label": "tuyensinh-ntu-edu-vn-e-an-tuyen-sinh-to-chuc-tuyen-sinh.txt#7",
@@ -3171,7 +3171,7 @@
           }
         }
       ],
-      "latency_ms": 10313.082800013945,
+      "latency_ms": 11899.523100117221,
       "error": null
     }
   ]

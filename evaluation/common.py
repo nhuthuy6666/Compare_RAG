@@ -72,7 +72,7 @@ def load_structured_config(path_like: str | Path) -> dict[str, Any]:
             import yaml  # type: ignore
         except ImportError as exc:
             raise RuntimeError(
-                "config.yaml khong phai JSON hop le va moi truong chua co PyYAML."
+                "File config khong phai JSON hop le va moi truong chua co PyYAML."
             ) from exc
         data = yaml.safe_load(raw) or {}
 

@@ -15,12 +15,12 @@ from evaluation.common import load_structured_config, resolve_path  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render markdown comparison table from evaluation results.")
-    parser.add_argument("--config", default="evaluation/config.yaml", help="Path to config file.")
+    parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     return parser.parse_args()
 
 
 def load_rows(path: Path) -> list[dict[str, str]]:
-    # Đọc bảng CSV so sánh đã được evaluate.py ghi ra.
+    # Đọc bảng CSV so sánh đã được evaluate-v1.py ghi ra.
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 
@@ -34,7 +34,7 @@ def to_float(row: dict[str, str], key: str) -> float:
 
 
 def main() -> None:
-    # 1) Nạp config và tìm đến file summary đã tổng hợp theo từng hệ.
+    # 1) Nạp config V1 và tìm đến file summary đã tổng hợp theo từng hệ.
     args = parse_args()
     config = load_structured_config(args.config)
     comparison_path = resolve_path(Path(config["results_dir"]) / "comparison.csv")

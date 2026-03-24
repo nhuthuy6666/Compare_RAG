@@ -15,7 +15,7 @@ from evaluation.common import load_structured_config, resolve_path  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render ASCII visualization from evaluation results.")
-    parser.add_argument("--config", default="evaluation/config.yaml", help="Path to config file.")
+    parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     return parser.parse_args()
 
 
@@ -41,7 +41,7 @@ def to_float(row: dict[str, str], key: str) -> float:
 
 
 def main() -> None:
-    # 1) Đọc file comparison.csv đã được evaluate.py tạo ra.
+    # 1) Đọc file comparison.csv đã được evaluate-v1.py tạo ra.
     args = parse_args()
     config = load_structured_config(args.config)
     comparison_path = resolve_path(Path(config["results_dir"]) / "comparison.csv")
