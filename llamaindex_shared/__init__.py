@@ -6,6 +6,7 @@ from llamaindex_shared.common import (
     ensure_vector_index,
     load_shared_config,
 )
+from llamaindex_shared.chat_ui import ChatUiConfig, ChatUiTab, build_chat_ui_tabs, render_chat_ui
 from llamaindex_shared.corpus_utils import (
     chunk_txt_file,
     configure_console_utf8,
@@ -19,8 +20,11 @@ from llamaindex_shared.prompts import build_prompt_templates
 
 __all__ = [
     "SharedRagConfig",
+    "ChatUiConfig",
+    "ChatUiTab",
     "OpenAICompatibleEmbedding",
     "OpenAICompatibleLLM",
+    "build_chat_ui_tabs",
     "build_query_engine",
     "build_prompt_templates",
     "chunk_txt_file",
@@ -31,6 +35,7 @@ __all__ = [
     "load_chunk_record_groups",
     "load_shared_config",
     "records_to_nodes",
+    "render_chat_ui",
     "summarize_records",
     "write_chunk_records",
 ]

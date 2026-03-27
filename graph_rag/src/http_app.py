@@ -1,30 +1,32 @@
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import asdict
+import sys
+from functools import lru_cache
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from threading import Lock
+from urllib.parse import urlparse
 
-from flask import Flask, jsonify, render_template, request
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from chat_service import answer_question
-from chat_store import ChatStore
+from llamaindex_shared import ChatUiConfig, build_chat_ui_tabs, render_chat_ui
 from utils import configure_console_utf8
 
 
 configure_console_utf8()
 
-
-## Chuẩn hóa chat session object về JSON-serializable dict cho UI/API.
-def _session_to_dict(session):
-    return {
-        "id": session.id,
-        "title": session.title,
-        "created_at": session.created_at,
-        "updated_at": session.updated_at,
-        "messages": [asdict(message) for message in session.messages],
-    }
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8502
+GRAPH_LOCK = Lock()
 
 
-## Chuẩn hóa kết quả hỏi đáp stateless về schema chung `answer/sources`.
+# Chuyển kết quả GraphRAG thành schema thống nhất với 2 hệ còn lại.
 def _answer_to_payload(question: str, result) -> dict:
     return {
         "answer": result.answer,
@@ -42,90 +44,167 @@ def _answer_to_payload(question: str, result) -> dict:
     }
 
 
-## Tạo Flask app cho GraphRAG.
-## App này đồng thời phục vụ web UI có session và endpoint stateless `/api/chat` cho benchmark.
-def create_app() -> Flask:
-    app = Flask(__name__, template_folder="templates", static_folder="static")
-    store = ChatStore()
-
-    # Render trang chủ cùng danh sách session và session đang active.
-    @app.get("/")
-    def index():
-        sessions = store.list_sessions()
-        active_session = sessions[0] if sessions else store.create_session()
-        sessions = store.list_sessions()
-        return render_template(
-            "index.html",
-            sessions=[_session_to_dict(session) for session in sessions],
-            active_session=_session_to_dict(active_session),
+# Tạo HTML UI dùng chung cho GraphRAG và đánh dấu tab Graph đang được chọn.
+@lru_cache(maxsize=1)
+def load_ui_html() -> str:
+    return render_chat_ui(
+        ChatUiConfig(
+            current_rag_id="graph",
+            page_title="NTU Graph RAG",
+            brand_badge="NTU Admissions",
+            brand_title="NTU Bot",
+            brand_description=(
+                "Graph RAG tổng hợp thông tin từ các fact trong đồ thị tri thức. "
+                "Giao diện này được dùng chung với Baseline và Hybrid RAG."
+            ),
+            header_badge="Graph RAG",
+            header_subtitle="Graph retrieval | Query fusion | Fact graph",
+            assistant_label="Graph NTU Bot",
+            empty_title="Graph RAG sẵn sàng",
+            empty_description=(
+                "Bạn có thể đặt cùng một câu hỏi và chuyển tab để so sánh kết quả "
+                "giữa Graph, Hybrid và Baseline RAG."
+            ),
+            placeholder="Ví dụ: Ngành Marketing 2025 có bao nhiêu chỉ tiêu?",
+            composer_hint="Đặt cùng câu hỏi ở 3 tab để so sánh kết quả",
+            loading_message="Đang truy xuất graph facts...",
+            ready_message="Đã trả lời xong.",
+            storage_key="ntu_project_graph_sessions",
+            suggestions=[
+                "Ngành Marketing 2025 có bao nhiêu chỉ tiêu?",
+                "Hồ sơ nhập học gồm những gì?",
+                "Học phí dự kiến một năm là bao nhiêu?",
+            ],
+            tabs=build_chat_ui_tabs(),
         )
+    )
 
-    # Endpoint health check cho local smoke test và benchmark runner.
-    @app.get("/health")
-    def health():
-        return jsonify({"status": "ok"})
 
-    # Endpoint stateless dùng schema chung với các hệ RAG còn lại.
-    @app.post("/api/chat")
-    def answer_chat():
-        payload = request.get_json(silent=True) or {}
-        question = (payload.get("query") or payload.get("question") or "").strip()
+class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
+    server_version = "NTUGraphRagHTTP/2.0"
+
+    # Phục vụ UI gốc, health check và favicon cho GraphRAG.
+    def do_GET(self) -> None:
+        parsed = urlparse(self.path)
+        if parsed.path == "/":
+            self._send_html(load_ui_html())
+            return
+        if parsed.path == "/health":
+            self._send_json({"status": "ok"})
+            return
+        if parsed.path == "/favicon.ico":
+            self.send_response(HTTPStatus.NO_CONTENT)
+            self.end_headers()
+            return
+        self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+
+    # Nhận payload chat và trả kết quả cho frontend.
+    def do_POST(self) -> None:
+        parsed = urlparse(self.path)
+        if parsed.path != "/api/chat":
+            self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+            return
+
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+
+        question = str(payload.get("query") or payload.get("question") or "").strip()
         if not question:
-            return jsonify({"error": "Vui long nhap cau hoi."}), 400
+            self._send_json({"error": "Vui lòng nhập câu hỏi."}, status=HTTPStatus.BAD_REQUEST)
+            return
 
-        result = answer_question(question)
-        return jsonify(_answer_to_payload(question, result))
+        try:
+            with GRAPH_LOCK:
+                result = answer_question(question)
+        except Exception as exc:
+            self._send_json(
+                {"error": f"Không thể xử lý câu hỏi. Chi tiết: {exc}"},
+                status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
+            return
 
-    # Tạo một cuộc trò chuyện mới cho UI có session.
-    @app.post("/api/chats")
-    def create_chat():
-        session = store.create_session()
-        return jsonify({"session": _session_to_dict(session)})
+        self._send_json(_answer_to_payload(question, result), status=HTTPStatus.OK)
 
-    # Lấy chi tiết một session theo id.
-    @app.get("/api/chats/<session_id>")
-    def get_chat(session_id: str):
-        session = store.get_session(session_id)
-        if session is None:
-            return jsonify({"error": "Khong tim thay cuoc tro chuyen."}), 404
-        return jsonify({"session": _session_to_dict(session)})
+    # Đọc body JSON từ request và tự xử lý lỗi payload sai định dạng.
+    def _read_json_payload(self) -> dict | None:
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+            raw_body = self.rfile.read(content_length)
+            return json.loads(raw_body.decode("utf-8") or "{}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._send_json({"error": "Payload JSON không hợp lệ."}, status=HTTPStatus.BAD_REQUEST)
+            return None
 
-    # Xóa một session rồi trả lại danh sách session còn lại.
-    @app.delete("/api/chats/<session_id>")
-    def delete_chat(session_id: str):
-        store.delete_session(session_id)
-        sessions = store.list_sessions()
-        return jsonify({"sessions": [_session_to_dict(session) for session in sessions]})
+    # Tắt log mặc định của BaseHTTPRequestHandler để console gọn hơn.
+    def log_message(self, format: str, *args) -> None:
+        return
 
-    # Ghi thêm một lượt hỏi đáp vào session hiện có.
-    @app.post("/api/chats/<session_id>/messages")
-    def send_message(session_id: str):
-        payload = request.get_json(silent=True) or {}
-        question = (payload.get("question") or "").strip()
-        if not question:
-            return jsonify({"error": "Vui long nhap cau hoi."}), 400
+    # Gửi HTML cho trình duyệt với content-type phù hợp.
+    def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK) -> None:
+        body = html.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
-        result = answer_question(question)
-        session = store.append_turn(
-            session_id=session_id,
-            question=question,
-            answer=result.answer,
-            facts=[asdict(fact) for fact in result.facts],
-        )
-        return jsonify({"session": _session_to_dict(session)})
-
-    return app
-
-
-app = create_app()
+    # Gửi JSON cho frontend và giữ nguyên Unicode để dễ debug.
+    def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
-## Entry point chạy Flask server cục bộ cho GraphRAG.
-## 1) Đọc `UI_PORT` từ môi trường.
-## 2) Khởi động Flask app trên `127.0.0.1`.
+# Chạy vòng lặp hỏi đáp trong terminal để test nhanh GraphRAG.
+def run_cli() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+    print("Graph RAG sẵn sàng. Gõ 'exit' để thoát.")
+    while True:
+        question = input("\nNhập câu hỏi: ").strip()
+        if question.lower() == "exit":
+            break
+        with GRAPH_LOCK:
+            result = answer_question(question)
+        print("\n=== TRẢ LỜI ===")
+        print(result.answer)
+
+
+# Đọc port UI từ biến môi trường để launcher có thể thống nhất 3 server.
+def resolve_server_port() -> int:
+    return int(os.getenv("UI_PORT", str(DEFAULT_PORT)))
+
+
+# Khởi động HTTP server GraphRAG theo cùng cách với baseline và hybrid.
+def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
+    resolved_port = port if port is not None else resolve_server_port()
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+    print("Đang khởi tạo Graph RAG...")
+    server = ThreadingHTTPServer((host, resolved_port), ChatHTTPRequestHandler)
+    print(f"Graph RAG đang chạy tại http://{host}:{resolved_port}")
+    print("Nhấn Ctrl+C để dừng server.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nĐã dừng server.")
+    finally:
+        server.server_close()
+
+
+# Entry point của GraphRAG.
+# 1) Kiểm tra xem user có muốn chạy chế độ CLI hay không.
+# 2) Nếu có `--cli` thì mở vòng lặp hỏi đáp trong terminal.
+# 3) Nếu không thì đọc `UI_PORT` và khởi động web UI/API dùng giao diện chung.
 def main() -> None:
-    port = int(os.getenv("UI_PORT", "8502"))
-    app.run(host="127.0.0.1", port=port, debug=False)
+    if "--cli" in sys.argv:
+        run_cli()
+        return
+    run_server()
 
 
 if __name__ == "__main__":
