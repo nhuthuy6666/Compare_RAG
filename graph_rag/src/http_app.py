@@ -16,6 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from chat_service import answer_question
 from llamaindex_shared import ChatUiConfig, build_chat_ui_tabs, render_chat_ui
+from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload
 from utils import configure_console_utf8
 
 
@@ -69,7 +70,7 @@ def load_ui_html() -> str:
             composer_hint="Đặt cùng câu hỏi ở 3 tab để so sánh kết quả",
             loading_message="Đang truy xuất graph facts...",
             ready_message="Đã trả lời xong.",
-            storage_key="ntu_project_graph_sessions",
+            storage_key="ntu_fusion_graph_sessions",
             suggestions=[
                 "Ngành Marketing 2025 có bao nhiêu chỉ tiêu?",
                 "Hồ sơ nhập học gồm những gì?",
@@ -114,9 +115,10 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Vui lòng nhập câu hỏi."}, status=HTTPStatus.BAD_REQUEST)
             return
 
+        profile_name, runtime_overrides = parse_benchmark_profile_payload(payload)
         try:
             with GRAPH_LOCK:
-                result = answer_question(question)
+                result = answer_question(question, runtime_overrides=runtime_overrides)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể xử lý câu hỏi. Chi tiết: {exc}"},
@@ -124,7 +126,9 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             )
             return
 
-        self._send_json(_answer_to_payload(question, result), status=HTTPStatus.OK)
+        response_payload = _answer_to_payload(question, result)
+        response_payload["benchmark_profile"] = profile_name
+        self._send_json(response_payload, status=HTTPStatus.OK)
 
     # Đọc body JSON từ request và tự xử lý lỗi payload sai định dạng.
     def _read_json_payload(self) -> dict | None:

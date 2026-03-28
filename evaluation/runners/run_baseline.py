@@ -46,7 +46,10 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
             "mode": system_config.get("mode", "chat"),
         }
         if is_anythingllm
-        else {"query": example.question}
+        else {
+            "query": example.question,
+            "benchmark_profile": system_config.get("benchmark_profile") or {},
+        }
     )
 
     try:

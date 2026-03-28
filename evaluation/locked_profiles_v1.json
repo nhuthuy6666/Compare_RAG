@@ -1,0 +1,100 @@
+{
+  "controlled": {
+    "description": "Profile chia sẻ dùng cho cùng luật chơi giữa 3 kiến trúc.",
+    "systems": {
+      "baseline": {
+        "profile_name": "shared_locked_v1",
+        "locked": true,
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 4,
+          "query_fusion_mode": "relative_score",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        }
+      },
+      "hybrid": {
+        "profile_name": "shared_locked_v1",
+        "locked": true,
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 4,
+          "query_fusion_mode": "relative_score",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        }
+      },
+      "graphrag": {
+        "profile_name": "shared_locked_v1",
+        "locked": true,
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 4,
+          "query_fusion_mode": "relative_score",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        }
+      }
+    }
+  },
+  "best_tuned": {
+    "description": "Profile riêng theo từng kiến trúc, được khóa sau khi xem dev split.",
+    "selected_on_split": "dev",
+    "systems": {
+      "baseline": {
+        "profile_name": "baseline_default_locked",
+        "locked": true,
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 2,
+          "query_fusion_mode": "reciprocal_rank",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        },
+        "selection_note": "Khóa tạm bằng candidate mặc định cho đến khi chạy tune_v1 và cập nhật lại manifest."
+      },
+      "hybrid": {
+        "profile_name": "hybrid_default_locked",
+        "locked": true,
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 2,
+          "query_fusion_mode": "reciprocal_rank",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        },
+        "selection_note": "Khóa tạm bằng candidate mặc định cho đến khi chạy tune_v1 và cập nhật lại manifest."
+      },
+      "graphrag": {
+        "profile_name": "graphrag_default_locked",
+        "locked": true,
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 2,
+          "query_fusion_mode": "reciprocal_rank",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        },
+        "selection_note": "Khóa tạm bằng candidate mặc định cho đến khi chạy tune_v1 và cập nhật lại manifest."
+      }
+    }
+  }
+}

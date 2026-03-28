@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import random
 import statistics
 import sys
@@ -16,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from evaluation.common import load_structured_config, resolve_path  # noqa: E402
+from evaluation.dataset.loader import load_examples  # noqa: E402
 
 
 RNG = random.Random(42)
@@ -24,18 +24,74 @@ RNG = random.Random(42)
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute bootstrap reliability reports from evaluation results.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
+    parser.add_argument(
+        "--split",
+        choices=("auto", "all", "dev", "held_out_test"),
+        default="auto",
+        help="Dataset split to align against. Default auto-reads from comparison.json when available.",
+    )
     return parser.parse_args()
-
-
-def load_json(path: Path):
-    # Đọc JSON dataset hoặc output phụ trợ.
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def load_csv_rows(path: Path) -> list[dict[str, str]]:
     # Đọc metric rows từ CSV.
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
+
+
+def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
+    if requested_split != "auto":
+        return requested_split
+
+    comparison_path = results_dir / "comparison.json"
+    if not comparison_path.exists():
+        return "all"
+
+    try:
+        payload = json.loads(comparison_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return "all"
+
+    if not isinstance(payload, list) or not payload:
+        return "all"
+
+    splits = {str(row.get("split") or "").strip() for row in payload if str(row.get("split") or "").strip()}
+    if len(splits) == 1:
+        return next(iter(splits))
+    return "all"
+
+
+def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids: list[str]) -> list[dict[str, str]]:
+    # Căn metric rows theo đúng thứ tự example_id của evaluate-v1 để pairwise bootstrap không lệch mẫu.
+    indexed_rows: dict[str, dict[str, str]] = {}
+    duplicate_ids: list[str] = []
+    for row in rows:
+        example_id = str(row.get("example_id") or "").strip()
+        if not example_id:
+            raise ValueError(f"{system}: metric row thiếu example_id nên không thể align reliability.")
+        if example_id in indexed_rows:
+            duplicate_ids.append(example_id)
+            continue
+        indexed_rows[example_id] = row
+
+    if duplicate_ids:
+        duplicates = ", ".join(sorted(set(duplicate_ids)))
+        raise ValueError(f"{system}: metric CSV có example_id bị trùng: {duplicates}")
+
+    expected_ids = set(example_ids)
+    actual_ids = set(indexed_rows)
+    missing_ids = sorted(expected_ids - actual_ids)
+    extra_ids = sorted(actual_ids - expected_ids)
+    if missing_ids or extra_ids:
+        details: list[str] = []
+        if missing_ids:
+            details.append(f"missing={', '.join(missing_ids[:5])}")
+        if extra_ids:
+            details.append(f"extra={', '.join(extra_ids[:5])}")
+        suffix = " ..." if len(missing_ids) > 5 or len(extra_ids) > 5 else ""
+        raise ValueError(f"{system}: metric CSV không khớp dataset ({'; '.join(details)}{suffix})")
+
+    return [indexed_rows[example_id] for example_id in example_ids]
 
 
 def to_float(value: str | float | int | None) -> float:
@@ -89,12 +145,18 @@ def main() -> None:
     args = parse_args()
     config = load_structured_config(args.config)
     results_dir = resolve_path(config["results_dir"])
-    dataset = load_json(resolve_path(config["dataset_path"]))
-    topic_counts = Counter(item["topic"] for item in dataset)
+    resolved_split = resolve_reliability_split(results_dir, args.split)
+    examples = load_examples(config["dataset_path"], split=resolved_split)
+    example_ids = [example.id for example in examples]
+    topic_counts = Counter(example.topic for example in examples)
 
     systems = ["baseline", "hybrid", "graphrag"]
     rows_by_system = {
-        system: load_csv_rows(results_dir / f"{system}_metrics.csv")
+        system: align_rows_to_examples(
+            system,
+            load_csv_rows(results_dir / f"{system}_metrics.csv"),
+            example_ids,
+        )
         for system in systems
     }
 
@@ -193,7 +255,8 @@ def main() -> None:
     lines = [
         "# Reliability Report",
         "",
-        f"- Tong so cau hoi: {len(dataset)}",
+        f"- Split: {resolved_split}",
+        f"- Tong so cau hoi: {len(examples)}",
         f"- So nhom chu de: {len(topic_counts)}",
         f"- Nhom co it hon 3 cau: {', '.join(warning_topics) if warning_topics else 'khong co'}",
         "",

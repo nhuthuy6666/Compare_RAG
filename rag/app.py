@@ -24,6 +24,7 @@ from llamaindex_shared import (  # noqa: E402
     load_shared_config,
     render_chat_ui,
 )
+from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload, runtime_overrides_signature  # noqa: E402
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -58,7 +59,7 @@ def load_ui_html() -> str:
             composer_hint="Enter để gửi | Shift + Enter để xuống dòng",
             loading_message="Đang truy xuất dense index trong Qdrant...",
             ready_message="Đã hoàn tất.",
-            storage_key="ntu_project_baseline_sessions",
+            storage_key="ntu_fusion_baseline_sessions",
             suggestions=[
                 "Mã trường Đại học Nha Trang là gì?",
                 "Điện thoại tuyển sinh là số nào?",
@@ -70,9 +71,9 @@ def load_ui_html() -> str:
 
 
 # Khởi tạo config, model và vector index baseline chỉ một lần trong vòng đời server.
-@lru_cache(maxsize=1)
-def get_resources():
-    config = load_shared_config(collection_name="ntu_rag")
+@lru_cache(maxsize=16)
+def get_resources(profile_name: str = "default", overrides_key: str = "{}"):
+    config = load_shared_config(collection_name="ntu_rag", overrides=json.loads(overrides_key))
     configure_models(config)
     index = ensure_vector_index(
         config,
@@ -84,8 +85,8 @@ def get_resources():
 
 
 # Xử lý một câu hỏi theo baseline RAG và trả payload thống nhất cho UI/API.
-def answer_query(query: str) -> dict:
-    config, query_engine = get_resources()
+def answer_query(query: str, *, profile_name: str = "default", runtime_overrides: dict | None = None) -> dict:
+    config, query_engine = get_resources(profile_name, runtime_overrides_signature(runtime_overrides))
     response = query_engine.query(query)
     sources = collect_sources(response, limit=config.retrieval_top_n)
 
@@ -104,6 +105,7 @@ def answer_query(query: str) -> dict:
         "answer": answer,
         "rewritten_query": query,
         "sources": sources,
+        "benchmark_profile": profile_name,
     }
 
 
@@ -141,9 +143,10 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Vui lòng nhập câu hỏi."}, status=HTTPStatus.BAD_REQUEST)
             return
 
+        profile_name, runtime_overrides = parse_benchmark_profile_payload(payload)
         try:
             with RAG_LOCK:
-                response = answer_query(query)
+                response = answer_query(query, profile_name=profile_name, runtime_overrides=runtime_overrides)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể xử lý câu hỏi. Chi tiết: {exc}"},

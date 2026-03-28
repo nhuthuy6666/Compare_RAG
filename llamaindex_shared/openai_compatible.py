@@ -168,6 +168,8 @@ class OpenAICompatibleLLM(CustomLLM):
     context_window: int = Field(default=32768)
     max_tokens: int = Field(default=1024)
     temperature: float = Field(default=0.1)
+    top_p: float = Field(default=1.0)
+    seed: int | None = Field(default=None)
     timeout: float = Field(default=120.0, exclude=True)
     default_headers: dict[str, str] | None = Field(default=None, exclude=True)
 
@@ -182,6 +184,8 @@ class OpenAICompatibleLLM(CustomLLM):
         context_window: int = 32768,
         max_tokens: int = 1024,
         temperature: float = 0.1,
+        top_p: float = 1.0,
+        seed: int | None = None,
         timeout: float = 120.0,
         default_headers: dict[str, str] | None = None,
         callback_manager: CallbackManager | None = None,
@@ -196,6 +200,8 @@ class OpenAICompatibleLLM(CustomLLM):
             context_window=context_window,
             max_tokens=max_tokens,
             temperature=temperature,
+            top_p=top_p,
+            seed=seed,
             timeout=timeout,
             default_headers=default_headers,
             callback_manager=callback_manager or CallbackManager([]),
@@ -225,12 +231,26 @@ class OpenAICompatibleLLM(CustomLLM):
     def complete(
         self, prompt: str, formatted: bool = False, **kwargs: Any
     ) -> CompletionResponse:
-        response = self._client.chat.completions.create(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=kwargs.get("max_tokens", self.max_tokens),
-            temperature=kwargs.get("temperature", self.temperature),
-        )
+        request_kwargs: dict[str, Any] = {
+            "model": self.model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": kwargs.get("max_tokens", self.max_tokens),
+            "temperature": kwargs.get("temperature", self.temperature),
+            "top_p": kwargs.get("top_p", self.top_p),
+        }
+        seed = kwargs.get("seed", self.seed)
+        if seed is not None:
+            if self.api_base and "11434" in self.api_base:
+                request_kwargs["extra_body"] = {
+                    "options": {
+                        "seed": int(seed),
+                        "top_p": kwargs.get("top_p", self.top_p),
+                        "temperature": kwargs.get("temperature", self.temperature),
+                    }
+                }
+            else:
+                request_kwargs["seed"] = int(seed)
+        response = self._client.chat.completions.create(**request_kwargs)
         text = response.choices[0].message.content or ""
         return CompletionResponse(text=text, raw=response.model_dump())
 

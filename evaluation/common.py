@@ -26,6 +26,7 @@ class EvalExample:
     refusal_expected: bool = False
     topic: str = ""
     strength_bucket: str = ""
+    split: str = "all"
 
 
 # Chuẩn hóa một nguồn được hệ RAG trả về để các metric xử lý thống nhất.

@@ -24,6 +24,7 @@ from llamaindex_shared import (  # noqa: E402
     load_shared_config,
     render_chat_ui,
 )
+from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload, runtime_overrides_signature  # noqa: E402
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -58,7 +59,7 @@ def load_ui_html() -> str:
             composer_hint="Ví dụ: Điểm chuẩn ngành CNTT năm 2025?",
             loading_message="Đang truy xuất tài liệu bằng hybrid retrieval...",
             ready_message="Đã trả lời xong.",
-            storage_key="ntu_project_hybrid_sessions",
+            storage_key="ntu_fusion_hybrid_sessions",
             suggestions=[
                 "Điểm chuẩn năm 2025 là bao nhiêu?",
                 "Ngành nào có nhiều học bổng nhất?",
@@ -71,9 +72,9 @@ def load_ui_html() -> str:
 
 
 # Khởi tạo config, model và hybrid vector index chỉ một lần trong vòng đời server.
-@lru_cache(maxsize=1)
-def get_resources():
-    config = load_shared_config(collection_name="ntu_hybrid_llamaindex")
+@lru_cache(maxsize=16)
+def get_resources(profile_name: str = "default", overrides_key: str = "{}"):
+    config = load_shared_config(collection_name="ntu_hybrid_llamaindex", overrides=json.loads(overrides_key))
     configure_models(config)
     index = ensure_vector_index(
         config,
@@ -85,8 +86,8 @@ def get_resources():
 
 
 # Xử lý một câu hỏi theo hybrid retrieval và trả về schema thống nhất cho frontend.
-def answer_query(query: str) -> dict:
-    config, query_engine = get_resources()
+def answer_query(query: str, *, profile_name: str = "default", runtime_overrides: dict | None = None) -> dict:
+    config, query_engine = get_resources(profile_name, runtime_overrides_signature(runtime_overrides))
     response = query_engine.query(query)
     sources = collect_sources(response, limit=config.retrieval_top_n)
 
@@ -105,6 +106,7 @@ def answer_query(query: str) -> dict:
         "answer": answer,
         "rewritten_query": query,
         "sources": sources,
+        "benchmark_profile": profile_name,
     }
 
 
@@ -142,9 +144,10 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Vui lòng nhập câu hỏi."}, status=HTTPStatus.BAD_REQUEST)
             return
 
+        profile_name, runtime_overrides = parse_benchmark_profile_payload(payload)
         try:
             with RAG_LOCK:
-                response = answer_query(query)
+                response = answer_query(query, profile_name=profile_name, runtime_overrides=runtime_overrides)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể xử lý câu hỏi. Chi tiết: {exc}"},
