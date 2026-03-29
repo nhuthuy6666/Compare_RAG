@@ -83,6 +83,13 @@ def _get_float_env(name: str, default: float) -> float:
         raise ValueError(f"Environment variable {name} must be a float, got: {raw!r}") from exc
 
 
+def _resolve_project_path(path_like: str | Path, *, base_dir: Path) -> Path:
+    """Resolve path tương đối theo repo hiện tại để tránh phụ thuộc đường dẫn tuyệt đối cũ."""
+
+    path = Path(path_like)
+    return path if path.is_absolute() else base_dir / path
+
+
 def _get_bool_env(name: str, default: bool) -> bool:
     raw = os.getenv(name)
     if raw is None:
@@ -120,8 +127,14 @@ def load_config(overrides: dict | None = None) -> AppConfig:
     config = AppConfig(
         project_root=PROJECT_ROOT,
         baseline_config_path=baseline_config_path,
-        txt_dir=Path(os.getenv("TXT_DATA_DIR", str(corpus.get("txt_root") or DEFAULT_TXT_DIR))),
-        source_chunk_root=Path(os.getenv("CHUNK_JSONL_ROOT", str(corpus.get("chunk_root") or DEFAULT_CHUNK_DIR))),
+        txt_dir=_resolve_project_path(
+            os.getenv("TXT_DATA_DIR", str(corpus.get("txt_root") or "extract_md/data_txt")),
+            base_dir=PROJECT_ROOT.parent,
+        ),
+        source_chunk_root=_resolve_project_path(
+            os.getenv("CHUNK_JSONL_ROOT", str(corpus.get("chunk_root") or "extract_md/data_chunks")),
+            base_dir=PROJECT_ROOT.parent,
+        ),
         corpus_scope=os.getenv("CORPUS_SCOPE", str(corpus.get("scope") or "web")),
         processed_dir=Path(os.getenv("PROCESSED_DIR", DEFAULT_PROCESSED_DIR)),
         chunk_dir=Path(os.getenv("CHUNK_DIR", DEFAULT_CHUNK_DIR)),

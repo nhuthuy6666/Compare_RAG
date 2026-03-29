@@ -3,8 +3,8 @@
   "version": 1,
   "corpus": {
     "scope": "all",
-    "txt_root": "C:\\Users\\Admin\\OneDrive\\Desktop\\workspace\\llm_project\\extract_md\\data_txt",
-    "chunk_root": "C:\\Users\\Admin\\OneDrive\\Desktop\\workspace\\llm_project\\extract_md\\data_chunks",
+    "txt_root": "extract_md/data_txt",
+    "chunk_root": "extract_md/data_chunks",
     "chunk_profile": "balanced",
     "min_chars": 120,
     "max_chars": 700,

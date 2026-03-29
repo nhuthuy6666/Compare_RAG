@@ -96,6 +96,13 @@ def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
         raise ValueError(f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported}") from exc
 
 
+def _resolve_repo_path(path_like: str | Path) -> Path:
+    """Resolve path tương đối theo root của repo hiện tại."""
+
+    path = Path(path_like)
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
 # Hợp nhất config từ baseline JSON và biến môi trường thành một object dùng chung.
 def load_shared_config(
     *,
@@ -114,8 +121,8 @@ def load_shared_config(
     seed_env = os.getenv("LLM_SEED")
     config = SharedRagConfig(
         baseline_config_path=baseline_path,
-        source_chunk_root=Path(
-            os.getenv("CHUNK_JSONL_ROOT", str(corpus.get("chunk_root") or PROJECT_ROOT / "extract_md" / "data_chunks"))
+        source_chunk_root=_resolve_repo_path(
+            os.getenv("CHUNK_JSONL_ROOT", str(corpus.get("chunk_root") or "extract_md/data_chunks"))
         ),
         corpus_scope=os.getenv("CORPUS_SCOPE", str(corpus.get("scope") or "all")),
         llm_base_url=os.getenv("LLM_BASE_URL", "http://localhost:11434/v1"),
