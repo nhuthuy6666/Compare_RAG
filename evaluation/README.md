@@ -38,23 +38,60 @@ Giải thích chi tiết metric nằm trong `evaluation/METRICS_V1.md`.
 ## Quy Trình Benchmark Mới
 
 - `dev` và `held_out_test` được tách cố định trong `evaluation/dataset/splits_v1.json`
-- `controlled same-settings`: `python evaluation/evaluate-v1.py --mode controlled --split held_out_test`
+- `controlled with fusion`: `python evaluation/evaluate-v1.py --mode controlled_with_fusion --split held_out_test`
+- `controlled no fusion`: `python evaluation/evaluate-v1.py --mode controlled_no_fusion --split held_out_test`
 - `best-tuned-per-architecture`: `python evaluation/evaluate-v1.py --mode best_tuned --split held_out_test`
 - có thể evaluate candidate profile riêng cho từng hệ:
   `python evaluation/evaluate-v1.py --system hybrid --mode best_tuned --profile-source candidate --profile-name hybrid_no_fusion --split dev`
 - tuning protocol thật trên `dev` để chọn candidate tốt nhất và khóa lại vào manifest:
   `python evaluation/tune_v1.py --write-locks`
 - repeated study với nhiều lần chạy + CI + significance:
-  `python evaluation/study_v1.py --mode controlled --split held_out_test`
+  `python evaluation/study_v1.py --mode controlled_with_fusion --split held_out_test`
+  hoặc
+  `python evaluation/study_v1.py --mode controlled_no_fusion --split held_out_test`
 - workflow human judgments:
   `python evaluation/judgments.py prepare`
   rồi
   `python evaluation/judgments.py report`
 
 Policy benchmark nằm tại `evaluation/benchmark_policy_v1.json`, candidate profile nằm tại `evaluation/profile_candidates_v1.json`, profile khóa nằm tại `evaluation/locked_profiles_v1.json`.
+`controlled` hiện được giữ như alias tương thích cũ của `controlled_with_fusion`.
 
 Mặc định `python evaluation/evaluate-v1.py ...` giờ chỉ ghi file kết quả chính là `evaluation/results_v1/comparison.md`.
 Nếu cần giữ thêm CSV/JSON trung gian để debug hoặc chạy study/tuning nâng cao, dùng thêm cờ `--keep-artifacts`.
+
+## So Sanh Ca 3 He Theo Fusion
+
+Neu muon tao 2 bao cao rieng ma khong ghi de `evaluation/results_v1/comparison.md`, dung script sau:
+
+```bash
+python evaluation/scripts/run_shared_profile_comparisons.py --split all
+```
+
+Thu tu chay de ra ket qua:
+
+1. Bat 3 RAG server bang `python run_all_rags.py`
+2. Chay script tren de sinh ca 2 bao cao
+3. Mo `evaluation/results_shared/with_fusion/comparison.md`
+4. Mo `evaluation/results_shared/no_fusion/comparison.md`
+
+Lenh nay se chay 2 lan evaluate bang 2 mode locked ro rang:
+
+- ca 3 he cung dung shared profile co fusion va ghi ra `evaluation/results_shared/with_fusion/comparison.md`
+- ca 3 he cung tat fusion va ghi ra `evaluation/results_shared/no_fusion/comparison.md`
+
+Neu can giu them artifact CSV/JSON:
+
+```bash
+python evaluation/scripts/run_shared_profile_comparisons.py --split all --keep-artifacts
+```
+
+Neu muon chay tay tung lenh, dung:
+
+```bash
+python evaluation/evaluate-v1.py --system all --mode controlled_with_fusion --split all --run-label shared_fusion_all --results-dir evaluation/results_shared/with_fusion
+python evaluation/evaluate-v1.py --system all --mode controlled_no_fusion --split all --run-label shared_no_fusion_all --results-dir evaluation/results_shared/no_fusion
+```
 
 ## Chạy Ra Kết Quả Cuối
 
@@ -113,24 +150,36 @@ Lệnh này sẽ:
 - chọn candidate tốt nhất theo protocol ngân sách hiện tại
 - ghi profile thắng cuộc vào `evaluation/locked_profiles_v1.json`
 
-### 4. Chạy kết quả cuối cho `controlled same-settings`
+### 4. Chạy kết quả cuối cho `controlled with fusion`
 
 ```bash
-python evaluation/evaluate-v1.py --mode controlled --split held_out_test --run-label final_controlled
+python evaluation/evaluate-v1.py --mode controlled_with_fusion --split held_out_test --run-label final_controlled_with_fusion
 ```
 
-### 5. Chạy kết quả cuối cho `best-tuned-per-architecture`
+### 5. Chạy kết quả cuối cho `controlled no fusion`
+
+```bash
+python evaluation/evaluate-v1.py --mode controlled_no_fusion --split held_out_test --run-label final_controlled_no_fusion
+```
+
+### 6. Chạy kết quả cuối cho `best-tuned-per-architecture`
 
 ```bash
 python evaluation/evaluate-v1.py --mode best_tuned --split held_out_test --run-label final_best_tuned
 ```
 
-### 6. Chạy repeated study để lấy mean, std, CI và significance
+### 7. Chạy repeated study để lấy mean, std, CI và significance
 
-Controlled:
+Controlled with fusion:
 
 ```bash
-python evaluation/study_v1.py --mode controlled --split held_out_test --label final_controlled_study
+python evaluation/study_v1.py --mode controlled_with_fusion --split held_out_test --label final_controlled_with_fusion_study
+```
+
+Controlled no fusion:
+
+```bash
+python evaluation/study_v1.py --mode controlled_no_fusion --split held_out_test --label final_controlled_no_fusion_study
 ```
 
 Best tuned:
@@ -139,7 +188,7 @@ Best tuned:
 python evaluation/study_v1.py --mode best_tuned --split held_out_test --label final_best_tuned_study
 ```
 
-### 7. Xuất bảng và báo cáo tổng hợp
+### 8. Xuất bảng và báo cáo tổng hợp
 
 ```bash
 python evaluation/compare.py
@@ -147,32 +196,35 @@ python evaluation/visualize.py
 python evaluation/reliability.py
 ```
 
-### 8. Các file cần xem sau khi chạy xong
+### 9. Các file cần xem sau khi chạy xong
 
 - `evaluation/results_v1/comparison.csv`
 - `evaluation/results_v1/comparison.json`
 - `evaluation/results_v1/strength_breakdown.csv`
 - `evaluation/results_v1/comparison.md`
-- `evaluation/studies_v1/final_controlled_study/study.md`
+- `evaluation/studies_v1/final_controlled_with_fusion_study/study.md`
+- `evaluation/studies_v1/final_controlled_no_fusion_study/study.md`
 - `evaluation/studies_v1/final_best_tuned_study/study.md`
 - `evaluation/locked_profiles_v1.json`
 
-### 9. Lệnh ngắn gọn nếu chỉ muốn chạy full pipeline
+### 10. Lệnh ngắn gọn nếu chỉ muốn chạy full pipeline
 
 Sau khi đã bật `python run_all_rags.py` ở terminal 1, terminal 2 chạy lần lượt:
 
 ```bash
 python evaluation/tune_v1.py --write-locks
-python evaluation/evaluate-v1.py --mode controlled --split held_out_test --run-label final_controlled
+python evaluation/evaluate-v1.py --mode controlled_with_fusion --split held_out_test --run-label final_controlled_with_fusion
+python evaluation/evaluate-v1.py --mode controlled_no_fusion --split held_out_test --run-label final_controlled_no_fusion
 python evaluation/evaluate-v1.py --mode best_tuned --split held_out_test --run-label final_best_tuned
-python evaluation/study_v1.py --mode controlled --split held_out_test --label final_controlled_study
+python evaluation/study_v1.py --mode controlled_with_fusion --split held_out_test --label final_controlled_with_fusion_study
+python evaluation/study_v1.py --mode controlled_no_fusion --split held_out_test --label final_controlled_no_fusion_study
 python evaluation/study_v1.py --mode best_tuned --split held_out_test --label final_best_tuned_study
 python evaluation/compare.py
 python evaluation/visualize.py
 python evaluation/reliability.py
 ```
 
-### 10. Note quan trọng
+### 11. Note quan trọng
 
 - Không sửa prompt, profile hay code sau khi đã nhìn kết quả `held_out_test`, nếu không kết quả đó không còn là kết quả cuối nữa.
 - Muốn tune lại thì quay về bước 3, chạy trên `dev`, khóa profile lại, rồi mới chạy lại `held_out_test`.
@@ -196,7 +248,8 @@ Terminal 2:
 
 ```bash
 cd c:\Users\Admin\OneDrive\Desktop\workspace\llm_project_fusion
-python evaluation/evaluate-v1.py --mode controlled --split all --run-label final_controlled_all72
+python evaluation/evaluate-v1.py --mode controlled_with_fusion --split all --run-label final_controlled_with_fusion_all72
+python evaluation/evaluate-v1.py --mode controlled_no_fusion --split all --run-label final_controlled_no_fusion_all72
 python evaluation/evaluate-v1.py --mode best_tuned --split all --run-label final_best_tuned_all72
 python evaluation/compare.py
 python evaluation/reliability.py --split all

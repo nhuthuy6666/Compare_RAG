@@ -10,8 +10,11 @@ from evaluation.common import normalize_text
 
 
 class SemanticScorer:
+    """Bọc logic gọi embedding service và tính semantic similarity có cache."""
+
     def __init__(self, base_url: str, model: str, timeout: tuple[int, int]):
-        # Lưu cấu hình endpoint embedding và bộ nhớ đệm vector để tránh gọi lặp.
+        """Khởi tạo semantic scorer với endpoint, model và timeout tương ứng."""
+
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
@@ -19,7 +22,8 @@ class SemanticScorer:
         self._cache: dict[str, list[float]] = {}
 
     def embed(self, text: str) -> list[float]:
-        # Chuẩn hóa text trước khi cache để các biến thể cùng nghĩa dùng chung embedding.
+        """Lấy embedding cho một đoạn text, có normalize và cache trước khi gọi API."""
+
         normalized = normalize_text(text)
         if not normalized:
             return []
@@ -31,7 +35,8 @@ class SemanticScorer:
         return vector
 
     def _embed_with_fallback(self, text: str) -> list[float]:
-        # Thử dần nhiều độ dài input và nhiều API path để tương thích OpenAI-style lẫn Ollama-style.
+        """Thử nhiều độ dài input và nhiều endpoint để tăng khả năng tương thích."""
+
         candidates = [text[:2500], text[:1200], text[:600]]
         for candidate in candidates:
             if not candidate.strip():
@@ -52,12 +57,14 @@ class SemanticScorer:
         return []
 
     def cosine_text(self, left: str, right: str) -> float:
-        # Tính cosine similarity trực tiếp trên embedding của hai đoạn text.
+        """Tính cosine similarity trực tiếp trên embedding của hai đoạn text."""
+
         return cosine_similarity(self.embed(left), self.embed(right))
 
 
 def cosine_similarity(left: list[float], right: list[float]) -> float:
-    # Trả về 0 nếu vector rỗng hoặc khác chiều để metric phía sau an toàn.
+    """Tính cosine similarity an toàn, trả 0 nếu vector rỗng hoặc lệch chiều."""
+
     if not left or not right or len(left) != len(right):
         return 0.0
 
@@ -70,7 +77,8 @@ def cosine_similarity(left: list[float], right: list[float]) -> float:
 
 
 def _extract_vector(payload: dict[str, Any]) -> list[float]:
-    # Hỗ trợ nhiều format response embedding phổ biến.
+    """Rút vector embedding từ nhiều dạng payload response phổ biến."""
+
     if "data" in payload:
         return list(payload["data"][0]["embedding"])
     if "embedding" in payload:

@@ -26,28 +26,33 @@ VALUE_RE = re.compile(r"^[0-9]+(?:[.,][0-9]+)?$")
 
 
 class AdmissionsGraphExtractor:
+    """Extractor rule-based để rút facts tuyển sinh thành node và relation cho GraphRAG."""
     # Extractor “rule-based” cho GraphRAG tuyển sinh:
     # - Đọc text chunk (kể cả table_row) và sinh EntityNode/Relation theo các pattern thường gặp.
     # - Mục tiêu: tạo graph facts ổn định, nhanh và dễ debug (không phụ thuộc LLM để trích quan hệ).
     # Khởi tạo extractor rule-based và cấu hình tần suất in tiến độ.
     def __init__(self, progress_every: int = 5) -> None:
+        """Khởi tạo extractor và cấu hình tần suất in tiến độ khi xử lý chunk."""
         self._progress_every = max(progress_every, 1)
 
     @classmethod
     # Trả về tên lớp để LlamaIndex có thể nhận diện extractor này.
     def class_name(cls) -> str:
+        """Trả về tên lớp để LlamaIndex nhận diện extractor này."""
         return "AdmissionsGraphExtractor"
 
     # Wrapper đồng bộ cho interface extractor của LlamaIndex.
     def __call__(
         self, nodes: Sequence[BaseNode], show_progress: bool = False, **kwargs: Any
     ) -> Sequence[BaseNode]:
+        """Wrapper đồng bộ để tương thích với interface extractor của LlamaIndex."""
         return asyncio.run(self.acall(nodes, show_progress=show_progress, **kwargs))
 
     # Duyệt lần lượt từng chunk node và gắn thêm KG nodes/relations vào metadata.
     async def acall(
         self, nodes: Sequence[BaseNode], show_progress: bool = False, **kwargs: Any
     ) -> Sequence[BaseNode]:
+        """Duyệt từng chunk, trích facts và gắn KG nodes/relations vào metadata."""
         # Duyệt lần lượt từng chunk node và gắn thêm KG_NODES/KG_RELATIONS vào metadata.
         total = len(nodes)
         results: list[BaseNode] = []
@@ -59,6 +64,7 @@ class AdmissionsGraphExtractor:
 
     # Trích entity/relation từ một chunk và gắn lại vào metadata của node.
     def _extract_node(self, node: BaseNode) -> BaseNode:
+        """Trích entity/relation từ một chunk rồi gắn ngược lại vào metadata của node."""
         # 1) Khởi tạo tập entities/relations cục bộ cho chunk này.
         text = node.get_content()
         metadata = node.metadata.copy()
@@ -132,6 +138,7 @@ class AdmissionsGraphExtractor:
         metadata: dict[str, Any],
         add_relation: Any,
     ) -> None:
+        """Trích các fact tổng quát như mã trường, địa chỉ, điện thoại, website và phương thức tuyển sinh."""
         if metadata.get("record_type") == "table_row":
             return
 
@@ -180,6 +187,7 @@ class AdmissionsGraphExtractor:
         metadata: dict[str, Any],
         add_relation: Any,
     ) -> None:
+        """Phân loại và trích fact từ các chunk bảng tuyển sinh."""
         if metadata.get("record_type") != "table_row":
             return
 
@@ -216,6 +224,7 @@ class AdmissionsGraphExtractor:
         metadata: dict[str, Any],
         add_relation: Any,
     ) -> None:
+        """Trích fact về chỉ tiêu, mã ngành và phương thức từ một dòng bảng chỉ tiêu."""
         if len(cells) < 7:
             return
 
@@ -260,6 +269,7 @@ class AdmissionsGraphExtractor:
         metadata: dict[str, Any],
         add_relation: Any,
     ) -> None:
+        """Trích tổ hợp xét tuyển và điều kiện tiếng Anh từ một dòng bảng tổ hợp môn."""
         if len(cells) < 5:
             return
 
@@ -296,6 +306,7 @@ class AdmissionsGraphExtractor:
         metadata: dict[str, Any],
         add_relation: Any,
     ) -> None:
+        """Trích các fact điểm chuẩn hoặc điều kiện điểm từ một dòng bảng điểm."""
         if len(cells) < 4:
             return
 
@@ -340,28 +351,33 @@ class AdmissionsGraphExtractor:
 
 # Chuẩn hóa khoảng trắng và ký tự thừa trong một ô bảng hoặc đoạn text ngắn.
 def _clean_text(value: str) -> str:
+    """Chuẩn hóa khoảng trắng và ký tự thừa trong một ô bảng hoặc đoạn text ngắn."""
     return re.sub(r"\s+", " ", value).strip(" -;")
 
 
 # Làm sạch text nội tuyến sau khi bỏ xuống dòng.
 def _clean_inline_text(value: str) -> str:
+    """Làm sạch text nội tuyến sau khi bỏ ký tự xuống dòng."""
     return _clean_text(value.replace("\n", " "))
 
 
 # Tách một dòng bảng dạng markdown thành danh sách các ô.
 def _split_row_cells(line: str) -> list[str]:
+    """Tách một dòng bảng dạng markdown thành danh sách các ô."""
     raw = line[2:] if line.startswith("- ") else line
     return [_clean_text(cell) for cell in raw.split("|")]
 
 
 # Nhận diện dòng header của bảng.
 def _is_header_row(line: str) -> bool:
+    """Nhận diện một dòng có phải header của bảng hay không."""
     first_cell = _split_row_cells(line)[0].upper()
     return first_cell in {"TT", "STT", "(1)", "(2)"} or line.startswith("- (")
 
 
 # Nhận diện dòng nhóm/chia mục trong bảng để bỏ qua khi extract.
 def _is_group_row(cells: list[str]) -> bool:
+    """Nhận diện dòng nhóm hoặc dòng chia mục để bỏ qua khi extract."""
     first_cell = cells[0]
     non_empty = [cell for cell in cells if cell and cell != "-"]
     if re.fullmatch(r"[IVX]+", first_cell):
@@ -373,6 +389,7 @@ def _is_group_row(cells: list[str]) -> bool:
 
 # Tìm ô đầu tiên khớp với pattern cho trước.
 def _find_first(cells: list[str], pattern: re.Pattern[str]) -> str:
+    """Tìm ô đầu tiên khớp với pattern cho trước."""
     for cell in cells:
         if pattern.match(cell):
             return cell
@@ -381,6 +398,7 @@ def _find_first(cells: list[str], pattern: re.Pattern[str]) -> str:
 
 # Tìm mã chương trình thứ hai trong dòng để phân biệt mã xét tuyển và mã ngành.
 def _find_second_program_code(cells: list[str], first_code: str) -> tuple[str, int]:
+    """Tìm mã chương trình thứ hai để phân biệt mã xét tuyển và mã ngành."""
     found_first = False
     for index, cell in enumerate(cells):
         if not PROGRAM_CODE_RE.match(cell):
@@ -394,6 +412,7 @@ def _find_second_program_code(cells: list[str], first_code: str) -> tuple[str, i
 
 # Suy ra tên chương trình/ngành từ các ô dữ liệu trong một dòng bảng.
 def _find_program_name(cells: list[str], admission_code: str) -> str:
+    """Suy ra tên chương trình hoặc ngành từ các ô dữ liệu trong một dòng bảng."""
     found_code = False
     for cell in cells:
         if cell == admission_code:
@@ -414,6 +433,7 @@ def _find_program_name(cells: list[str], admission_code: str) -> str:
 
 # Trích danh sách phương thức tuyển sinh xuất hiện trong text.
 def _extract_methods(text: str) -> list[tuple[str, str]]:
+    """Trích danh sách phương thức tuyển sinh xuất hiện trong text."""
     normalized = text.replace("\n", " ")
     methods: list[tuple[str, str]] = []
     for method_code, description in METHOD_RE.findall(normalized):
@@ -426,16 +446,19 @@ def _extract_methods(text: str) -> list[tuple[str, str]]:
 
 # Kiểm tra dòng dữ liệu có giống bảng chỉ tiêu hay không.
 def _looks_like_quota_row(header_text: str, cells: list[str]) -> bool:
+    """Kiểm tra một dòng dữ liệu có giống bảng chỉ tiêu hay không."""
     return "Chỉ tiêu" in header_text and any("Phương thức" in cell for cell in cells)
 
 
 # Kiểm tra dòng dữ liệu có giống bảng tổ hợp xét tuyển hay không.
 def _looks_like_subject_row(header_text: str, cells: list[str]) -> bool:
+    """Kiểm tra một dòng dữ liệu có giống bảng tổ hợp xét tuyển hay không."""
     return "Tổ hợp xét tuyển" in header_text and len(cells) >= 5
 
 
 # Kiểm tra dòng dữ liệu có thuộc bảng điểm chuẩn/điều kiện điểm hay không.
 def _looks_like_score_row(metadata: dict[str, Any], header_text: str, cells: list[str]) -> bool:
+    """Kiểm tra một dòng dữ liệu có thuộc bảng điểm chuẩn hoặc điều kiện điểm hay không."""
     source_file = str(metadata.get("source_file", ""))
     return "diem-trung-tuyen" in source_file or (
         "ĐGNL" in header_text and ("Điểm thi" in header_text or "Điểm chuẩn" in header_text)
@@ -444,6 +467,7 @@ def _looks_like_score_row(metadata: dict[str, Any], header_text: str, cells: lis
 
 # Suy ra năm áp dụng cho một dòng điểm từ metadata, header hoặc tên file.
 def _extract_score_year(metadata: dict[str, Any], header_text: str, cells: list[str]) -> str:
+    """Suy ra năm áp dụng của một dòng điểm từ metadata, header hoặc tên file."""
     source_year = str(metadata.get("source_year", "") or "")
     if source_year and source_year != "unknown":
         return source_year

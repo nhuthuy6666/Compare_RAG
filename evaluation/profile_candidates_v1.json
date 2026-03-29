@@ -13,6 +13,17 @@
           "max_output_tokens": 1024,
           "llm_seed": 17
         }
+      },
+      "shared_no_fusion_v1": {
+        "description": "Cung prompt, cung retrieval budget, tat fusion, cung seed va cung token cap cho ca 3 he.",
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": false,
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        }
       }
     }
   },

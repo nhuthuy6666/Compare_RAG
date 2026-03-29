@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from evaluation.common import ensure_dir, load_structured_config, resolve_path, write_csv  # noqa: E402
+from evaluation.common import ensure_dir, load_structured_config, write_csv  # noqa: E402
 from evaluation.policy import load_benchmark_policy, resolve_mode, resolve_split  # noqa: E402
 
 
@@ -21,9 +21,16 @@ RNG = random.Random(42)
 
 
 def parse_args() -> argparse.Namespace:
+    """Khai báo và parse tham số cho repeated evaluation study."""
+
     parser = argparse.ArgumentParser(description="Run repeated evaluation study with CI and significance tests.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
-    parser.add_argument("--mode", choices=("controlled", "best_tuned"), default=None, help="Benchmark mode.")
+    parser.add_argument(
+        "--mode",
+        choices=("controlled", "controlled_with_fusion", "controlled_no_fusion", "best_tuned"),
+        default=None,
+        help="Benchmark mode.",
+    )
     parser.add_argument("--split", choices=("dev", "held_out_test"), default=None, help="Dataset split.")
     parser.add_argument("--runs", type=int, default=None, help="Override number of repeated runs.")
     parser.add_argument("--label", default="", help="Optional study label.")
@@ -31,11 +38,15 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_csv_rows(path: Path) -> list[dict[str, str]]:
+    """Đọc CSV thành danh sách dict để tổng hợp study."""
+
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
 def to_float(value: str | float | int | None) -> float:
+    """Parse số an toàn từ CSV hoặc giá trị runtime."""
+
     try:
         return float(value or 0)
     except ValueError:
@@ -43,6 +54,8 @@ def to_float(value: str | float | int | None) -> float:
 
 
 def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float, float]:
+    """Ước lượng mean và khoảng tin cậy 95% bằng bootstrap."""
+
     if not values:
         return 0.0, 0.0, 0.0
     means: list[float] = []
@@ -57,6 +70,8 @@ def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float,
 
 
 def permutation_paired_pvalue(left: list[float], right: list[float], rounds: int = 5000) -> float:
+    """Tính p-value pairwise bằng permutation test trên cùng tập mẫu."""
+
     if not left or not right or len(left) != len(right):
         return 1.0
     diffs = [l - r for l, r in zip(left, right)]
@@ -70,12 +85,23 @@ def permutation_paired_pvalue(left: list[float], right: list[float], rounds: int
 
 
 def confidence_label(ci_low: float, ci_high: float, p_value: float) -> str:
+    """Gán nhãn ổn định khi CI không cắt 0 và p-value đủ nhỏ."""
+
     if (ci_low > 0 or ci_high < 0) and p_value < 0.05:
         return "stable"
     return "uncertain"
 
 
 def main() -> None:
+    """Điểm vào chính của repeated study.
+
+    Các bước:
+    1. Đọc config/policy và xác định mode, split, số lần chạy cùng seed schedule.
+    2. Chạy `evaluate-v1.py` lặp lại nhiều lần và lưu từng run vào thư mục study riêng.
+    3. Tổng hợp chuỗi điểm theo hệ, tính CI và kiểm định pairwise.
+    4. Ghi CSV và report Markdown để phục vụ phân tích độ ổn định.
+    """
+
     args = parse_args()
     config = load_structured_config(args.config)
     policy = load_benchmark_policy(config)

@@ -19,16 +19,16 @@ from evaluation.common import (  # noqa: E402
     write_csv,
     write_json,
 )
-from evaluation.dataset.loader import load_examples  # noqa: E402
 from evaluation.compare import build_comparison_report  # noqa: E402
+from evaluation.dataset.loader import load_examples  # noqa: E402
 from evaluation.metrics.rag_metrics_v1 import evaluate_prediction_v1  # noqa: E402
 from evaluation.policy import (  # noqa: E402
     load_benchmark_policy,
     load_locked_profiles,
     load_profile_candidates,
     mode_budget,
-    resolve_profile_payload,
     resolve_mode,
+    resolve_profile_payload,
     resolve_split,
 )
 from evaluation.runners import run_baseline, run_graphrag, run_hybrid  # noqa: E402
@@ -43,6 +43,8 @@ RUNNERS: dict[str, tuple[Callable, Callable]] = {
 
 
 def parse_args() -> argparse.Namespace:
+    """Khai báo và parse tham số dòng lệnh cho lần chạy benchmark V1."""
+
     parser = argparse.ArgumentParser(description="Evaluate 3 RAG systems via HTTP with V1 scoring.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     parser.add_argument(
@@ -53,7 +55,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--limit", type=int, default=None, help="Only evaluate first N questions.")
     parser.add_argument("--split", choices=("all", "dev", "held_out_test"), default=None, help="Dataset split to use.")
-    parser.add_argument("--mode", choices=("controlled", "best_tuned"), default=None, help="Benchmark mode.")
+    parser.add_argument(
+        "--mode",
+        choices=("controlled", "controlled_with_fusion", "controlled_no_fusion", "best_tuned"),
+        default=None,
+        help="Benchmark mode.",
+    )
     parser.add_argument("--profile-source", choices=("locked", "candidate"), default="locked", help="Profile source.")
     parser.add_argument("--profile-name", default="", help="Explicit profile name when using candidate source.")
     parser.add_argument("--seed", type=int, default=0, help="Recorded seed for repeat runs.")
@@ -69,6 +76,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def mean(values: list[float]) -> float:
+    """Tính trung bình và làm tròn 4 chữ số để thống nhất cách ghi báo cáo."""
+
     return round(statistics.fmean(values), 4) if values else 0.0
 
 
@@ -122,6 +131,8 @@ DETAIL_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
 
 
 def aggregate_metrics(system: str, rows: list[dict], *, metadata: dict[str, object], budget: dict[str, object]) -> dict:
+    """Gộp metric theo hệ để tạo summary row cho báo cáo tổng hợp."""
+
     numeric_fields = [
         "refusal_correct",
         "exact_match",
@@ -171,6 +182,8 @@ def aggregate_metrics(system: str, rows: list[dict], *, metadata: dict[str, obje
 
 
 def aggregate_strength_buckets(system: str, rows: list[dict], *, metadata: dict[str, object], budget: dict[str, object]) -> list[dict]:
+    """Gộp metric theo từng bucket độ mạnh câu hỏi như dense, graph và neutral."""
+
     grouped: dict[str, list[dict]] = {}
     for row in rows:
         bucket = str(row.get("strength_bucket") or "neutral")
@@ -185,6 +198,8 @@ def aggregate_strength_buckets(system: str, rows: list[dict], *, metadata: dict[
 
 
 def print_detailed_summary(system_name: str, summary: dict, metric_rows: list[dict]) -> None:
+    """In tóm tắt metric chi tiết của một hệ ra terminal để theo dõi khi chạy."""
+
     topic_scores: dict[str, list[float]] = {}
     for row in metric_rows:
         topic_scores.setdefault(str(row["topic"]), []).append(float(row["overall_score"]))
@@ -231,6 +246,8 @@ def run_system(
     metadata: dict[str, object],
     budget: dict[str, object],
 ) -> dict:
+    """Chạy một hệ trên toàn bộ tập câu hỏi, chấm điểm và trả summary đã gộp."""
+
     healthcheck, runner = RUNNERS[system_name]
     healthcheck(system_config, timeout)
 
@@ -277,6 +294,16 @@ def run_system(
 
 
 def main() -> None:
+    """Điểm vào chính của benchmark V1.
+
+    Các bước:
+    1. Đọc tham số, config, policy và xác định mode, split, budget sẽ dùng.
+    2. Nạp tập câu hỏi benchmark và chuẩn bị thư mục đầu ra.
+    3. Khởi tạo semantic scorer nếu config bật semantic metric.
+    4. Lần lượt chạy từng hệ, resolve profile tương ứng và chấm điểm toàn bộ câu hỏi.
+    5. Gộp kết quả, render `comparison.md` và ghi thêm artifact nếu có `--keep-artifacts`.
+    """
+
     args = parse_args()
     config = load_structured_config(args.config)
     policy = load_benchmark_policy(config)
@@ -296,6 +323,7 @@ def main() -> None:
         int(budget.get("connect_timeout_seconds") or config.get("connect_timeout_seconds", 10)),
         int(budget.get("request_timeout_seconds") or config.get("request_timeout_seconds", 180)),
     )
+
     semantic_config = config.get("semantic") or {}
     semantic_scorer = None
     if semantic_config.get("enabled", True):
@@ -308,6 +336,7 @@ def main() -> None:
     systems = list(RUNNERS.keys()) if args.system == "all" else [args.system]
     if args.profile_source == "candidate" and args.system == "all" and not args.profile_name:
         raise ValueError("When --profile-source candidate is used with --system all, --profile-name is required.")
+
     summaries: list[dict] = []
     strength_rows: list[dict] = []
     for system_name in systems:

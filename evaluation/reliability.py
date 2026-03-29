@@ -22,6 +22,8 @@ RNG = random.Random(42)
 
 
 def parse_args() -> argparse.Namespace:
+    """Khai báo và parse tham số cho báo cáo reliability."""
+
     parser = argparse.ArgumentParser(description="Compute bootstrap reliability reports from evaluation results.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     parser.add_argument(
@@ -34,11 +36,15 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_csv_rows(path: Path) -> list[dict[str, str]]:
+    """Đọc CSV thành danh sách dict để xử lý thống nhất."""
+
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
 def find_missing_metric_files(results_dir: Path, systems: list[str]) -> list[Path]:
+    """Liệt kê các file metric CSV còn thiếu cho từng hệ."""
+
     missing: list[Path] = []
     for system in systems:
         metric_path = results_dir / f"{system}_metrics.csv"
@@ -48,6 +54,8 @@ def find_missing_metric_files(results_dir: Path, systems: list[str]) -> list[Pat
 
 
 def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
+    """Tự suy ra split cần dùng khi người dùng chọn `auto`."""
+
     if requested_split != "auto":
         return requested_split
 
@@ -70,7 +78,8 @@ def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
 
 
 def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids: list[str]) -> list[dict[str, str]]:
-    # Căn metric rows theo đúng thứ tự example_id của evaluate-v1 để pairwise bootstrap không lệch mẫu.
+    """Căn metric row theo đúng thứ tự example để bootstrap pairwise không lệch mẫu."""
+
     indexed_rows: dict[str, dict[str, str]] = {}
     duplicate_ids: list[str] = []
     for row in rows:
@@ -103,7 +112,8 @@ def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids:
 
 
 def to_float(value: str | float | int | None) -> float:
-    # Parse số an toàn cho các giá trị đọc từ CSV.
+    """Parse số an toàn cho dữ liệu đọc từ CSV."""
+
     try:
         return float(value or 0)
     except ValueError:
@@ -111,7 +121,8 @@ def to_float(value: str | float | int | None) -> float:
 
 
 def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float, float]:
-    # Bootstrap mean và khoảng tin cậy 95% cho một metric của một hệ.
+    """Ước lượng mean và khoảng tin cậy 95% cho một metric."""
+
     if not values:
         return 0.0, 0.0, 0.0
     means: list[float] = []
@@ -126,7 +137,8 @@ def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float,
 
 
 def bootstrap_diff_ci(left: list[float], right: list[float], rounds: int = 2000) -> tuple[float, float, float]:
-    # Bootstrap chênh lệch trung bình giữa hai hệ trên cùng tập câu hỏi.
+    """Ước lượng khoảng tin cậy cho chênh lệch trung bình giữa hai hệ."""
+
     if not left or not right or len(left) != len(right):
         return 0.0, 0.0, 0.0
     diffs: list[float] = []
@@ -142,14 +154,23 @@ def bootstrap_diff_ci(left: list[float], right: list[float], rounds: int = 2000)
 
 
 def confidence_label(low: float, high: float) -> str:
-    # Nếu CI không cắt qua 0 thì xem khác biệt là ổn định hơn.
+    """Gán nhãn ổn định nếu khoảng tin cậy không cắt qua 0."""
+
     if low > 0 or high < 0:
         return "stable"
     return "overlap_zero"
 
 
 def main() -> None:
-    # 1) Nạp config, dataset và metric CSV của từng hệ.
+    """Điểm vào chính của script reliability.
+
+    Các bước:
+    1. Đọc config, xác định split và nạp metric CSV của từng hệ.
+    2. Căn metric row theo thứ tự câu hỏi để tránh lệch mẫu khi bootstrap.
+    3. Tính CI cho metric tổng quan, breakdown theo topic và pairwise difference.
+    4. Ghi các bảng CSV và report Markdown để phục vụ phân tích độ tin cậy.
+    """
+
     args = parse_args()
     config = load_structured_config(args.config)
     results_dir = resolve_path(config["results_dir"])
@@ -164,11 +185,11 @@ def main() -> None:
         comparison_md = results_dir / "comparison.md"
         if comparison_md.exists():
             print(f"Saved: {comparison_md}")
-        print("Neu ban chi can comparison.md thi khong can chay lai.")
-        print("Khong the chay reliability.py vi cac file metric CSV khong con trong evaluation/results_v1.")
-        print("Mac dinh evaluate-v1.py hien chi giu comparison.md de folder ket qua gon hon.")
-        print("Neu can reliability report, hay chay lai evaluate-v1.py kem --keep-artifacts roi chay lai reliability.py.")
-        print("Cac file dang thieu:")
+        print("Nếu bạn chỉ cần comparison.md thì không cần chạy lại.")
+        print("Không thể chạy reliability.py vì các file metric CSV không còn trong evaluation/results_v1.")
+        print("Mặc định evaluate-v1.py hiện chỉ giữ comparison.md để folder kết quả gọn hơn.")
+        print("Nếu cần reliability report, hãy chạy lại evaluate-v1.py kèm --keep-artifacts rồi chạy lại reliability.py.")
+        print("Các file đang thiếu:")
         for path in missing_metric_files:
             print(f"- {path}")
         return
@@ -182,7 +203,6 @@ def main() -> None:
         for system in systems
     }
 
-    # 2) Tính bootstrap 95% CI cho các metric tổng quan quan trọng của từng hệ.
     summary_rows: list[dict[str, object]] = []
     for system, rows in rows_by_system.items():
         overall_vals = [to_float(row["overall_score"]) for row in rows]
@@ -209,10 +229,9 @@ def main() -> None:
                 "faithfulness_mean": round(faith_mean, 4),
                 "faithfulness_ci_low": round(faith_low, 4),
                 "faithfulness_ci_high": round(faith_high, 4),
-                }
-            )
+            }
+        )
 
-    # 3) Tổng hợp điểm theo topic để nhìn xem hệ mạnh/yếu ở nhóm câu hỏi nào.
     topic_report_rows: list[dict[str, object]] = []
     for system, rows in rows_by_system.items():
         grouped: dict[str, list[float]] = defaultdict(list)
@@ -220,18 +239,17 @@ def main() -> None:
             grouped[row["topic"]].append(to_float(row["overall_score"]))
         for topic, expected_n in sorted(topic_counts.items()):
             vals = grouped.get(topic, [])
-            mean = statistics.fmean(vals) if vals else 0.0
+            mean_value = statistics.fmean(vals) if vals else 0.0
             topic_report_rows.append(
                 {
                     "system": system,
                     "topic": topic,
                     "samples": len(vals),
                     "expected_samples": expected_n,
-                    "overall_mean": round(mean, 4),
+                    "overall_mean": round(mean_value, 4),
                 }
             )
 
-    # 4) So sánh từng cặp hệ bằng bootstrap diff và win-rate theo từng câu.
     pairwise_rows: list[dict[str, object]] = []
     for left, right in [("baseline", "hybrid"), ("baseline", "graphrag"), ("hybrid", "graphrag")]:
         left_rows = rows_by_system[left]
@@ -256,7 +274,6 @@ def main() -> None:
     topic_csv = results_dir / "topic_breakdown.csv"
     pairwise_csv = results_dir / "pairwise_differences.csv"
 
-    # 5) Ghi các bảng reliability ra CSV để tiện phân tích tiếp bằng spreadsheet.
     for path, rows in [
         (summary_csv, summary_rows),
         (topic_csv, topic_report_rows),
@@ -272,15 +289,14 @@ def main() -> None:
             writer.writeheader()
             writer.writerows(rows)
 
-    # 6) Sinh báo cáo Markdown tóm tắt CI, pairwise difference và độ phủ chủ đề.
     warning_topics = [topic for topic, count in topic_counts.items() if count < 3]
     lines = [
         "# Reliability Report",
         "",
         f"- Split: {resolved_split}",
-        f"- Tong so cau hoi: {len(examples)}",
-        f"- So nhom chu de: {len(topic_counts)}",
-        f"- Nhom co it hon 3 cau: {', '.join(warning_topics) if warning_topics else 'khong co'}",
+        f"- Tổng số câu hỏi: {len(examples)}",
+        f"- Số nhóm chủ đề: {len(topic_counts)}",
+        f"- Nhóm có ít hơn 3 câu: {', '.join(warning_topics) if warning_topics else 'không có'}",
         "",
         "## Bootstrap 95% CI",
     ]
@@ -300,9 +316,8 @@ def main() -> None:
     lines.append("")
     lines.append("## Topic Coverage")
     for topic, count in sorted(topic_counts.items()):
-        lines.append(f"- {topic}: {count} cau")
+        lines.append(f"- {topic}: {count} câu")
 
-    # 7) Ghi file báo cáo và in ra terminal.
     report_path = results_dir / "reliability.md"
     report_path.write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
