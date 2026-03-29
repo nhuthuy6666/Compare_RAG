@@ -9,9 +9,7 @@ from openai import APIConnectionError, APITimeoutError
 from config import build_vector_store, configure_models, load_config, reset_vector_store
 from fact_graph import build_graph_fact_nodes, write_fact_records
 from utils import (
-    chunk_txt_file,
     configure_console_utf8,
-    iter_txt_files,
     load_chunk_record_groups,
     summarize_records,
     write_chunk_records,
@@ -56,8 +54,7 @@ def attach_embeddings(nodes, embed_model, batch_size: int) -> list:
 
 ## Khai báo CLI cho flow ingest GraphRAG Qdrant-only.
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ingest GraphRAG tu shared chunk JSONL hoac TXT vao Qdrant.")
-    parser.add_argument("--input-dir", type=Path, help="Folder chua TXT nguon neu muon fallback tu chunk lai.")
+    parser = argparse.ArgumentParser(description="Ingest GraphRAG tu shared chunk JSONL vao Qdrant.")
     parser.add_argument("--chunk-jsonl-root", type=Path, help="Folder shared chunk JSONL de dung dung chunk baseline.")
     parser.add_argument("--output-dir", type=Path, help="Folder luu JSONL audit cuc bo cho GraphRAG.")
     parser.add_argument("--limit", type=int, help="Chi xu ly N file dau tien.")
@@ -82,14 +79,10 @@ def parse_args() -> argparse.Namespace:
 
 
 ## Nạp tập chunk records đầu vào.
-## Ưu tiên shared JSONL từ `extract_md`, nếu không có thì fallback sang TXT và chunk lại tại chỗ.
+## Chỉ dùng shared JSONL từ `extract_md` để giữ pipeline đồng bộ với baseline.
 def _load_records(args: argparse.Namespace, config) -> list[dict]:
-    txt_root = args.input_dir or config.txt_dir
     chunk_jsonl_root = args.chunk_jsonl_root or config.source_chunk_root
     output_root = args.output_dir or config.chunk_dir
-    min_chars = args.min_chars or config.chunk_min_chars
-    max_chars = args.max_chars or config.chunk_max_chars
-    max_sections = args.max_sections_per_chunk or config.max_sections_per_chunk
 
     all_records: list[dict] = []
     record_groups = load_chunk_record_groups(
@@ -107,35 +100,15 @@ def _load_records(args: argparse.Namespace, config) -> list[dict]:
             print(f"[shared-chunks] {jsonl_path} -> {output_path} ({len(records)} chunks)")
         return all_records
 
-    txt_files = iter_txt_files(txt_root, limit=args.limit)
-    if not txt_files:
-        raise FileNotFoundError(
-            f"Khong tim thay shared chunk JSONL trong {chunk_jsonl_root} "
-            f"va cung khong co TXT nao trong {txt_root}"
-        )
-
-    for txt_path in txt_files:
-        records = chunk_txt_file(
-            source_path=txt_path,
-            txt_root=txt_root,
-            min_chars=min_chars,
-            max_chars=max_chars,
-            max_sections_per_chunk=max_sections,
-        )
-        if not records:
-            continue
-        all_records.extend(records)
-        relative_path = txt_path.relative_to(txt_root).with_suffix(".jsonl")
-        output_path = output_root / relative_path
-        write_chunk_records(records, output_path)
-        print(f"[chunked] {txt_path} -> {output_path} ({len(records)} chunks)")
-
-    return all_records
+    raise FileNotFoundError(
+        f"Khong tim thay shared chunk JSONL trong {chunk_jsonl_root} (scope={config.corpus_scope}). "
+        "Hay tao/cap nhat corpus chunk truoc khi ingest GraphRAG."
+    )
 
 
 ## Entry point ingest GraphRAG Qdrant-only.
 ## 1) Cấu hình console UTF-8 và đọc CLI/config.
-## 2) Nạp chunk records từ shared JSONL hoặc fallback TXT.
+## 2) Nạp chunk records từ shared JSONL.
 ## 3) In thống kê corpus để theo dõi quy mô ingest.
 ## 4) Khởi tạo model và trích graph facts từ từng chunk.
 ## 5) Ghi graph facts ra file JSONL audit để dễ debug.

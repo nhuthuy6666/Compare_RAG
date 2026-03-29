@@ -4,7 +4,7 @@ GraphRAG hiện chỉ dùng `Qdrant + LlamaIndex`.
 
 Kiến trúc hiện tại:
 
-- đọc cùng chunk đầu vào từ `extract_md/rag_baseline.json`
+- đọc cùng chunk đầu vào từ `extract_md/data_chunks` theo cấu hình trong `extract_md/rag_baseline.json`
 - trích `graph facts` từ mỗi chunk bằng extractor cục bộ
 - lưu toàn bộ fact nodes trực tiếp vào Qdrant
 - query trên tập graph facts bằng LlamaIndex
@@ -86,6 +86,7 @@ python graph_rag/app.py
 
 ## Ghi chú
 
+- GraphRAG không còn fallback sang `graph_rag/data/txt`; nếu thiếu chunk JSONL trong corpus shared thì ingest sẽ báo lỗi ngay.
 - Collection Qdrant mặc định lấy từ `QDRANT_COLLECTION`, giá trị mặc định là `ntu_graphrag`.
 - File audit graph facts được ghi ra `graph_rag/data/processed/graph_facts.jsonl`.
 - `graph_rag/app.py` là entrypoint chính và duy nhất để chạy web UI/API của GraphRAG.

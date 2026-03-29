@@ -16,7 +16,6 @@ from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BASELINE_CONFIG = PROJECT_ROOT.parent / "extract_md" / "rag_baseline.json"
-DEFAULT_TXT_DIR = PROJECT_ROOT / "data" / "txt"
 DEFAULT_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 DEFAULT_CHUNK_DIR = DEFAULT_PROCESSED_DIR / "chunks"
 DEFAULT_FACTS_PATH = DEFAULT_PROCESSED_DIR / "graph_facts.jsonl"
@@ -26,7 +25,6 @@ DEFAULT_FACTS_PATH = DEFAULT_PROCESSED_DIR / "graph_facts.jsonl"
 class AppConfig:
     project_root: Path
     baseline_config_path: Path
-    txt_dir: Path
     source_chunk_root: Path
     corpus_scope: str
     processed_dir: Path
@@ -127,10 +125,6 @@ def load_config(overrides: dict | None = None) -> AppConfig:
     config = AppConfig(
         project_root=PROJECT_ROOT,
         baseline_config_path=baseline_config_path,
-        txt_dir=_resolve_project_path(
-            os.getenv("TXT_DATA_DIR", str(corpus.get("txt_root") or "extract_md/data_txt")),
-            base_dir=PROJECT_ROOT.parent,
-        ),
         source_chunk_root=_resolve_project_path(
             os.getenv("CHUNK_JSONL_ROOT", str(corpus.get("chunk_root") or "extract_md/data_chunks")),
             base_dir=PROJECT_ROOT.parent,
