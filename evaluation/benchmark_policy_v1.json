@@ -1,0 +1,60 @@
+{
+  "default_split": "held_out_test",
+  "default_mode": "controlled",
+  "locked_profiles_path": "evaluation/locked_profiles_v1.json",
+  "profile_candidates_path": "evaluation/profile_candidates_v1.json",
+  "repeated_runs": {
+    "num_runs": 3,
+    "seed_values": [13, 29, 47],
+    "seed_effective": true,
+    "note": "Seed được gửi xuống app bằng benchmark profile và map sang request LLM để giảm độ ngẫu nhiên giữa các lần chạy."
+  },
+  "tuning_protocol": {
+    "split": "dev",
+    "max_candidates_per_system": 3,
+    "repeats_per_candidate": 3,
+    "seed_values": [13, 29, 47],
+    "allow_test_tuning": false,
+    "selection_metric": "overall_score",
+    "note": "Mỗi kiến trúc được tuning riêng trên dev split với cùng ngân sách candidate và cùng seed schedule trước khi khóa profile để test."
+  },
+  "human_judgment": {
+    "status": "pending_annotators",
+    "required_annotators": 2,
+    "annotation_dir": "evaluation/annotations/human_v1",
+    "judgment_fields": ["answer_correctness", "evidence_relevance"],
+    "fallback": "Không bịa nhãn người chấm. Chỉ chuẩn bị workflow và báo cáo pending cho đến khi có annotator thật."
+  },
+  "modes": {
+    "controlled": {
+      "description": "So sánh 3 kiến trúc trong cùng một luật chơi và cùng profile chia sẻ.",
+      "profile_strategy": "shared_locked",
+      "locked_profile_set": "controlled",
+      "budget": {
+        "retrieval_top_n": 6,
+        "evaluation_k": 3,
+        "request_timeout_seconds": 180,
+        "connect_timeout_seconds": 10,
+        "latency_budget_ms": 25000,
+        "token_budget_status": "enforced",
+        "max_output_tokens": 1024,
+        "budget_note": "Evaluator gửi profile runtime xuống từng app, nên retrieval budget và output token budget được khóa bằng request metadata."
+      }
+    },
+    "best_tuned": {
+      "description": "Mỗi kiến trúc dùng profile đã được khóa sau khi chọn trên dev split theo cùng protocol ngân sách.",
+      "profile_strategy": "per_architecture_locked",
+      "locked_profile_set": "best_tuned",
+      "budget": {
+        "retrieval_top_n": 6,
+        "evaluation_k": 3,
+        "request_timeout_seconds": 180,
+        "connect_timeout_seconds": 10,
+        "latency_budget_ms": 25000,
+        "token_budget_status": "enforced",
+        "max_output_tokens": 1024,
+        "budget_note": "Nếu một hệ không thể đồng nhất ngân sách, report phải ghi note chênh lệch thay vì ẩn đi."
+      }
+    }
+  }
+}

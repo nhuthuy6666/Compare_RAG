@@ -28,18 +28,16 @@ STOPWORDS = {
     "thi",
     "do",
     "day",
-    "thi",
-    "la",
 }
 
 
 def content_tokens(text: str) -> set[str]:
-    # Lấy các token mang nhiều nội dung hơn để phục vụ kiểm tra support của claim.
+    # Lay cac token mang nhieu noi dung hon de phuc vu kiem tra support cua claim.
     return {token for token in tokenize(text) if token not in STOPWORDS and len(token) > 1}
 
 
 def keyword_overlap_ratio(text: str, keywords: list[str]) -> float:
-    # Tỷ lệ keyword kỳ vọng xuất hiện trong text đã normalize.
+    # Ty le keyword ky vong xuat hien trong text da normalize.
     normalized = normalize_text(text)
     if not keywords:
         return 1.0
@@ -48,21 +46,22 @@ def keyword_overlap_ratio(text: str, keywords: list[str]) -> float:
 
 
 def semantic_similarity(reference: str, answer: str, scorer: SemanticScorer | None) -> float:
-    # So độ gần nghĩa giữa reference answer và answer bằng embedding cosine.
+    # So do gan nghia giua reference answer va answer bang embedding cosine.
     if scorer is None:
         return 0.0
     return scorer.cosine_text(reference, answer)
 
 
 def answer_relevance(example: EvalExample, answer: str, scorer: SemanticScorer | None) -> float:
-    # Đo answer có thực sự trả lời câu hỏi hay chỉ nói chung chung.
-    semantic = scorer.cosine_text(example.question, answer) if scorer else 0.0
+    # Do answer co tra loi dung cau hoi va bam vao dap an mong doi, khong phat nang vi khac wording.
+    semantic_question = scorer.cosine_text(example.question, answer) if scorer else 0.0
+    semantic_reference = scorer.cosine_text(example.reference_answer, answer) if scorer else 0.0
     lexical = keyword_overlap_ratio(answer, example.answer_keywords or example.expected_keywords)
-    return (0.7 * semantic) + (0.3 * lexical)
+    return (0.35 * semantic_question) + (0.40 * semantic_reference) + (0.25 * lexical)
 
 
 def context_relevance(example: EvalExample, sources: list[SourceRecord], scorer: SemanticScorer | None) -> float:
-    # Chấm từng nguồn retrieve theo mức liên quan tới câu hỏi, rồi lấy trung bình top 3 tốt nhất.
+    # Cham tung source theo muc do giup tra loi cau hoi va reference, roi lay trung binh top 3 tot nhat.
     if not sources:
         return 0.0
 
@@ -70,23 +69,24 @@ def context_relevance(example: EvalExample, sources: list[SourceRecord], scorer:
     scored: list[float] = []
     for source in sources:
         text = source.content or source.label
-        semantic = scorer.cosine_text(example.question, text) if scorer else 0.0
+        semantic_question = scorer.cosine_text(example.question, text) if scorer else 0.0
+        semantic_reference = scorer.cosine_text(example.reference_answer, text) if scorer else 0.0
         lexical = keyword_overlap_ratio(text, context_keywords)
-        scored.append((0.65 * semantic) + (0.35 * lexical))
+        scored.append((0.25 * semantic_question) + (0.40 * semantic_reference) + (0.35 * lexical))
 
     top_items = sorted(scored, reverse=True)[: min(3, len(scored))]
     return sum(top_items) / len(top_items)
 
 
 def split_claims(answer: str) -> list[str]:
-    # Tách câu trả lời dài thành các claim nhỏ để kiểm tra độ bám nguồn từng ý.
+    # Tach cau tra loi dai thanh cac claim nho de kiem tra do bam nguon tung y.
     raw_claims = re.split(r"[.!?\n;]+", answer)
     claims = [claim.strip(" -\t") for claim in raw_claims if claim.strip()]
     return [claim for claim in claims if len(tokenize(claim)) >= 3]
 
 
 def _claim_supported(claim: str, sources: list[SourceRecord], scorer: SemanticScorer | None) -> bool:
-    # Một claim được xem là có support khi có ít nhất một nguồn đủ gần về nghĩa và thuật ngữ.
+    # Mot claim duoc xem la co support khi co it nhat mot source du gan ve nghia va thuat ngu.
     claim_numbers = set(extract_numbers(claim))
     claim_terms = content_tokens(claim)
 
@@ -105,11 +105,11 @@ def _claim_supported(claim: str, sources: list[SourceRecord], scorer: SemanticSc
 
     if claim_numbers and not numeric_supported:
         return False
-    return best_score >= 0.58
+    return best_score >= 0.55
 
 
 def faithfulness(answer: str, sources: list[SourceRecord], scorer: SemanticScorer | None) -> float:
-    # Tỷ lệ claim trong câu trả lời được nguồn hỗ trợ.
+    # Ty le claim trong cau tra loi duoc nguon ho tro.
     claims = split_claims(answer)
     if not claims:
         return 1.0 if not answer.strip() else 0.0
@@ -118,5 +118,5 @@ def faithfulness(answer: str, sources: list[SourceRecord], scorer: SemanticScore
 
 
 def hallucination_rate(answer: str, sources: list[SourceRecord], scorer: SemanticScorer | None) -> float:
-    # Hallucination rate là phần bổ sung của faithfulness.
+    # Hallucination rate la phan bo sung cua faithfulness.
     return 1.0 - faithfulness(answer, sources, scorer)

@@ -65,7 +65,10 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
         try:
             response = requests.post(
                 f"{base_url}{stateless_endpoint}",
-                json={"query": example.question},
+                json={
+                    "query": example.question,
+                    "benchmark_profile": system_config.get("benchmark_profile") or {},
+                },
                 timeout=timeout,
             )
             response.raise_for_status()

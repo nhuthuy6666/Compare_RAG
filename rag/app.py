@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from functools import lru_cache
 from http import HTTPStatus
@@ -14,31 +15,65 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from llamaindex_shared import (  # noqa: E402
+    ChatUiConfig,
+    build_chat_ui_tabs,
     build_query_engine,
     collect_sources,
     configure_models,
     ensure_vector_index,
     load_shared_config,
+    render_chat_ui,
 )
+from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload, runtime_overrides_signature  # noqa: E402
 
 
 BASE_DIR = Path(__file__).resolve().parent
-UI_TEMPLATE_PATH = BASE_DIR / "chat_ui.html"
 STATE_PATH = BASE_DIR / ".qdrant_state.json"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8001
 RAG_LOCK = Lock()
 
 
-# Tải giao diện chat HTML để phục vụ route `/`.
-def load_index_page() -> str:
-    return UI_TEMPLATE_PATH.read_text(encoding="utf-8")
-
-
+# Tạo HTML UI dùng chung cho baseline RAG với tab điều hướng sang 2 hệ còn lại.
 @lru_cache(maxsize=1)
-# Khởi tạo config, model, vector index và query engine một lần duy nhất.
-def get_resources():
-    config = load_shared_config(collection_name="ntu_rag")
+def load_ui_html() -> str:
+    return render_chat_ui(
+        ChatUiConfig(
+            current_rag_id="baseline",
+            page_title="NTU Baseline RAG",
+            brand_badge="NTU Admissions",
+            brand_title="NTU Bot",
+            brand_description=(
+                "Baseline RAG dùng dense retrieval thuần để làm mốc so sánh. "
+                "Giao diện này được dùng chung với Hybrid và Graph RAG."
+            ),
+            header_badge="Baseline RAG",
+            header_subtitle="Dense retrieval | Qdrant | LlamaIndex",
+            assistant_label="Baseline NTU Bot",
+            empty_title="Baseline RAG sẵn sàng",
+            empty_description=(
+                "Bạn có thể đặt cùng một câu hỏi và chuyển tab để so sánh kết quả "
+                "giữa Baseline, Hybrid và Graph RAG."
+            ),
+            placeholder="Hỏi về điểm chuẩn, học phí, mã trường, phương thức tuyển sinh...",
+            composer_hint="Enter để gửi | Shift + Enter để xuống dòng",
+            loading_message="Đang truy xuất dense index trong Qdrant...",
+            ready_message="Đã hoàn tất.",
+            storage_key="ntu_fusion_baseline_sessions",
+            suggestions=[
+                "Mã trường Đại học Nha Trang là gì?",
+                "Điện thoại tuyển sinh là số nào?",
+                "Ngành CNTT năm 2025 lấy bao nhiêu chỉ tiêu?",
+            ],
+            tabs=build_chat_ui_tabs(),
+        )
+    )
+
+
+# Khởi tạo config, model và vector index baseline chỉ một lần trong vòng đời server.
+@lru_cache(maxsize=16)
+def get_resources(profile_name: str = "default", overrides_key: str = "{}"):
+    config = load_shared_config(collection_name="ntu_rag", overrides=json.loads(overrides_key))
     configure_models(config)
     index = ensure_vector_index(
         config,
@@ -49,39 +84,39 @@ def get_resources():
     return config, query_engine
 
 
-# Chạy pipeline hỏi đáp stateless và trả về schema chung cho UI/API.
-def answer_query(query: str) -> dict:
-    config, query_engine = get_resources()
+# Xử lý một câu hỏi theo baseline RAG và trả payload thống nhất cho UI/API.
+def answer_query(query: str, *, profile_name: str = "default", runtime_overrides: dict | None = None) -> dict:
+    config, query_engine = get_resources(profile_name, runtime_overrides_signature(runtime_overrides))
     response = query_engine.query(query)
     sources = collect_sources(response, limit=config.retrieval_top_n)
+
     if not sources:
         answer = config.query_refusal_response
     else:
         scores = [float(item["score"]) for item in sources if item.get("score") is not None]
-        if (
-            scores
+        is_low_confidence = (
+            bool(scores)
             and config.retrieval_similarity_threshold > 0
             and max(scores) < config.retrieval_similarity_threshold
-        ):
-            answer = config.query_refusal_response
-        else:
-            answer = str(response).strip()
+        )
+        answer = config.query_refusal_response if is_low_confidence else str(response).strip()
 
     return {
         "answer": answer,
         "rewritten_query": query,
         "sources": sources,
+        "benchmark_profile": profile_name,
     }
 
 
 class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
-    server_version = "NTURagHTTP/1.0"
+    server_version = "NTURagHTTP/2.0"
 
-    # Phục vụ UI, health check và favicon.
+    # Phục vụ UI gốc, health check và favicon cho baseline RAG.
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/":
-            self._send_html(load_index_page())
+            self._send_html(load_ui_html())
             return
         if parsed.path == "/health":
             self._send_json({"status": "ok"})
@@ -92,19 +127,15 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
-    # Nhận payload chat JSON, gọi pipeline RAG và trả kết quả cho frontend/benchmark.
+    # Nhận payload chat và trả kết quả cho frontend.
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path != "/api/chat":
             self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
             return
 
-        try:
-            content_length = int(self.headers.get("Content-Length", "0"))
-            raw_body = self.rfile.read(content_length)
-            payload = json.loads(raw_body.decode("utf-8") or "{}")
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            self._send_json({"error": "Payload JSON không hợp lệ."}, status=HTTPStatus.BAD_REQUEST)
+        payload = self._read_json_payload()
+        if payload is None:
             return
 
         query = str(payload.get("query") or payload.get("question") or "").strip()
@@ -112,9 +143,10 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Vui lòng nhập câu hỏi."}, status=HTTPStatus.BAD_REQUEST)
             return
 
+        profile_name, runtime_overrides = parse_benchmark_profile_payload(payload)
         try:
             with RAG_LOCK:
-                response = answer_query(query)
+                response = answer_query(query, profile_name=profile_name, runtime_overrides=runtime_overrides)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể xử lý câu hỏi. Chi tiết: {exc}"},
@@ -124,11 +156,21 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
 
         self._send_json(response, status=HTTPStatus.OK)
 
-    # Tắt log mặc định của BaseHTTPRequestHandler cho output gọn hơn.
+    # Đọc body JSON từ request và tự xử lý lỗi payload sai định dạng.
+    def _read_json_payload(self) -> dict | None:
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+            raw_body = self.rfile.read(content_length)
+            return json.loads(raw_body.decode("utf-8") or "{}")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self._send_json({"error": "Payload JSON không hợp lệ."}, status=HTTPStatus.BAD_REQUEST)
+            return None
+
+    # Tắt log mặc định của BaseHTTPRequestHandler để console gọn hơn.
     def log_message(self, format: str, *args) -> None:
         return
 
-    # Gửi HTML với content-type đúng cho route giao diện.
+    # Gửi HTML cho trình duyệt với content-type phù hợp.
     def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = html.encode("utf-8")
         self.send_response(status)
@@ -137,7 +179,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    # Gửi JSON với Unicode giữ nguyên để frontend đọc dễ dàng.
+    # Gửi JSON cho frontend và giữ nguyên Unicode để dễ debug.
     def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -147,11 +189,11 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-# Chạy chế độ CLI để test nhanh retrieval và answer trong terminal.
+# Chạy vòng lặp hỏi đáp trong terminal để test nhanh baseline RAG.
 def run_cli() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
-    print("RAG sẵn sàng. Gõ 'exit' để thoát.")
+    print("Baseline RAG sẵn sàng. Gõ 'exit' để thoát.")
     while True:
         query = input("\nNhập câu hỏi: ").strip()
         if query.lower() == "exit":
@@ -162,14 +204,20 @@ def run_cli() -> None:
         print(result["answer"])
 
 
-# Khởi động HTTP server local sau khi bảo đảm index đã sẵn sàng.
-def run_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
+# Đọc port UI từ biến môi trường để launcher có thể thống nhất 3 server.
+def resolve_server_port() -> int:
+    return int(os.getenv("UI_PORT", str(DEFAULT_PORT)))
+
+
+# Khởi động HTTP server baseline sau khi đảm bảo vector index đã sẵn sàng.
+def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
+    resolved_port = port if port is not None else resolve_server_port()
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
-    print("Đang khởi tạo RAG...")
+    print("Đang khởi tạo Baseline RAG...")
     config, _ = get_resources()
-    server = ThreadingHTTPServer((host, port), ChatHTTPRequestHandler)
-    print(f"RAG API đang chạy tại http://{host}:{port}")
+    server = ThreadingHTTPServer((host, resolved_port), ChatHTTPRequestHandler)
+    print(f"Baseline RAG đang chạy tại http://{host}:{resolved_port}")
     print(f"Qdrant collection: {config.qdrant_collection} @ {config.qdrant_url}")
     print("Nhấn Ctrl+C để dừng server.")
     try:
@@ -180,10 +228,10 @@ def run_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
         server.server_close()
 
 
-# Entry point cho baseline RAG.
-# 1) Kiểm tra có đang muốn chạy CLI hay không.
-# 2) Nếu có `--cli` thì chạy vòng lặp hỏi đáp trong terminal.
-# 3) Nếu không thì khởi động web server và API stateless.
+# Entry point của baseline RAG.
+# 1) Kiểm tra xem user có muốn chạy chế độ CLI hay không.
+# 2) Nếu có `--cli` thì mở vòng lặp hỏi đáp trong terminal.
+# 3) Nếu không thì đọc `UI_PORT` và khởi động web UI/API dùng giao diện chung.
 def main() -> None:
     if "--cli" in sys.argv:
         run_cli()

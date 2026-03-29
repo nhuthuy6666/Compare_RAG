@@ -1,0 +1,146 @@
+{
+  "controlled": {
+    "shared_profiles": {
+      "shared_locked_v1": {
+        "description": "Cùng prompt, cùng retrieval budget, cùng fusion, cùng seed và cùng token cap cho cả 3 hệ.",
+        "runtime_overrides": {
+          "retrieval_top_n": 6,
+          "query_fusion_enabled": true,
+          "query_fusion_num_queries": 4,
+          "query_fusion_mode": "relative_score",
+          "generation_temperature": 0.0,
+          "generation_top_p": 1.0,
+          "max_output_tokens": 1024,
+          "llm_seed": 17
+        }
+      }
+    }
+  },
+  "best_tuned": {
+    "systems": {
+      "baseline": {
+        "candidates": {
+          "baseline_default_locked": {
+            "description": "Dense baseline với fusion 2 query và reciprocal rank để giữ top-k sạch hơn.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": true,
+              "query_fusion_num_queries": 2,
+              "query_fusion_mode": "reciprocal_rank",
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          },
+          "baseline_no_fusion": {
+            "description": "Dense baseline không dùng fusion để ưu tiên precision của top-k.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": false,
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          },
+          "baseline_relative_score_4q": {
+            "description": "Dense baseline giữ relative score 4 query như cấu hình gốc.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": true,
+              "query_fusion_num_queries": 4,
+              "query_fusion_mode": "relative_score",
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          }
+        }
+      },
+      "hybrid": {
+        "candidates": {
+          "hybrid_default_locked": {
+            "description": "Hybrid với fusion 2 query và reciprocal rank.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": true,
+              "query_fusion_num_queries": 2,
+              "query_fusion_mode": "reciprocal_rank",
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          },
+          "hybrid_no_fusion": {
+            "description": "Hybrid không fusion để tránh làm loãng ranking của dense+sparse.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": false,
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          },
+          "hybrid_relative_score_4q": {
+            "description": "Hybrid giữ relative score 4 query như cấu hình gốc.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": true,
+              "query_fusion_num_queries": 4,
+              "query_fusion_mode": "relative_score",
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          }
+        }
+      },
+      "graphrag": {
+        "candidates": {
+          "graphrag_default_locked": {
+            "description": "GraphRAG với fusion 2 query và reciprocal rank.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": true,
+              "query_fusion_num_queries": 2,
+              "query_fusion_mode": "reciprocal_rank",
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          },
+          "graphrag_no_fusion": {
+            "description": "GraphRAG không fusion để xem graph facts thuần có precision tốt hơn hay không.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": false,
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          },
+          "graphrag_relative_score_4q": {
+            "description": "GraphRAG giữ relative score 4 query như cấu hình gốc.",
+            "runtime_overrides": {
+              "retrieval_top_n": 6,
+              "query_fusion_enabled": true,
+              "query_fusion_num_queries": 4,
+              "query_fusion_mode": "relative_score",
+              "generation_temperature": 0.0,
+              "generation_top_p": 1.0,
+              "max_output_tokens": 1024,
+              "llm_seed": 17
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -11,6 +11,7 @@ from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import AsyncQdrantClient, QdrantClient
 
 from openai_compatible import OpenAICompatibleEmbedding, OpenAICompatibleLLM
+from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +49,13 @@ class AppConfig:
     max_sections_per_chunk: int
     retrieval_top_n: int
     retrieval_similarity_threshold: float
+    query_fusion_enabled: bool
+    query_fusion_num_queries: int
+    query_fusion_mode: str
     generation_temperature: float
+    generation_top_p: float
+    max_output_tokens: int
+    llm_seed: int | None
     shared_prompt: str
     query_refusal_response: str
     graph_progress_every: int
@@ -76,6 +83,18 @@ def _get_float_env(name: str, default: float) -> float:
         raise ValueError(f"Environment variable {name} must be a float, got: {raw!r}") from exc
 
 
+def _get_bool_env(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
+
+
 ## Nạp file JSON baseline dùng chung để lấy chunk/model/prompt settings.
 def _load_baseline_config(path: Path) -> dict:
     if not path.exists():
@@ -87,16 +106,18 @@ def _load_baseline_config(path: Path) -> dict:
 
 
 ## Gộp baseline config và biến môi trường thành một AppConfig duy nhất cho GraphRAG.
-def load_config() -> AppConfig:
+def load_config(overrides: dict | None = None) -> AppConfig:
     load_dotenv()
     baseline_config_path = Path(os.getenv("BASELINE_CONFIG_PATH", DEFAULT_BASELINE_CONFIG))
     baseline = _load_baseline_config(baseline_config_path)
     corpus = baseline.get("corpus") or {}
     models = baseline.get("models") or {}
     retrieval = baseline.get("retrieval") or {}
+    fusion = retrieval.get("fusion") or {}
     generation = baseline.get("generation") or {}
 
-    return AppConfig(
+    seed_env = os.getenv("LLM_SEED")
+    config = AppConfig(
         project_root=PROJECT_ROOT,
         baseline_config_path=baseline_config_path,
         txt_dir=Path(os.getenv("TXT_DATA_DIR", str(corpus.get("txt_root") or DEFAULT_TXT_DIR))),
@@ -128,10 +149,19 @@ def load_config() -> AppConfig:
             "RETRIEVAL_SIMILARITY_THRESHOLD",
             float(retrieval.get("similarity_threshold") or 0.0),
         ),
+        query_fusion_enabled=_get_bool_env("QUERY_FUSION_ENABLED", bool(fusion.get("enabled", True))),
+        query_fusion_num_queries=max(
+            1,
+            _get_int_env("QUERY_FUSION_NUM_QUERIES", int(fusion.get("num_queries") or 4)),
+        ),
+        query_fusion_mode=os.getenv("QUERY_FUSION_MODE", str(fusion.get("mode") or "relative_score")).strip(),
         generation_temperature=_get_float_env(
             "GENERATION_TEMPERATURE",
             float(generation.get("temperature") or 0.1),
         ),
+        generation_top_p=_get_float_env("GENERATION_TOP_P", float(generation.get("top_p") or 1.0)),
+        max_output_tokens=_get_int_env("MAX_OUTPUT_TOKENS", int(generation.get("max_tokens") or 1024)),
+        llm_seed=int(seed_env) if seed_env is not None and seed_env.strip() else None,
         shared_prompt=os.getenv("SHARED_PROMPT", str(baseline.get("prompt") or "").strip()),
         query_refusal_response=os.getenv(
             "QUERY_REFUSAL_RESPONSE",
@@ -139,6 +169,11 @@ def load_config() -> AppConfig:
         ),
         graph_progress_every=_get_int_env("GRAPH_PROGRESS_EVERY", 5),
     )
+    runtime_overrides = normalize_runtime_overrides(overrides)
+    if not runtime_overrides:
+        return config
+    supported = {key: value for key, value in runtime_overrides.items() if key in config.__dataclass_fields__}
+    return replace(config, **supported)
 
 
 ## Kiểm tra các biến bắt buộc trước khi khởi tạo model hoặc kết nối dịch vụ.
@@ -162,8 +197,10 @@ def configure_models(config: AppConfig) -> None:
         api_key=api_key,
         api_base=config.llm_base_url,
         timeout=float(config.llm_timeout),
-        max_tokens=1024,
+        max_tokens=config.max_output_tokens,
         temperature=config.generation_temperature,
+        top_p=config.generation_top_p,
+        seed=config.llm_seed,
     )
     Settings.embed_model = OpenAICompatibleEmbedding(
         model_name=config.embed_model,

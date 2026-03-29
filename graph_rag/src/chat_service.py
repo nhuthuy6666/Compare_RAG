@@ -2,11 +2,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
+import json
 
 from llama_index.core import VectorStoreIndex
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.retrievers import QueryFusionRetriever
+from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 
 from config import build_qdrant_client, build_vector_store, configure_models, load_config
 from prompts import build_prompt_templates
+
+
+QUERY_FUSION_PROMPT = """Ban la tro ly tao truy van tim kiem cho he thong GraphRAG tu van tuyen sinh.
+Hay tao {num_queries} cach dien dat khac nhau cho cung mot cau hoi, giu nguyen y dinh va uu tien tu khoa bam sat du lieu tuyen sinh NTU.
+Moi dong dung mot truy van, khong danh so, khong giai thich.
+
+Cau hoi goc: {query}
+Danh sach truy van:
+"""
 
 
 @dataclass(frozen=True)
@@ -22,6 +35,21 @@ class ChatAnswer:
     question: str
     answer: str
     facts: list[SourceFact]
+
+
+def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
+    normalized = mode.strip().lower()
+    mapping = {
+        FUSION_MODES.RECIPROCAL_RANK.value: FUSION_MODES.RECIPROCAL_RANK,
+        FUSION_MODES.RELATIVE_SCORE.value: FUSION_MODES.RELATIVE_SCORE,
+        FUSION_MODES.DIST_BASED_SCORE.value: FUSION_MODES.DIST_BASED_SCORE,
+        FUSION_MODES.SIMPLE.value: FUSION_MODES.SIMPLE,
+    }
+    try:
+        return mapping[normalized]
+    except KeyError as exc:
+        supported = ", ".join(sorted(mapping))
+        raise ValueError(f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported}") from exc
 
 
 ## Kiểm tra collection Qdrant đã tồn tại và có dữ liệu trước khi phục vụ truy vấn.
@@ -43,8 +71,9 @@ def _ensure_collection_ready(config) -> None:
 ## Tạo query engine dùng lại nhiều lần để tránh rebuild index cho mỗi câu hỏi.
 ## Engine này query trực tiếp trên tập graph facts đã lưu trong Qdrant.
 @lru_cache(maxsize=8)
-def get_query_engine(top_k: int | None = None):
-    config = load_config()
+def get_query_engine(top_k: int | None = None, overrides_key: str = "{}"):
+    overrides = json.loads(overrides_key)
+    config = load_config(overrides=overrides)
     configure_models(config)
     _ensure_collection_ready(config)
     vector_store = build_vector_store(config)
@@ -54,8 +83,18 @@ def get_query_engine(top_k: int | None = None):
         shared_prompt=config.shared_prompt,
         query_refusal_response=config.query_refusal_response,
     )
-    return index.as_query_engine(
-        similarity_top_k=resolved_top_k,
+    retriever = index.as_retriever(similarity_top_k=resolved_top_k)
+    if config.query_fusion_enabled and config.query_fusion_num_queries > 1:
+        retriever = QueryFusionRetriever(
+            retrievers=[retriever],
+            query_gen_prompt=QUERY_FUSION_PROMPT,
+            mode=_resolve_query_fusion_mode(config.query_fusion_mode),
+            similarity_top_k=resolved_top_k,
+            num_queries=config.query_fusion_num_queries,
+            use_async=False,
+        )
+    return RetrieverQueryEngine.from_args(
+        retriever=retriever,
         text_qa_template=qa_template,
         refine_template=refine_template,
     )
@@ -92,10 +131,11 @@ def _is_confident_enough(facts: list[SourceFact], threshold: float) -> bool:
 
 ## Xử lý một lượt hỏi đáp hoàn chỉnh theo đúng đặc trưng kiến trúc GraphRAG:
 ## query trên graph facts bằng nguyên câu hỏi gốc, không thêm heuristic tăng cường truy vấn.
-def answer_question(question: str, top_k: int | None = None) -> ChatAnswer:
-    config = load_config()
-    response = get_query_engine(top_k=top_k).query(question)
-    facts = _collect_facts(response)
+def answer_question(question: str, top_k: int | None = None, runtime_overrides: dict | None = None) -> ChatAnswer:
+    config = load_config(overrides=runtime_overrides)
+    resolved_top_k = top_k or config.retrieval_top_n
+    response = get_query_engine(top_k=top_k, overrides_key=json.dumps(runtime_overrides or {}, ensure_ascii=False, sort_keys=True)).query(question)
+    facts = _collect_facts(response, limit=resolved_top_k)
     if not _is_confident_enough(facts, config.retrieval_similarity_threshold):
         return ChatAnswer(
             question=question,

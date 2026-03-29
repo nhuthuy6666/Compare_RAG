@@ -4,18 +4,22 @@ import hashlib
 import json
 import os
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
 from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.core.base.base_query_engine import BaseQueryEngine
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.retrievers import QueryFusionRetriever
+from llama_index.core.retrievers.fusion_retriever import FUSION_MODES
 from llama_index.core.schema import TextNode
 from llama_index.core.vector_stores.types import VectorStoreQueryMode
 from llama_index.vector_stores.qdrant import QdrantVectorStore
 from qdrant_client import AsyncQdrantClient, QdrantClient
 from qdrant_client.http.models import Distance, SparseVectorParams, VectorParams
 
+from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
 from llamaindex_shared.corpus_utils import load_chunk_record_groups, records_to_nodes
 from llamaindex_shared.openai_compatible import OpenAICompatibleEmbedding, OpenAICompatibleLLM
 from llamaindex_shared.prompts import build_prompt_templates
@@ -24,6 +28,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 DEFAULT_BASELINE_CONFIG = PROJECT_ROOT / "extract_md" / "rag_baseline.json"
+DEFAULT_QUERY_FUSION_PROMPT = """Ban la tro ly tao truy van tim kiem cho he thong RAG tu van tuyen sinh.
+Hay tao {num_queries} cach dien dat khac nhau cho cung mot cau hoi, giu nguyen y dinh va uu tien tu khoa bam sat du lieu tuyen sinh NTU.
+Moi dong dung mot truy van, khong danh so, khong giai thich.
+
+Cau hoi goc: {query}
+Danh sach truy van:
+"""
 
 
 @dataclass(frozen=True)
@@ -40,7 +51,13 @@ class SharedRagConfig:
     qdrant_collection: str
     retrieval_top_n: int
     retrieval_similarity_threshold: float
+    query_fusion_enabled: bool
+    query_fusion_num_queries: int
+    query_fusion_mode: str
     generation_temperature: float
+    generation_top_p: float
+    max_output_tokens: int
+    llm_seed: int | None
     prompt: str
     query_refusal_response: str
 
@@ -52,20 +69,50 @@ def _load_baseline_config(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _get_bool_env(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
+
+
+def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
+    normalized = mode.strip().lower()
+    mapping = {
+        FUSION_MODES.RECIPROCAL_RANK.value: FUSION_MODES.RECIPROCAL_RANK,
+        FUSION_MODES.RELATIVE_SCORE.value: FUSION_MODES.RELATIVE_SCORE,
+        FUSION_MODES.DIST_BASED_SCORE.value: FUSION_MODES.DIST_BASED_SCORE,
+        FUSION_MODES.SIMPLE.value: FUSION_MODES.SIMPLE,
+    }
+    try:
+        return mapping[normalized]
+    except KeyError as exc:
+        supported = ", ".join(sorted(mapping))
+        raise ValueError(f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported}") from exc
+
+
 # Hợp nhất config từ baseline JSON và biến môi trường thành một object dùng chung.
 def load_shared_config(
     *,
     collection_name: str,
     baseline_config_path: Path | None = None,
+    overrides: dict[str, Any] | None = None,
 ) -> SharedRagConfig:
     baseline_path = baseline_config_path or DEFAULT_BASELINE_CONFIG
     baseline = _load_baseline_config(baseline_path)
     corpus = baseline.get("corpus") or {}
     models = baseline.get("models") or {}
     retrieval = baseline.get("retrieval") or {}
+    fusion = retrieval.get("fusion") or {}
     generation = baseline.get("generation") or {}
 
-    return SharedRagConfig(
+    seed_env = os.getenv("LLM_SEED")
+    config = SharedRagConfig(
         baseline_config_path=baseline_path,
         source_chunk_root=Path(
             os.getenv("CHUNK_JSONL_ROOT", str(corpus.get("chunk_root") or PROJECT_ROOT / "extract_md" / "data_chunks"))
@@ -82,15 +129,29 @@ def load_shared_config(
         retrieval_similarity_threshold=float(
             os.getenv("RETRIEVAL_SIMILARITY_THRESHOLD", str(retrieval.get("similarity_threshold") or 0.0))
         ),
+        query_fusion_enabled=_get_bool_env("QUERY_FUSION_ENABLED", bool(fusion.get("enabled", True))),
+        query_fusion_num_queries=max(
+            1,
+            int(os.getenv("QUERY_FUSION_NUM_QUERIES", str(fusion.get("num_queries") or 4))),
+        ),
+        query_fusion_mode=str(os.getenv("QUERY_FUSION_MODE", str(fusion.get("mode") or "relative_score"))).strip(),
         generation_temperature=float(
             os.getenv("GENERATION_TEMPERATURE", str(generation.get("temperature") or 0.1))
         ),
+        generation_top_p=float(os.getenv("GENERATION_TOP_P", str(generation.get("top_p") or 1.0))),
+        max_output_tokens=int(os.getenv("MAX_OUTPUT_TOKENS", str(generation.get("max_tokens") or 1024))),
+        llm_seed=int(seed_env) if seed_env is not None and seed_env.strip() else None,
         prompt=str(baseline.get("prompt") or "").strip(),
         query_refusal_response=str(
             baseline.get("query_refusal_response")
             or "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có."
         ).strip(),
     )
+    runtime_overrides = normalize_runtime_overrides(overrides)
+    if not runtime_overrides:
+        return config
+    supported = {key: value for key, value in runtime_overrides.items() if key in config.__dataclass_fields__}
+    return replace(config, **supported)
 
 
 # Cấu hình LlamaIndex để dùng chung LLM chat và embedding model theo config hiện tại.
@@ -100,8 +161,10 @@ def configure_models(config: SharedRagConfig) -> None:
         api_key=config.llm_api_key,
         api_base=config.llm_base_url,
         timeout=180.0,
-        max_tokens=1024,
+        max_tokens=config.max_output_tokens,
         temperature=config.generation_temperature,
+        top_p=config.generation_top_p,
+        seed=config.llm_seed,
     )
     Settings.embed_model = OpenAICompatibleEmbedding(
         model_name=config.embed_model,
@@ -281,20 +344,32 @@ def build_query_engine(
         shared_prompt=config.prompt,
         query_refusal_response=config.query_refusal_response,
     )
-    query_kwargs: dict[str, Any] = {
+    retriever_kwargs: dict[str, Any] = {
         "similarity_top_k": config.retrieval_top_n,
-        "text_qa_template": qa_template,
-        "refine_template": refine_template,
     }
     if enable_hybrid:
-        query_kwargs.update(
+        retriever_kwargs.update(
             {
                 "vector_store_query_mode": VectorStoreQueryMode.HYBRID,
                 "sparse_top_k": config.retrieval_top_n,
                 "hybrid_top_k": config.retrieval_top_n,
             }
         )
-    return index.as_query_engine(**query_kwargs)
+    retriever = index.as_retriever(**retriever_kwargs)
+    if config.query_fusion_enabled and config.query_fusion_num_queries > 1:
+        retriever = QueryFusionRetriever(
+            retrievers=[retriever],
+            query_gen_prompt=DEFAULT_QUERY_FUSION_PROMPT,
+            mode=_resolve_query_fusion_mode(config.query_fusion_mode),
+            similarity_top_k=config.retrieval_top_n,
+            num_queries=config.query_fusion_num_queries,
+            use_async=False,
+        )
+    return RetrieverQueryEngine.from_args(
+        retriever=retriever,
+        text_qa_template=qa_template,
+        refine_template=refine_template,
+    )
 
 
 # Chuyển `source_nodes` của LlamaIndex thành schema JSON gọn cho UI và benchmark.

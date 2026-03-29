@@ -19,7 +19,7 @@ from evaluation.metrics.retrieval_metrics import (
     relevant_count,
     source_hint_hit,
     source_keyword_coverage,
-    source_relevance_flags,
+    source_relevance_scores,
 )
 from evaluation.metrics.semantic_metrics import (
     answer_relevance,
@@ -35,7 +35,7 @@ RETRIEVAL_K = 3
 
 
 def _empty_result(example: EvalExample, prediction: EvalPrediction) -> dict:
-    # Khi request lỗi, trả về một hàng metric “an toàn” với điểm 0 để pipeline vẫn chạy hết.
+    # Khi request loi, tra ve mot hang metric an toan voi diem 0 de pipeline van chay het.
     return {
         "example_id": example.id,
         "question": example.question,
@@ -86,7 +86,7 @@ def evaluate_prediction_v1(
     prediction: EvalPrediction,
     semantic_scorer: SemanticScorer | None = None,
 ) -> dict:
-    # Hàm lõi V1: giữ lại metric chi tiết cũ nhưng thay công thức overall theo bộ trọng số mới.
+    # Ham loi V1: giu lai metric chi tiet nhung cham retrieval theo content score de cong bang hon giua cac kien truc.
     if prediction.error:
         return _empty_result(example, prediction)
 
@@ -112,47 +112,47 @@ def evaluate_prediction_v1(
         example.context_keywords or example.expected_keywords,
     )
 
-    flags = source_relevance_flags(example, prediction.sources)
+    relevances = source_relevance_scores(example, prediction.sources, semantic_scorer)
     total_relevant = relevant_count(example)
-    p1 = precision_at_k(flags, 1)
-    p3 = precision_at_k(flags, 3)
-    p5 = precision_at_k(flags, 5)
-    r1 = recall_at_k(flags, total_relevant, 1)
-    r3 = recall_at_k(flags, total_relevant, 3)
-    r5 = recall_at_k(flags, total_relevant, 5)
-    f1_1 = f1_at_k(flags, total_relevant, 1)
-    f1_3 = f1_at_k(flags, total_relevant, 3)
-    f1_5 = f1_at_k(flags, total_relevant, 5)
-    hit3 = hit_rate_at_k(flags, 3)
-    reciprocal_rank = mrr(flags)
-    mean_average_precision = average_precision(flags, total_relevant)
-    ndcg3 = ndcg_at_k(flags, 3)
-    ndcg5 = ndcg_at_k(flags, 5)
+    p1 = precision_at_k(relevances, 1)
+    p3 = precision_at_k(relevances, 3)
+    p5 = precision_at_k(relevances, 5)
+    r1 = recall_at_k(relevances, total_relevant, 1)
+    r3 = recall_at_k(relevances, total_relevant, 3)
+    r5 = recall_at_k(relevances, total_relevant, 5)
+    f1_1 = f1_at_k(relevances, total_relevant, 1)
+    f1_3 = f1_at_k(relevances, total_relevant, 3)
+    f1_5 = f1_at_k(relevances, total_relevant, 5)
+    hit3 = hit_rate_at_k(relevances, 3)
+    reciprocal_rank = mrr(relevances)
+    mean_average_precision = average_precision(relevances, total_relevant)
+    ndcg3 = ndcg_at_k(relevances, 3)
+    ndcg5 = ndcg_at_k(relevances, 5)
 
     if example.refusal_expected:
         answer_quality = (0.6 * refusal_correct) + (0.4 * answer_rel)
         retrieval_quality = hit3
     else:
         answer_quality = (
-            (0.20 * exact)
-            + (0.20 * token_f1)
-            + (0.20 * char_sim)
-            + (0.20 * sem_sim)
-            + (0.20 * answer_keyword_cov)
+            (0.05 * exact)
+            + (0.10 * token_f1)
+            + (0.10 * char_sim)
+            + (0.35 * sem_sim)
+            + (0.25 * answer_keyword_cov)
+            + (0.15 * answer_rel)
         )
         if refusal_predicted:
             answer_quality *= 0.25
 
         retrieval_quality = (
-            (0.10 * hit)
-            + (0.10 * source_kw_cov)
-            + (0.10 * p3)
-            + (0.10 * r3)
+            (0.20 * context_rel)
+            + (0.15 * p3)
+            + (0.20 * r3)
             + (0.10 * f1_3)
-            + (0.15 * reciprocal_rank)
-            + (0.15 * mean_average_precision)
+            + (0.10 * hit3)
+            + (0.10 * reciprocal_rank)
+            + (0.05 * mean_average_precision)
             + (0.10 * ndcg3)
-            + (0.10 * ndcg5)
         )
 
     overall = blend_scores_v1(

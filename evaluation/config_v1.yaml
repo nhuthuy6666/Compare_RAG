@@ -1,5 +1,6 @@
 {
   "dataset_path": "evaluation/dataset/testset.json",
+  "benchmark_policy_path": "evaluation/benchmark_policy_v1.json",
   "outputs_dir": "evaluation/outputs_v1",
   "results_dir": "evaluation/results_v1",
   "request_timeout_seconds": 180,

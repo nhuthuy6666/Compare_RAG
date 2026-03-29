@@ -23,7 +23,14 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
     url = f"{system_config['base_url'].rstrip('/')}{system_config['chat_endpoint']}"
 
     try:
-        response = requests.post(url, json={"query": example.question}, timeout=timeout)
+        response = requests.post(
+            url,
+            json={
+                "query": example.question,
+                "benchmark_profile": system_config.get("benchmark_profile") or {},
+            },
+            timeout=timeout,
+        )
         response.raise_for_status()
         data = response.json()
         # Hybrid trả về danh sách chunk nên label được gắn thêm chunk_id để trace kết quả.
