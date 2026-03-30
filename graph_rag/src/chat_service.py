@@ -13,12 +13,12 @@ from config import build_qdrant_client, build_vector_store, configure_models, lo
 from prompts import build_prompt_templates
 
 
-QUERY_FUSION_PROMPT = """Ban la tro ly tao truy van tim kiem cho he thong GraphRAG tu van tuyen sinh.
-Hay tao {num_queries} cach dien dat khac nhau cho cung mot cau hoi, giu nguyen y dinh va uu tien tu khoa bam sat du lieu tuyen sinh NTU.
-Moi dong dung mot truy van, khong danh so, khong giai thich.
+QUERY_FUSION_PROMPT = """Bạn là trợ lý tạo truy vấn tìm kiếm cho hệ thống GraphRAG tư vấn tuyển sinh.
+Hãy tạo {num_queries} cách diễn đạt khác nhau cho cùng một câu hỏi, giữ nguyên ý định và ưu tiên từ khóa bám sát dữ liệu tuyển sinh NTU.
+Mỗi dòng dùng một truy vấn, không đánh số, không giải thích.
 
-Cau hoi goc: {query}
-Danh sach truy van:
+Câu hỏi gốc: {query}
+Danh sách truy vấn:
 """
 
 
@@ -130,7 +130,6 @@ def _is_confident_enough(facts: list[SourceFact], threshold: float) -> bool:
 
 
 ## Xử lý một lượt hỏi đáp hoàn chỉnh theo đúng đặc trưng kiến trúc GraphRAG:
-## query trên graph facts bằng nguyên câu hỏi gốc, không thêm heuristic tăng cường truy vấn.
 def answer_question(question: str, top_k: int | None = None, runtime_overrides: dict | None = None) -> ChatAnswer:
     config = load_config(overrides=runtime_overrides)
     resolved_top_k = top_k or config.retrieval_top_n

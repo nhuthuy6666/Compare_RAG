@@ -28,12 +28,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 DEFAULT_BASELINE_CONFIG = PROJECT_ROOT / "extract_md" / "rag_baseline.json"
-DEFAULT_QUERY_FUSION_PROMPT = """Ban la tro ly tao truy van tim kiem cho he thong RAG tu van tuyen sinh.
-Hay tao {num_queries} cach dien dat khac nhau cho cung mot cau hoi, giu nguyen y dinh va uu tien tu khoa bam sat du lieu tuyen sinh NTU.
-Moi dong dung mot truy van, khong danh so, khong giai thich.
+DEFAULT_QUERY_FUSION_PROMPT = """Bạn là trợ lý tạo truy vấn tìm kiếm cho hệ thống RAG tư vấn tuyển sinh.
+Hãy tạo {num_queries} cách diễn đạt khác nhau cho cùng một câu hỏi, giữ nguyên ý định và ưu tiên từ khóa bám sát dữ liệu tuyển sinh NTU.
+Mỗi dòng dùng một truy vấn, không đánh số, không giải thích.
 
-Cau hoi goc: {query}
-Danh sach truy van:
+Câu hỏi gốc: {query}
+Danh sách truy vấn:
 """
 
 

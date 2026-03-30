@@ -79,7 +79,7 @@ def parse_args() -> argparse.Namespace:
 
 
 ## Nạp tập chunk records đầu vào.
-## Chỉ dùng shared JSONL từ `extract_md` để giữ pipeline đồng bộ với baseline.
+## Chỉ dùng shared JSONL từ `extract_md`.
 def _load_records(args: argparse.Namespace, config) -> list[dict]:
     chunk_jsonl_root = args.chunk_jsonl_root or config.source_chunk_root
     output_root = args.output_dir or config.chunk_dir
