@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from evaluation.common import load_structured_config, resolve_path  # noqa: E402
 
 
+# Khai báo và parse tham số CLI cho script dựng bản xem ASCII.
 def parse_args() -> argparse.Namespace:
     """Khai báo và parse tham số cho script render bản xem ASCII."""
 
@@ -21,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Đọc summary CSV để render bản xem ASCII.
 def load_rows(path: Path) -> list[dict[str, str]]:
     """Đọc summary CSV để render bản xem ASCII."""
 
@@ -28,6 +30,7 @@ def load_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+# Biến một giá trị 0-1 thành thanh ASCII để quan sát nhanh.
 def bar(value: float, width: int = 24) -> str:
     """Biến một giá trị 0-1 thành thanh ASCII để quan sát nhanh."""
 
@@ -36,6 +39,7 @@ def bar(value: float, width: int = 24) -> str:
     return "#" * filled + "." * (width - filled)
 
 
+# Parse số an toàn từ CSV.
 def to_float(row: dict[str, str], key: str) -> float:
     """Parse số an toàn từ CSV."""
 
@@ -45,6 +49,11 @@ def to_float(row: dict[str, str], key: str) -> float:
         return 0.0
 
 
+# Entry point của script dựng biểu diễn ASCII.
+# 1. Đọc `comparison.csv` từ thư mục kết quả hiện tại.
+# 2. Sắp xếp các hệ theo `overall_score`.
+# 3. Render thanh ASCII cho các metric chính.
+# 4. Ghi `comparison_ascii.txt` để xem nhanh không cần Markdown renderer.
 def main() -> None:
     """Điểm vào chính của script dựng biểu diễn ASCII.
 

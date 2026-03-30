@@ -38,18 +38,11 @@ Corpus dùng chung cho `rag`, `hybrid_rag` và `graph_rag` hiện lấy từ `ex
 
 ## Kiểm tra đồng bộ corpus với Qdrant
 
-```bash
-python scripts/audit_rag_corpus.py
-```
+Hiện không còn script audit riêng để sinh `corpus_manifest.*`.
+Nếu cần kiểm tra đồng bộ:
 
-Ý nghĩa:
-
-- đọc `rag_baseline.json` để xác định chunk root hiện tại
-- liệt kê chính xác các tài liệu đang có trong `extract_md/data_chunks`
-- đối chiếu với các collection `ntu_rag`, `ntu_hybrid_llamaindex`, `ntu_graphrag`
-- ghi kết quả ra `extract_md/corpus_manifest.json` và `extract_md/corpus_manifest.md`
-
-Nếu bạn nghi ngờ dữ liệu extract và dữ liệu trong các RAG đang lệch nhau, đây là lệnh nên chạy đầu tiên.
+- kiểm tra `extract_md/data_chunks` đúng số file `.jsonl`/số dòng chunk như mong đợi
+- kiểm tra Qdrant collections (`ntu_rag`, `ntu_hybrid_llamaindex`, `ntu_graphrag`) có đúng số points sau khi ingest/reindex
 
 ## Baseline hiện tại
 

@@ -52,6 +52,7 @@ class EvalPrediction:
     error: str | None = None
 
 
+# Resolve đường dẫn tuyệt đối từ path cấu hình tương đối hoặc tuyệt đối.
 def resolve_path(path_like: str | Path) -> Path:
     """Resolve đường dẫn tuyệt đối từ path cấu hình tương đối hoặc tuyệt đối."""
 
@@ -59,6 +60,7 @@ def resolve_path(path_like: str | Path) -> Path:
     return path if path.is_absolute() else PROJECT_ROOT / path
 
 
+# Đọc file text UTF-8 sau khi đã resolve đường dẫn.
 def load_text(path_like: str | Path) -> str:
     """Đọc file text UTF-8 sau khi đã resolve đường dẫn."""
 
@@ -66,6 +68,7 @@ def load_text(path_like: str | Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+# Nạp config/manifest JSON hoặc YAML về dict Python dùng chung.
 def load_structured_config(path_like: str | Path) -> dict[str, Any]:
     """Nạp config hoặc manifest ở dạng JSON hay YAML về dict Python."""
 
@@ -87,6 +90,7 @@ def load_structured_config(path_like: str | Path) -> dict[str, Any]:
     return data
 
 
+# Đọc file `.env` đơn giản theo format `KEY=VALUE`.
 def load_env_file(path_like: str | Path) -> dict[str, str]:
     """Đọc file `.env` đơn giản theo format `KEY=VALUE`."""
 
@@ -104,6 +108,7 @@ def load_env_file(path_like: str | Path) -> dict[str, str]:
     return env
 
 
+# Bỏ dấu tiếng Việt để việc so khớp text bền hơn trước biến thể nhập liệu.
 def strip_accents(text: str) -> str:
     """Bỏ dấu tiếng Việt để việc so khớp text bền hơn trước biến thể nhập liệu."""
 
@@ -112,6 +117,7 @@ def strip_accents(text: str) -> str:
     return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
 
 
+# Chuẩn hóa text về dạng lower-case, bỏ dấu câu và rút gọn khoảng trắng.
 def normalize_text(text: str) -> str:
     """Chuẩn hóa text về dạng lower-case, bỏ dấu câu và rút gọn khoảng trắng."""
 
@@ -121,18 +127,21 @@ def normalize_text(text: str) -> str:
     return lowered.strip()
 
 
+# Tách token đơn giản từ text đã normalize.
 def tokenize(text: str) -> list[str]:
     """Tách token đơn giản từ text đã normalize."""
 
     return [token for token in normalize_text(text).split() if token]
 
 
+# Rút các chuỗi số để kiểm tra claim định lượng trong câu trả lời.
 def extract_numbers(text: str) -> list[str]:
     """Rút các chuỗi số để kiểm tra claim định lượng trong câu trả lời."""
 
     return re.findall(r"\d+(?:[.,]\d+)?", text)
 
 
+# Nối toàn bộ source thành một chuỗi lớn để dò keyword hoặc source hint.
 def flatten_sources_text(sources: list[SourceRecord]) -> str:
     """Nối toàn bộ nguồn thành một chuỗi lớn để dò keyword hoặc source hint."""
 
@@ -145,6 +154,7 @@ def flatten_sources_text(sources: list[SourceRecord]) -> str:
     return "\n".join(part for part in parts if part).strip()
 
 
+# Phát hiện các mẫu câu từ chối hoặc thiếu thông tin trong câu trả lời.
 def refusal_detected(answer: str) -> bool:
     """Phát hiện các mẫu câu từ chối hoặc thiếu thông tin trong câu trả lời."""
 
@@ -161,6 +171,7 @@ def refusal_detected(answer: str) -> bool:
     return any(signal in answer_norm for signal in signals)
 
 
+# Tạo thư mục đầu ra nếu chưa tồn tại và trả lại đường dẫn đã resolve.
 def ensure_dir(path_like: str | Path) -> Path:
     """Tạo thư mục đầu ra nếu chưa tồn tại và trả lại đường dẫn đã resolve."""
 
@@ -169,6 +180,7 @@ def ensure_dir(path_like: str | Path) -> Path:
     return path
 
 
+# Ghi payload ra file JSON đẹp để dễ đọc và diff.
 def write_json(path_like: str | Path, payload: Any) -> Path:
     """Ghi payload ra file JSON đẹp để dễ đọc và diff."""
 
@@ -178,6 +190,7 @@ def write_json(path_like: str | Path, payload: Any) -> Path:
     return path
 
 
+# Ghi danh sách row ra CSV với header là hợp của toàn bộ khóa xuất hiện.
 def write_csv(path_like: str | Path, rows: list[dict[str, Any]]) -> Path:
     """Ghi danh sách row ra CSV với header là hợp của toàn bộ khóa xuất hiện."""
 
@@ -196,6 +209,7 @@ def write_csv(path_like: str | Path, rows: list[dict[str, Any]]) -> Path:
     return path
 
 
+# Đệ quy chuyển dataclass/list/dict về kiểu thuần Python để dump JSON.
 def dataclass_to_dict(obj: Any) -> Any:
     """Đệ quy chuyển dataclass, list và dict về kiểu thuần Python để dump JSON."""
 

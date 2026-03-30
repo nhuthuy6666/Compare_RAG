@@ -8,7 +8,6 @@ from llamaindex_shared.common import (
 )
 from llamaindex_shared.chat_ui import ChatUiConfig, ChatUiTab, build_chat_ui_tabs, render_chat_ui
 from llamaindex_shared.corpus_utils import (
-    chunk_txt_file,
     configure_console_utf8,
     load_chunk_record_groups,
     records_to_nodes,
@@ -27,7 +26,6 @@ __all__ = [
     "build_chat_ui_tabs",
     "build_query_engine",
     "build_prompt_templates",
-    "chunk_txt_file",
     "collect_sources",
     "configure_console_utf8",
     "configure_models",

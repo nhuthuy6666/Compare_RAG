@@ -12,6 +12,7 @@ from evaluation.common import normalize_text
 class SemanticScorer:
     """Bọc logic gọi embedding service và tính semantic similarity có cache."""
 
+    # Khởi tạo semantic scorer với endpoint, model và timeout tương ứng.
     def __init__(self, base_url: str, model: str, timeout: tuple[int, int]):
         """Khởi tạo semantic scorer với endpoint, model và timeout tương ứng."""
 
@@ -21,6 +22,7 @@ class SemanticScorer:
         self.session = requests.Session()
         self._cache: dict[str, list[float]] = {}
 
+    # Lấy embedding cho một đoạn text, có normalize và cache trước khi gọi API.
     def embed(self, text: str) -> list[float]:
         """Lấy embedding cho một đoạn text, có normalize và cache trước khi gọi API."""
 
@@ -34,6 +36,7 @@ class SemanticScorer:
         self._cache[normalized] = vector
         return vector
 
+    # Thử nhiều độ dài input và nhiều endpoint để tăng khả năng tương thích.
     def _embed_with_fallback(self, text: str) -> list[float]:
         """Thử nhiều độ dài input và nhiều endpoint để tăng khả năng tương thích."""
 
@@ -56,12 +59,14 @@ class SemanticScorer:
                     continue
         return []
 
+    # Tính cosine similarity trực tiếp trên embedding của hai đoạn text.
     def cosine_text(self, left: str, right: str) -> float:
         """Tính cosine similarity trực tiếp trên embedding của hai đoạn text."""
 
         return cosine_similarity(self.embed(left), self.embed(right))
 
 
+# Tính cosine similarity an toàn, trả 0 nếu vector rỗng hoặc lệch chiều.
 def cosine_similarity(left: list[float], right: list[float]) -> float:
     """Tính cosine similarity an toàn, trả 0 nếu vector rỗng hoặc lệch chiều."""
 
@@ -76,6 +81,7 @@ def cosine_similarity(left: list[float], right: list[float]) -> float:
     return max(0.0, numerator / (left_norm * right_norm))
 
 
+# Rút vector embedding từ nhiều dạng payload response phổ biến.
 def _extract_vector(payload: dict[str, Any]) -> list[float]:
     """Rút vector embedding từ nhiều dạng payload response phổ biến."""
 

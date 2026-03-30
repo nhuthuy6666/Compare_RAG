@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from evaluation.common import load_structured_config, resolve_path  # noqa: E402
 
 
+# Khai báo và parse tham số CLI cho script dựng lại báo cáo Markdown.
 def parse_args() -> argparse.Namespace:
     """Khai báo và parse tham số cho script dựng lại báo cáo Markdown."""
 
@@ -21,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Đọc summary CSV thành list dict để các hàm render dùng chung.
 def load_rows(path: Path) -> list[dict[str, str]]:
     """Đọc CSV thành danh sách dict để các hàm render dùng chung."""
 
@@ -28,6 +30,7 @@ def load_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+# Parse một cột số trong CSV về float an toàn.
 def to_float(row: dict[str, str], key: str) -> float:
     """Parse số an toàn từ một cột trong CSV."""
 
@@ -37,6 +40,7 @@ def to_float(row: dict[str, str], key: str) -> float:
         return 0.0
 
 
+# Render phần metadata đầu báo cáo như mode, split, budget và seed.
 def render_metadata(rows: list[dict[str, str]]) -> list[str]:
     """Render phần metadata đầu báo cáo như mode, split, budget và seed."""
 
@@ -58,6 +62,7 @@ def render_metadata(rows: list[dict[str, str]]) -> list[str]:
     ]
 
 
+# Render bảng xếp hạng tổng quan của các hệ từ summary rows.
 def render_summary_table(rows: list[dict[str, str]]) -> list[str]:
     """Render bảng xếp hạng tổng quan của các hệ."""
 
@@ -85,6 +90,7 @@ def render_summary_table(rows: list[dict[str, str]]) -> list[str]:
     return lines
 
 
+# Render breakdown theo từng strength bucket nếu có dữ liệu bucket.
 def render_strength_tables(rows: list[dict[str, str]]) -> list[str]:
     """Render breakdown theo từng nhóm câu hỏi nếu có dữ liệu bucket."""
 
@@ -131,6 +137,7 @@ def render_strength_tables(rows: list[dict[str, str]]) -> list[str]:
     return lines
 
 
+# Ghép toàn bộ các phần của báo cáo thành nội dung cuối cùng của `comparison.md`.
 def build_comparison_report(rows: list[dict[str, str]], strength_rows: list[dict[str, str]] | None = None) -> str:
     """Ghép toàn bộ các phần thành nội dung cuối của `comparison.md`."""
 
@@ -141,6 +148,11 @@ def build_comparison_report(rows: list[dict[str, str]], strength_rows: list[dict
     return "\n".join(lines)
 
 
+# Entry point của script dựng lại báo cáo comparison.
+# 1. Đọc config để tìm thư mục kết quả hiện tại.
+# 2. Kiểm tra `comparison.csv` và `strength_breakdown.csv` có sẵn hay không.
+# 3. Nếu có artifact, render lại `comparison.md` từ CSV.
+# 4. Nếu chỉ còn `comparison.md`, in trạng thái hiện tại và hướng dẫn ngắn.
 def main() -> None:
     """Điểm vào chính của script render báo cáo.
 

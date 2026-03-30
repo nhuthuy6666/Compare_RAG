@@ -8,6 +8,7 @@ import requests
 from evaluation.common import EvalExample, EvalPrediction, SourceRecord, load_env_file
 
 
+# Ghép API key từ config hoặc file `.env` để gọi AnythingLLM/baseline cũ.
 def _headers(system_config: dict[str, Any]) -> dict[str, str]:
     # Ghép API key từ config hoặc file .env để gọi AnythingLLM.
     env = load_env_file(system_config.get("env_file", ""))
@@ -20,6 +21,7 @@ def _headers(system_config: dict[str, Any]) -> dict[str, str]:
     }
 
 
+# Kiểm tra baseline sẵn sàng nhận request hay chưa.
 def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None:
     # Hỗ trợ cả baseline AnythingLLM cũ lẫn baseline local qua HTTP.
     headers = _headers(system_config) if system_config.get("workspace_slug") else None
@@ -31,6 +33,7 @@ def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None
     response.raise_for_status()
 
 
+# Gọi baseline cho một câu hỏi benchmark và chuẩn hóa response về `EvalPrediction`.
 def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tuple[int, int]) -> EvalPrediction:
     # Gọi baseline cho một câu hỏi và chuẩn hóa response về EvalPrediction.
     started = time.perf_counter()

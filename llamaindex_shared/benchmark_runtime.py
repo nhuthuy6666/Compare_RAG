@@ -16,7 +16,7 @@ ALLOWED_OVERRIDE_KEYS = {
     "llm_seed",
 }
 
-
+# Lọc và “chuẩn hóa” dict override từ request/runtime
 def normalize_runtime_overrides(overrides: Mapping[str, Any] | None) -> dict[str, Any]:
     if not overrides:
         return {}
@@ -44,12 +44,12 @@ def normalize_runtime_overrides(overrides: Mapping[str, Any] | None) -> dict[str
             normalized[key] = str(value).strip()
     return normalized
 
-
+# Tạo một “chữ ký” dạng chuỗi JSON ổn định từ overrides đã normalize
 def runtime_overrides_signature(overrides: Mapping[str, Any] | None) -> str:
     normalized = normalize_runtime_overrides(overrides)
     return json.dumps(normalized, ensure_ascii=False, sort_keys=True)
 
-
+# Đọc payload request
 def parse_benchmark_profile_payload(payload: Mapping[str, Any] | None) -> tuple[str, dict[str, Any]]:
     if not payload:
         return "default", {}

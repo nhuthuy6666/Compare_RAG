@@ -5,11 +5,13 @@ from difflib import SequenceMatcher
 from evaluation.common import normalize_text, tokenize
 
 
+# Chấm exact match sau khi normalize để giảm khác biệt bề mặt.
 def exact_match_score(reference: str, answer: str) -> float:
     # Điểm tuyệt đối: chỉ được 1 khi answer trùng reference sau normalize.
     return 1.0 if normalize_text(reference) == normalize_text(answer) else 0.0
 
 
+# So khớp ở mức token để đo độ "đúng ý" ngay cả khi wording không hoàn toàn giống nhau.
 def token_f1_score(reference: str, answer: str) -> tuple[float, float, float]:
     # So khớp token-level để đo mức độ “đúng ý” ngay cả khi câu chữ không hoàn toàn giống nhau.
     reference_tokens = tokenize(reference)
@@ -37,11 +39,13 @@ def token_f1_score(reference: str, answer: str) -> tuple[float, float, float]:
     return precision, recall, 2 * precision * recall / (precision + recall)
 
 
+# Độ giống ký tự hữu ích cho số điện thoại, email, URL hoặc đáp án ngắn.
 def char_similarity(reference: str, answer: str) -> float:
     # Độ giống ký tự hữu ích cho số điện thoại, email, URL hoặc câu trả lời ngắn.
     return SequenceMatcher(a=normalize_text(reference), b=normalize_text(answer)).ratio()
 
 
+# Tính tỷ lệ keyword kỳ vọng thực sự xuất hiện trong câu trả lời.
 def keyword_coverage(answer: str, expected_keywords: list[str]) -> float:
     # Tính tỷ lệ keyword kỳ vọng thực sự xuất hiện trong câu trả lời.
     if not expected_keywords:

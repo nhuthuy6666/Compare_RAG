@@ -8,6 +8,7 @@ import requests
 from evaluation.common import EvalExample, EvalPrediction, SourceRecord
 
 
+# Kiểm tra app GraphRAG sẵn sàng nhận request hay chưa.
 def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None:
     response = requests.get(
         f"{system_config['base_url'].rstrip('/')}{system_config['health_endpoint']}",
@@ -16,6 +17,7 @@ def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None
     response.raise_for_status()
 
 
+# Chuẩn hóa payload stateless của GraphRAG về `(answer, sources)`.
 def _extract_stateless_answer_and_sources(payload: dict[str, Any]) -> tuple[str, list[SourceRecord]]:
     sources = [
         SourceRecord(
@@ -32,6 +34,7 @@ def _extract_stateless_answer_and_sources(payload: dict[str, Any]) -> tuple[str,
     return str(payload.get("answer") or "").strip(), sources
 
 
+# Chuẩn hóa payload dạng session chat của GraphRAG về `(answer, sources)`.
 def _extract_session_answer_and_sources(payload: dict[str, Any]) -> tuple[str, list[SourceRecord]]:
     session = payload.get("session") or {}
     messages = session.get("messages") or []
@@ -56,6 +59,7 @@ def _extract_session_answer_and_sources(payload: dict[str, Any]) -> tuple[str, l
     return str(latest.get("content") or "").strip(), sources
 
 
+# Gọi GraphRAG theo mode stateless hoặc session rồi map kết quả về `EvalPrediction`.
 def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tuple[int, int]) -> EvalPrediction:
     started = time.perf_counter()
     base_url = system_config["base_url"].rstrip("/")

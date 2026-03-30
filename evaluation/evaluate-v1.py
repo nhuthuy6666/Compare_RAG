@@ -42,6 +42,7 @@ RUNNERS: dict[str, tuple[Callable, Callable]] = {
 }
 
 
+# Khai báo và parse tham số CLI cho một lần benchmark V1.
 def parse_args() -> argparse.Namespace:
     """Khai báo và parse tham số dòng lệnh cho lần chạy benchmark V1."""
 
@@ -75,6 +76,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Tính trung bình và làm tròn 4 chữ số để thống nhất cách ghi báo cáo.
 def mean(values: list[float]) -> float:
     """Tính trung bình và làm tròn 4 chữ số để thống nhất cách ghi báo cáo."""
 
@@ -130,6 +132,7 @@ DETAIL_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
 ]
 
 
+# Gộp toàn bộ metric row của một hệ thành một summary row để ghi report.
 def aggregate_metrics(system: str, rows: list[dict], *, metadata: dict[str, object], budget: dict[str, object]) -> dict:
     """Gộp metric theo hệ để tạo summary row cho báo cáo tổng hợp."""
 
@@ -181,6 +184,7 @@ def aggregate_metrics(system: str, rows: list[dict], *, metadata: dict[str, obje
     return summary
 
 
+# Gộp metric theo từng strength bucket để xem hệ mạnh/yếu ở nhóm câu hỏi nào.
 def aggregate_strength_buckets(system: str, rows: list[dict], *, metadata: dict[str, object], budget: dict[str, object]) -> list[dict]:
     """Gộp metric theo từng bucket độ mạnh câu hỏi như dense, graph và neutral."""
 
@@ -197,6 +201,7 @@ def aggregate_strength_buckets(system: str, rows: list[dict], *, metadata: dict[
     return summaries
 
 
+# In bảng metric chi tiết của một hệ ra terminal sau mỗi lượt evaluate.
 def print_detailed_summary(system_name: str, summary: dict, metric_rows: list[dict]) -> None:
     """In tóm tắt metric chi tiết của một hệ ra terminal để theo dõi khi chạy."""
 
@@ -233,6 +238,7 @@ def print_detailed_summary(system_name: str, summary: dict, metric_rows: list[di
         print(f"  Worst topics: {worst_text}", flush=True)
 
 
+# Chạy trọn một hệ trên toàn bộ examples, chấm điểm từng câu và gộp kết quả.
 def run_system(
     *,
     system_name: str,
@@ -293,6 +299,12 @@ def run_system(
     }
 
 
+# Entry point benchmark V1.
+# 1. Đọc CLI, config, policy và resolve mode/split/budget.
+# 2. Nạp dataset, chuẩn bị outputs/results dir và semantic scorer nếu được bật.
+# 3. Lần lượt resolve profile cho từng hệ rồi gọi runner + evaluator.
+# 4. Gộp summary, render `comparison.md` và tùy chọn ghi thêm artifacts.
+# 5. In kết quả tóm tắt cuối cùng để theo dõi nhanh trên terminal.
 def main() -> None:
     """Điểm vào chính của benchmark V1.
 

@@ -68,7 +68,7 @@ def _load_baseline_config(path: Path) -> dict[str, Any]:
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
 
-
+# Đọc biến môi trường name và parse về kiểu bool
 def _get_bool_env(name: str, default: bool) -> bool:
     raw = os.getenv(name)
     if raw is None:
@@ -80,7 +80,7 @@ def _get_bool_env(name: str, default: bool) -> bool:
         return False
     raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
 
-
+# Nhận mode dạng chuỗi (từ config/env), chuẩn hóa lowercase rồi map sang enum FUSION_MODES để đưa vào QueryFusionRetriever.
 def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
     normalized = mode.strip().lower()
     mapping = {
@@ -95,7 +95,7 @@ def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
         supported = ", ".join(sorted(mapping))
         raise ValueError(f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported}") from exc
 
-
+# Chuẩn hóa đường dẫn: nếu là absolute path thì giữ nguyên, nếu là relative thì ghép với PROJECT_ROOT
 def _resolve_repo_path(path_like: str | Path) -> Path:
     """Resolve path tương đối theo root của repo hiện tại."""
 

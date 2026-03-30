@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 
+# Công thức tổng hợp V1 ưu tiên recall, faithfulness và độ liên quan của câu trả lời.
 def blend_scores_v1(
     *,
     recall_at_k: float,

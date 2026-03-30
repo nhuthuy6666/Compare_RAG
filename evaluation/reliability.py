@@ -21,6 +21,7 @@ from evaluation.dataset.loader import load_examples  # noqa: E402
 RNG = random.Random(42)
 
 
+# Khai báo và parse tham số CLI cho báo cáo reliability.
 def parse_args() -> argparse.Namespace:
     """Khai báo và parse tham số cho báo cáo reliability."""
 
@@ -35,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Đọc một file CSV thành list dict để các bước bootstrap dùng chung.
 def load_csv_rows(path: Path) -> list[dict[str, str]]:
     """Đọc CSV thành danh sách dict để xử lý thống nhất."""
 
@@ -42,6 +44,7 @@ def load_csv_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+# Liệt kê các file metric CSV còn thiếu trước khi bắt đầu bootstrap.
 def find_missing_metric_files(results_dir: Path, systems: list[str]) -> list[Path]:
     """Liệt kê các file metric CSV còn thiếu cho từng hệ."""
 
@@ -53,6 +56,7 @@ def find_missing_metric_files(results_dir: Path, systems: list[str]) -> list[Pat
     return missing
 
 
+# Resolve split dùng cho reliability; `auto` sẽ cố suy ra từ `comparison.json`.
 def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
     """Tự suy ra split cần dùng khi người dùng chọn `auto`."""
 
@@ -77,6 +81,7 @@ def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
     return "all"
 
 
+# Căn metric rows theo thứ tự example chuẩn để so sánh pairwise không lệch mẫu.
 def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids: list[str]) -> list[dict[str, str]]:
     """Căn metric row theo đúng thứ tự example để bootstrap pairwise không lệch mẫu."""
 
@@ -111,6 +116,7 @@ def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids:
     return [indexed_rows[example_id] for example_id in example_ids]
 
 
+# Parse một giá trị số lấy từ CSV về float an toàn.
 def to_float(value: str | float | int | None) -> float:
     """Parse số an toàn cho dữ liệu đọc từ CSV."""
 
@@ -120,6 +126,7 @@ def to_float(value: str | float | int | None) -> float:
         return 0.0
 
 
+# Tính mean và khoảng tin cậy 95% bằng bootstrap cho một dãy điểm.
 def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float, float]:
     """Ước lượng mean và khoảng tin cậy 95% cho một metric."""
 
@@ -136,6 +143,7 @@ def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float,
     return statistics.fmean(values), low, high
 
 
+# Tính khoảng tin cậy bootstrap cho chênh lệch giữa hai hệ đã align theo example.
 def bootstrap_diff_ci(left: list[float], right: list[float], rounds: int = 2000) -> tuple[float, float, float]:
     """Ước lượng khoảng tin cậy cho chênh lệch trung bình giữa hai hệ."""
 
@@ -153,6 +161,7 @@ def bootstrap_diff_ci(left: list[float], right: list[float], rounds: int = 2000)
     return observed, low, high
 
 
+# Gắn nhãn ổn định khi khoảng tin cậy của chênh lệch không cắt qua 0.
 def confidence_label(low: float, high: float) -> str:
     """Gán nhãn ổn định nếu khoảng tin cậy không cắt qua 0."""
 
@@ -161,6 +170,11 @@ def confidence_label(low: float, high: float) -> str:
     return "overlap_zero"
 
 
+# Entry point của báo cáo reliability.
+# 1. Đọc config, resolve split và nạp dataset làm chuẩn align.
+# 2. Kiểm tra các metric CSV cần thiết đã tồn tại hay chưa.
+# 3. Căn metric row của từng hệ theo example rồi tính bootstrap CI và pairwise diff.
+# 4. Ghi CSV/report Markdown để phục vụ phân tích độ tin cậy.
 def main() -> None:
     """Điểm vào chính của script reliability.
 

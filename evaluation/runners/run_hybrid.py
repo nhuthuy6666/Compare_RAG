@@ -8,6 +8,7 @@ import requests
 from evaluation.common import EvalExample, EvalPrediction, SourceRecord
 
 
+# Kiểm tra app Hybrid RAG sẵn sàng nhận request hay chưa.
 def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None:
     # Kiểm tra app Hybrid RAG sẵn sàng nhận request hay chưa.
     response = requests.get(
@@ -17,6 +18,7 @@ def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None
     response.raise_for_status()
 
 
+# Gọi endpoint chat của Hybrid RAG cho một câu hỏi benchmark.
 def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tuple[int, int]) -> EvalPrediction:
     # Gọi endpoint chat của Hybrid RAG cho một câu hỏi benchmark.
     started = time.perf_counter()

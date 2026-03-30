@@ -15,6 +15,7 @@ DEFAULT_WITH_FUSION_OUTPUTS = "evaluation/outputs_shared/with_fusion"
 DEFAULT_NO_FUSION_OUTPUTS = "evaluation/outputs_shared/no_fusion"
 
 
+# Khai báo và parse tham số CLI cho script chạy 2 báo cáo shared profile.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run shared-mode comparisons for all 3 systems with fusion and without fusion."
@@ -35,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Dựng lệnh `evaluate-v1.py` hoàn chỉnh cho một lượt chạy fusion hoặc no-fusion.
 def build_command(
     *,
     config: str,
@@ -69,6 +71,7 @@ def build_command(
     return command
 
 
+# In lệnh ra console và thực thi nếu không ở chế độ dry-run.
 def run_command(command: list[str], *, dry_run: bool) -> None:
     printable = subprocess.list2cmdline(command)
     print(printable, flush=True)
@@ -77,6 +80,10 @@ def run_command(command: list[str], *, dry_run: bool) -> None:
     subprocess.run(command, check=True)
 
 
+# Entry point của script chạy 2 báo cáo shared profile.
+# 1. Đọc CLI và dựng nhãn run mặc định cho 2 chế độ.
+# 2. Tạo command cho lượt chạy `with_fusion` và `no_fusion`.
+# 3. Chạy tuần tự hai lệnh benchmark và in đường dẫn báo cáo cuối cùng.
 def main() -> None:
     args = parse_args()
 

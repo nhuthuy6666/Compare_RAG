@@ -20,6 +20,7 @@ from evaluation.policy import load_benchmark_policy, resolve_mode, resolve_split
 RNG = random.Random(42)
 
 
+# Khai báo và parse tham số CLI cho repeated evaluation study.
 def parse_args() -> argparse.Namespace:
     """Khai báo và parse tham số cho repeated evaluation study."""
 
@@ -37,6 +38,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Đọc CSV thành list dict để tổng hợp study.
 def load_csv_rows(path: Path) -> list[dict[str, str]]:
     """Đọc CSV thành danh sách dict để tổng hợp study."""
 
@@ -44,6 +46,7 @@ def load_csv_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+# Parse một giá trị số từ CSV hoặc runtime về float an toàn.
 def to_float(value: str | float | int | None) -> float:
     """Parse số an toàn từ CSV hoặc giá trị runtime."""
 
@@ -53,6 +56,7 @@ def to_float(value: str | float | int | None) -> float:
         return 0.0
 
 
+# Tính mean và khoảng tin cậy 95% bằng bootstrap trên nhiều lần chạy.
 def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float, float]:
     """Ước lượng mean và khoảng tin cậy 95% bằng bootstrap."""
 
@@ -69,6 +73,7 @@ def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float,
     return statistics.fmean(values), low, high
 
 
+# Tính p-value pairwise bằng permutation test trên cùng tập mẫu.
 def permutation_paired_pvalue(left: list[float], right: list[float], rounds: int = 5000) -> float:
     """Tính p-value pairwise bằng permutation test trên cùng tập mẫu."""
 
@@ -84,6 +89,7 @@ def permutation_paired_pvalue(left: list[float], right: list[float], rounds: int
     return (extreme + 1) / (rounds + 1)
 
 
+# Gắn nhãn ổn định khi CI không cắt 0 và p-value đủ nhỏ.
 def confidence_label(ci_low: float, ci_high: float, p_value: float) -> str:
     """Gán nhãn ổn định khi CI không cắt 0 và p-value đủ nhỏ."""
 
@@ -92,6 +98,11 @@ def confidence_label(ci_low: float, ci_high: float, p_value: float) -> str:
     return "uncertain"
 
 
+# Entry point của repeated study.
+# 1. Đọc config/policy rồi resolve mode, split, số lần chạy và seed schedule.
+# 2. Gọi `evaluate-v1.py` lặp lại nhiều lần và lưu mỗi run vào thư mục riêng.
+# 3. Tổng hợp chuỗi điểm theo hệ, tính CI và pairwise significance.
+# 4. Ghi CSV và report Markdown cho phân tích độ ổn định.
 def main() -> None:
     """Điểm vào chính của repeated study.
 

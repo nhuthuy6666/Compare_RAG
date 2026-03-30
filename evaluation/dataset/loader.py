@@ -26,6 +26,7 @@ DEFAULT_TOPIC_BUCKETS = {
 }
 
 
+# Đọc một file JSON list đơn giản; trả `[]` nếu file trống hoặc chưa tồn tại.
 def _load_json_list(path: Path) -> list[dict]:
     if not path.exists():
         return []
@@ -38,6 +39,7 @@ def _load_json_list(path: Path) -> list[dict]:
     return payload
 
 
+# Nạp override strength bucket theo `example_id` nếu file bucket tồn tại.
 def _load_strength_buckets() -> dict[str, str]:
     if not STRENGTH_BUCKET_PATH.exists():
         return {}
@@ -50,6 +52,7 @@ def _load_strength_buckets() -> dict[str, str]:
     return {str(key): str(value) for key, value in payload.items()}
 
 
+# Nạp map split -> tập `example_id` để gán dev/held_out_test cho từng câu.
 def _load_split_assignments() -> dict[str, set[str]]:
     if not SPLIT_ASSIGNMENT_PATH.exists():
         return {}
@@ -68,6 +71,7 @@ def _load_split_assignments() -> dict[str, set[str]]:
     return assignments
 
 
+# Resolve split của một example cụ thể từ bảng split assignments.
 def _resolve_example_split(example_id: str, split_assignments: dict[str, set[str]]) -> str:
     for split_name, example_ids in split_assignments.items():
         if example_id in example_ids:
@@ -75,6 +79,7 @@ def _resolve_example_split(example_id: str, split_assignments: dict[str, set[str
     return "all"
 
 
+# Nạp dataset benchmark, gán bucket/split và lọc theo split được yêu cầu.
 def load_examples(path_like: str | Path, *, split: str = "all") -> list[EvalExample]:
     # Đọc file JSON benchmark, gán bucket/split và cho phép lọc theo dev hoặc held_out_test.
     path = resolve_path(path_like)

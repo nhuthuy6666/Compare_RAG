@@ -34,8 +34,8 @@ from evaluation.semantic import SemanticScorer
 RETRIEVAL_K = 3
 
 
+# Khi request lỗi, trả về một hàng metric an toàn với điểm 0 để pipeline vẫn chạy hết.
 def _empty_result(example: EvalExample, prediction: EvalPrediction) -> dict:
-    # Khi request loi, tra ve mot hang metric an toan voi diem 0 de pipeline van chay het.
     return {
         "example_id": example.id,
         "question": example.question,
@@ -81,12 +81,12 @@ def _empty_result(example: EvalExample, prediction: EvalPrediction) -> dict:
     }
 
 
+# Hàm lõi V1: chấm một dự đoán theo generation, retrieval, faithfulness và overall.
 def evaluate_prediction_v1(
     example: EvalExample,
     prediction: EvalPrediction,
     semantic_scorer: SemanticScorer | None = None,
 ) -> dict:
-    # Ham loi V1: giu lai metric chi tiet nhung cham retrieval theo content score de cong bang hon giua cac kien truc.
     if prediction.error:
         return _empty_result(example, prediction)
 

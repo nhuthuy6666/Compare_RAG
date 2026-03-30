@@ -57,7 +57,7 @@ class Section:
     def document_title(self) -> str:
         return self.heading_path[0] if self.heading_path else ""
 
-    # Render heading context cua section, bo qua heading root cua tai lieu.
+    # Render heading context của section, bỏ qua heading root của tài liệu.
     def render_body(self, skip_heading_count: int = 1) -> str:
         parts: list[str] = []
         for level, text in self.headings[skip_heading_count:]:
@@ -73,13 +73,13 @@ class Section:
         return self.render_body()
 
 
-# Chuyen chuoi bat ky thanh slug lowercase dung cho ten file.
+# Chuyển chuỗi bất kỳ thành slug lowercase dùng cho tên file.
 def slugify(value: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", value.strip().lower())
     return re.sub(r"-+", "-", slug).strip("-")
 
 
-# Doan nam (YYYY) tu path, fallback theo ten file hoac nam hien tai.
+# Đoán năm (YYYY) từ path, fallback theo tên file hoặc năm hiện tại.
 def guess_year(path: Path) -> str:
     for part in reversed(path.parts):
         if re.fullmatch(r"20\d{2}", part):
@@ -90,12 +90,12 @@ def guess_year(path: Path) -> str:
     return str(date.today().year)
 
 
-# Chuyen stem cua file thanh tieu de de doc.
+# Chuyển stem của file thành tiêu đề dễ đọc.
 def source_title_from_stem(stem: str) -> str:
     return re.sub(r"[-_]+", " ", stem).strip().title()
 
 
-# Chuan hoa mot dong text: unicode, bullet dac biet, khoang trang.
+# Chuẩn hóa một dòng text: Unicode, bullet đặc biệt, khoảng trắng.
 def normalize_line(line: str) -> str:
     cleaned = unicodedata.normalize("NFC", line)
     cleaned = cleaned.replace("\ufeff", "").replace("\u200b", "").replace("\u200c", "").replace("\u200d", "")
@@ -106,7 +106,7 @@ def normalize_line(line: str) -> str:
     return re.sub(r"\s+", " ", cleaned).strip()
 
 
-# Chuan hoa toan bo van ban va xu ly xuong dong.
+# Chuẩn hóa toàn bộ văn bản và xử lý xuống dòng.
 def normalize_text(text: str) -> str:
     text = unicodedata.normalize("NFC", text)
     text = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -120,7 +120,7 @@ def fold_text(text: str) -> str:
     return "".join(char for char in decomposed if not unicodedata.combining(char)).lower()
 
 
-# Gop nhieu dong trong lien tiep thanh toi da 1 dong trong.
+# Gộp nhiều dòng trống liên tiếp thành tối đa 1 dòng trống.
 def collapse_blank_lines(lines: list[str]) -> list[str]:
     output: list[str] = []
     previous_blank = False
@@ -178,14 +178,14 @@ def is_inline_fact_heading(text: str) -> bool:
     return ":" in text and len(text) <= 120
 
 
-# Dong goi tieu de + noi dung thanh tai lieu TXT hoan chinh.
+# Đóng gói tiêu đề + nội dung thành tài liệu TXT hoàn chỉnh.
 def finalize_document(title: str, body_lines: list[str]) -> str:
     lines = [f"# {title}", *normalize_heading_hierarchy(body_lines)]
     text = normalize_text("\n".join(collapse_blank_lines(lines)))
     return text + "\n"
 
 
-# Nhan dien heading theo token (Qn, La ma, so thu tu) va suy ra level.
+# Nhận diện heading theo token (Qn, La Mã, số thứ tự) và suy ra level.
 def extract_heading_info(text: str) -> dict | None:
     match = HEADING_PREFIX_RE.match(text)
     if not match:
@@ -204,7 +204,7 @@ def extract_heading_info(text: str) -> dict | None:
     return None
 
 
-# Suy ra cap do heading tu noi dung dong text.
+# Suy ra cấp độ heading từ nội dung dòng text.
 def heading_level_from_text(text: str) -> int | None:
     info = extract_heading_info(text)
     if info:
@@ -216,7 +216,7 @@ def heading_level_from_text(text: str) -> int | None:
     return None
 
 
-# Chuyen mot dong text thanh heading markdown neu hop le.
+# Chuyển một dòng text thành heading markdown nếu hợp lệ.
 def classify_heading_line(text: str) -> str | None:
     info = extract_heading_info(text)
     if info:
@@ -228,7 +228,7 @@ def classify_heading_line(text: str) -> str | None:
     return f"{'#' * level} {text}"
 
 
-# Phan loai dong text thuong/heading/bullet theo quy tac normalize.
+# Phân loại dòng text thường/heading/bullet theo quy tắc normalize.
 def classify_text_line(text: str) -> str:
     cleaned = normalize_line(text)
     if not cleaned:
@@ -241,14 +241,14 @@ def classify_text_line(text: str) -> str:
     return cleaned
 
 
-# Kiem tra dong co phai nhieu header/footer so trang can bo.
+# Kiểm tra dòng có phải nhiễu header/footer số trang cán bộ.
 def is_noise_line(line: str) -> bool:
     if not line or re.fullmatch(r"\d{1,3}", line):
         return True
     return any(pattern.match(line) for pattern in PAGE_NOISE_PATTERNS)
 
 
-# Loc dong nhieu lap va noise theo tung trang PDF.
+# Lọc dòng nhiễu lặp và noise theo từng trang PDF.
 def filter_noise_lines(page_lines: list[list[str]]) -> list[list[str]]:
     page_count = max(len(page_lines), 1)
     line_presence = Counter()
@@ -273,7 +273,7 @@ def filter_noise_lines(page_lines: list[list[str]]) -> list[list[str]]:
     return output
 
 
-# Render bang thanh cac dong text theo dinh dang pipes.
+# Render bảng thành các dòng text theo định dạng pipes.
 def render_table_lines(rows: list[list[str]], table_index: int, style: str = "pipes") -> list[str]:
     normalized_rows: list[list[str]] = []
     for row in rows:
@@ -349,8 +349,8 @@ def common_heading_prefix_len(left: list[HeadingNode], right: list[HeadingNode])
 def same_merge_anchor(left: Section, right: Section) -> bool:
     if left.document_title != right.document_title:
         return False
-    # Chi merge khi 2 section con cung nam duoi it nhat 1 heading noi dung chung,
-    # tranh tron cac fact ngan o top-level voi cac phan khac trong cung tai lieu.
+    # Chỉ merge khi 2 section con cùng nằm dưới ít nhất 1 heading nội dung chung,
+    # tránh trộn các fact ngắn ở top-level với các phần khác trong cùng tài liệu.
     return common_heading_prefix_len(left.headings, right.headings) >= 2
 
 

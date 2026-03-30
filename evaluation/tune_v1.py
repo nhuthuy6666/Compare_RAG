@@ -16,6 +16,7 @@ from evaluation.common import ensure_dir, load_structured_config  # noqa: E402
 from evaluation.policy import load_benchmark_policy, load_locked_profiles, load_profile_candidates  # noqa: E402
 
 
+# Khai báo và parse tham số CLI cho quy trình tuning khóa profile trên dev.
 def parse_args() -> argparse.Namespace:
     """Khai báo và parse tham số cho quy trình tuning khóa profile trên dev."""
 
@@ -27,12 +28,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# Trả về đường dẫn file summary JSON của một run candidate.
 def _comparison_path(results_dir: Path) -> Path:
     """Trả về đường dẫn file summary JSON của một run candidate."""
 
     return results_dir / "comparison.json"
 
 
+# Lấy danh sách tên candidate profile của một hệ trong mode best_tuned.
 def _candidate_names(profile_candidates: dict, system_name: str) -> list[str]:
     """Lấy danh sách tên candidate profile của một hệ trong mode best_tuned."""
 
@@ -41,6 +44,7 @@ def _candidate_names(profile_candidates: dict, system_name: str) -> list[str]:
     return list(candidates.keys())
 
 
+# Nạp summary JSON của một run candidate và chuẩn hóa về dict.
 def _load_summary(path: Path) -> dict:
     """Nạp summary JSON của một run candidate và chuẩn hóa về dict."""
 
@@ -50,6 +54,11 @@ def _load_summary(path: Path) -> dict:
     raise RuntimeError(f"Unexpected comparison payload: {path}")
 
 
+# Entry point của tuning protocol.
+# 1. Đọc config/policy và kiểm tra tuning chỉ được phép chạy trên `dev`.
+# 2. Lần lượt chạy các candidate profile cho từng hệ với nhiều seed.
+# 3. Tính điểm trung bình, chọn candidate tốt nhất và khóa lại nếu được yêu cầu.
+# 4. Ghi báo cáo tóm tắt toàn bộ quy trình tuning.
 def main() -> None:
     """Điểm vào chính của tuning protocol.
 
