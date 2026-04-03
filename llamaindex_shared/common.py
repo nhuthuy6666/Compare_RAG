@@ -141,7 +141,7 @@ def load_shared_config(
             1,
             int(os.getenv("QUERY_FUSION_NUM_QUERIES", str(fusion.get("num_queries") or 4))),
         ),
-        query_fusion_mode=str(os.getenv("QUERY_FUSION_MODE", str(fusion.get("mode") or "relative_score"))).strip(),
+        query_fusion_mode=str(os.getenv("QUERY_FUSION_MODE", str(fusion.get("mode") or "reciprocal_rank"))).strip(),
         generation_temperature=float(
             os.getenv("GENERATION_TEMPERATURE", str(generation.get("temperature") or 0.1))
         ),

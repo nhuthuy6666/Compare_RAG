@@ -161,7 +161,7 @@ def load_config(overrides: dict | None = None) -> AppConfig:
             1,
             _get_int_env("QUERY_FUSION_NUM_QUERIES", int(fusion.get("num_queries") or 4)),
         ),
-        query_fusion_mode=os.getenv("QUERY_FUSION_MODE", str(fusion.get("mode") or "relative_score")).strip(),
+        query_fusion_mode=os.getenv("QUERY_FUSION_MODE", str(fusion.get("mode") or "reciprocal_rank")).strip(),
         generation_temperature=_get_float_env(
             "GENERATION_TEMPERATURE",
             float(generation.get("temperature") or 0.1),

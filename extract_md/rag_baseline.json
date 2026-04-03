@@ -23,7 +23,7 @@
     "fusion": {
       "enabled": true,
       "num_queries": 4,
-      "mode": "relative_score"
+      "mode": "reciprocal_rank"
     }
   },
   "generation": {
