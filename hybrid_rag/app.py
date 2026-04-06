@@ -23,6 +23,7 @@ from llamaindex_shared import (  # noqa: E402
     ensure_vector_index,
     load_shared_config,
     render_chat_ui,
+    should_apply_similarity_threshold,
 )
 from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload, runtime_overrides_signature  # noqa: E402
 
@@ -96,6 +97,8 @@ def answer_query(query: str, *, profile_name: str = "default", runtime_overrides
     else:
         scores = [float(item["score"]) for item in sources if item.get("score") is not None]
         is_low_confidence = (
+            should_apply_similarity_threshold(config)
+            and
             bool(scores)
             and config.retrieval_similarity_threshold > 0
             and max(scores) < config.retrieval_similarity_threshold

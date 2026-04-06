@@ -12,12 +12,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from evaluation.common import (  # noqa: E402
-    EvalPrediction,
-    dataclass_to_dict,
     ensure_dir,
     load_structured_config,
-    write_csv,
-    write_json,
 )
 from evaluation.compare import build_comparison_report  # noqa: E402
 from evaluation.dataset.loader import load_examples  # noqa: E402
@@ -66,12 +62,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--profile-name", default="", help="Explicit profile name when using candidate source.")
     parser.add_argument("--seed", type=int, default=0, help="Recorded seed for repeat runs.")
     parser.add_argument("--run-label", default="", help="Optional label for this run.")
-    parser.add_argument("--outputs-dir", default=None, help="Override outputs dir for this run.")
+    parser.add_argument("--outputs-dir", default=None, help="Deprecated compatibility flag; ignored.")
     parser.add_argument("--results-dir", default=None, help="Override results dir for this run.")
     parser.add_argument(
         "--keep-artifacts",
         action="store_true",
-        help="Keep intermediate CSV/JSON artifacts. By default only comparison.md is written.",
+        help="Deprecated compatibility flag; artifacts are no longer written.",
     )
     return parser.parse_args()
 
@@ -245,9 +241,6 @@ def run_system(
     system_config: dict,
     examples: list,
     timeout: tuple[int, int],
-    outputs_dir: Path,
-    results_dir: Path,
-    keep_artifacts: bool,
     semantic_scorer: SemanticScorer | None,
     metadata: dict[str, object],
     budget: dict[str, object],
@@ -257,13 +250,11 @@ def run_system(
     healthcheck, runner = RUNNERS[system_name]
     healthcheck(system_config, timeout)
 
-    predictions: list[EvalPrediction] = []
     metric_rows: list[dict] = []
     latency_budget_ms = float(budget.get("latency_budget_ms") or 0.0)
     for index, example in enumerate(examples, start=1):
         print(f"[{system_name}] {index}/{len(examples)} - {example.id}", flush=True)
         prediction = runner(example, system_config, timeout)
-        predictions.append(prediction)
         row = {
             "system": system_name,
             "strength_bucket": example.strength_bucket,
@@ -280,19 +271,6 @@ def run_system(
     summary = aggregate_metrics(system_name, metric_rows, metadata=metadata, budget=budget)
     bucket_summaries = aggregate_strength_buckets(system_name, metric_rows, metadata=metadata, budget=budget)
     print_detailed_summary(system_name, summary, metric_rows)
-    if keep_artifacts:
-        output_payload = {
-            "system": system_name,
-            "metadata": metadata,
-            "budget": budget,
-            "summary": summary,
-            "strength_breakdown": bucket_summaries,
-            "predictions": dataclass_to_dict(predictions),
-        }
-        output_path = write_json(outputs_dir / f"{system_name}_outputs.json", output_payload)
-        metrics_path = write_csv(results_dir / f"{system_name}_metrics.csv", metric_rows)
-        print(f"  Saved: {metrics_path}", flush=True)
-        print(f"  Saved: {output_path}", flush=True)
     return {
         "summary": summary,
         "bucket_summaries": bucket_summaries,
@@ -303,7 +281,7 @@ def run_system(
 # 1. Đọc CLI, config, policy và resolve mode/split/budget.
 # 2. Nạp dataset, chuẩn bị outputs/results dir và semantic scorer nếu được bật.
 # 3. Lần lượt resolve profile cho từng hệ rồi gọi runner + evaluator.
-# 4. Gộp summary, render `comparison.md` và tùy chọn ghi thêm artifacts.
+# 4. Gộp summary và render `comparison.md`.
 # 5. In kết quả tóm tắt cuối cùng để theo dõi nhanh trên terminal.
 def main() -> None:
     """Điểm vào chính của benchmark V1.
@@ -313,7 +291,7 @@ def main() -> None:
     2. Nạp tập câu hỏi benchmark và chuẩn bị thư mục đầu ra.
     3. Khởi tạo semantic scorer nếu config bật semantic metric.
     4. Lần lượt chạy từng hệ, resolve profile tương ứng và chấm điểm toàn bộ câu hỏi.
-    5. Gộp kết quả, render `comparison.md` và ghi thêm artifact nếu có `--keep-artifacts`.
+    5. Gộp kết quả và render `comparison.md`.
     """
 
     args = parse_args()
@@ -330,7 +308,6 @@ def main() -> None:
         examples = examples[: args.limit]
 
     results_dir = ensure_dir(args.results_dir or config["results_dir"])
-    outputs_dir = ensure_dir(args.outputs_dir or config["outputs_dir"]) if args.keep_artifacts else Path(config["outputs_dir"])
     timeout = (
         int(budget.get("connect_timeout_seconds") or config.get("connect_timeout_seconds", 10)),
         int(budget.get("request_timeout_seconds") or config.get("request_timeout_seconds", 180)),
@@ -378,9 +355,6 @@ def main() -> None:
             system_config=system_config,
             examples=examples,
             timeout=timeout,
-            outputs_dir=outputs_dir,
-            results_dir=results_dir,
-            keep_artifacts=args.keep_artifacts,
             semantic_scorer=semantic_scorer,
             metadata=metadata,
             budget=budget,
@@ -392,11 +366,6 @@ def main() -> None:
     report_strength_rows = [{key: str(value) for key, value in row.items()} for row in strength_rows]
     comparison_md = results_dir / "comparison.md"
     comparison_md.write_text(build_comparison_report(report_rows, report_strength_rows), encoding="utf-8")
-
-    if args.keep_artifacts:
-        comparison_csv = write_csv(results_dir / "comparison.csv", summaries)
-        comparison_json = write_json(results_dir / "comparison.json", summaries)
-        strength_csv = write_csv(results_dir / "strength_breakdown.csv", strength_rows)
 
     print("\nSummary", flush=True)
     print(
@@ -413,10 +382,6 @@ def main() -> None:
             flush=True,
         )
     print(f"\nSaved: {comparison_md}", flush=True)
-    if args.keep_artifacts:
-        print(f"Saved: {comparison_csv}", flush=True)
-        print(f"Saved: {comparison_json}", flush=True)
-        print(f"Saved: {strength_csv}", flush=True)
 
 
 if __name__ == "__main__":

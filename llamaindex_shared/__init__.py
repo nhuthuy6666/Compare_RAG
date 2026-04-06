@@ -5,6 +5,7 @@ from llamaindex_shared.common import (
     configure_models,
     ensure_vector_index,
     load_shared_config,
+    should_apply_similarity_threshold,
 )
 from llamaindex_shared.chat_ui import ChatUiConfig, ChatUiTab, build_chat_ui_tabs, render_chat_ui
 from llamaindex_shared.corpus_utils import (
@@ -34,6 +35,7 @@ __all__ = [
     "load_shared_config",
     "records_to_nodes",
     "render_chat_ui",
+    "should_apply_similarity_threshold",
     "summarize_records",
     "write_chunk_records",
 ]

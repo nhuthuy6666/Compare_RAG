@@ -84,6 +84,7 @@ def _get_bool_env(name: str, default: bool) -> bool:
 def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
     normalized = mode.strip().lower()
     mapping = {
+        "reciprocal_rank": FUSION_MODES.RECIPROCAL_RANK,
         FUSION_MODES.RECIPROCAL_RANK.value: FUSION_MODES.RECIPROCAL_RANK,
         FUSION_MODES.RELATIVE_SCORE.value: FUSION_MODES.RELATIVE_SCORE,
         FUSION_MODES.DIST_BASED_SCORE.value: FUSION_MODES.DIST_BASED_SCORE,
@@ -93,7 +94,16 @@ def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
         return mapping[normalized]
     except KeyError as exc:
         supported = ", ".join(sorted(mapping))
-        raise ValueError(f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported}") from exc
+        raise ValueError(
+            f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported} "
+            "(legacy alias `reciprocal_rank` is also accepted)."
+        ) from exc
+
+
+# Score sau QueryFusionRetriever không còn cùng thang đo với similarity score gốc,
+# nên chỉ dùng ngưỡng từ chối khi hệ đang retrieve bằng một truy vấn đơn.
+def should_apply_similarity_threshold(config: SharedRagConfig) -> bool:
+    return not (config.query_fusion_enabled and config.query_fusion_num_queries > 1)
 
 # Chuẩn hóa đường dẫn: nếu là absolute path thì giữ nguyên, nếu là relative thì ghép với PROJECT_ROOT
 def _resolve_repo_path(path_like: str | Path) -> Path:

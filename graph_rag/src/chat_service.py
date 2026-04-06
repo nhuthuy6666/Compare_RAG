@@ -40,6 +40,7 @@ class ChatAnswer:
 def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
     normalized = mode.strip().lower()
     mapping = {
+        "reciprocal_rank": FUSION_MODES.RECIPROCAL_RANK,
         FUSION_MODES.RECIPROCAL_RANK.value: FUSION_MODES.RECIPROCAL_RANK,
         FUSION_MODES.RELATIVE_SCORE.value: FUSION_MODES.RELATIVE_SCORE,
         FUSION_MODES.DIST_BASED_SCORE.value: FUSION_MODES.DIST_BASED_SCORE,
@@ -49,7 +50,16 @@ def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
         return mapping[normalized]
     except KeyError as exc:
         supported = ", ".join(sorted(mapping))
-        raise ValueError(f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported}") from exc
+        raise ValueError(
+            f"Unsupported QUERY_FUSION_MODE={mode!r}. Supported values: {supported} "
+            "(legacy alias `reciprocal_rank` is also accepted)."
+        ) from exc
+
+
+# Score sau query fusion bị đổi thang đo, nên không thể so trực tiếp với
+# ngưỡng similarity gốc như ở truy vấn đơn.
+def _should_apply_similarity_threshold(config) -> bool:
+    return not (config.query_fusion_enabled and config.query_fusion_num_queries > 1)
 
 
 ## Kiểm tra collection Qdrant đã tồn tại và có dữ liệu trước khi phục vụ truy vấn.
@@ -135,7 +145,8 @@ def answer_question(question: str, top_k: int | None = None, runtime_overrides: 
     resolved_top_k = top_k or config.retrieval_top_n
     response = get_query_engine(top_k=top_k, overrides_key=json.dumps(runtime_overrides or {}, ensure_ascii=False, sort_keys=True)).query(question)
     facts = _collect_facts(response, limit=resolved_top_k)
-    if not _is_confident_enough(facts, config.retrieval_similarity_threshold):
+    threshold = config.retrieval_similarity_threshold if _should_apply_similarity_threshold(config) else 0.0
+    if not _is_confident_enough(facts, threshold):
         return ChatAnswer(
             question=question,
             answer=config.query_refusal_response,
