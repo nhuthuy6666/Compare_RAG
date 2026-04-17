@@ -21,6 +21,8 @@ RAG_SERVERS = [
 
 # Tạo biến môi trường dùng chung để mỗi process biết port của cả 3 tab giao diện.
 def _build_child_env(ui_port: int) -> dict[str, str]:
+    """Tạo bộ biến môi trường con cho từng backend RAG."""
+
     child_env = os.environ.copy()
     child_env["PYTHONIOENCODING"] = "utf-8"
     child_env["RAG_UI_HOST"] = UI_HOST
@@ -33,6 +35,8 @@ def _build_child_env(ui_port: int) -> dict[str, str]:
 
 # In log của từng process kèm prefix để dễ phân biệt trên một terminal.
 def _stream_output(name: str, stream) -> None:
+    """Đọc stdout của process con và gắn prefix theo tên hệ RAG."""
+
     try:
         for line in stream:
             print(f"[{name}] {line.rstrip()}")
@@ -42,6 +46,8 @@ def _stream_output(name: str, stream) -> None:
 
 # Khởi động một RAG backend bằng Python hiện tại và nối stdout vào bộ đọc log.
 def _start_process(server: dict[str, object]) -> tuple[subprocess.Popen[str], threading.Thread]:
+    """Khởi động một backend RAG và tạo thread đọc log của backend đó."""
+
     process = subprocess.Popen(
         [sys.executable, str(server["path"])],
         cwd=str(PROJECT_ROOT),
@@ -64,6 +70,8 @@ def _start_process(server: dict[str, object]) -> tuple[subprocess.Popen[str], th
 
 # Dừng một process con theo cách mềm trước, rồi mới ép kill nếu cần.
 def _stop_process(process: subprocess.Popen[str]) -> None:
+    """Dừng process con theo thứ tự terminate rồi kill nếu process không thoát."""
+
     if process.poll() is not None:
         return
 
@@ -80,6 +88,8 @@ def _stop_process(process: subprocess.Popen[str]) -> None:
 
 # Kiểm tra nhanh xem có process nào tắt sớm không để dừng cả cụm nếu có lỗi khởi động.
 def _check_early_exit(processes: list[tuple[dict[str, object], subprocess.Popen[str]]]) -> str | None:
+    """Phát hiện backend nào thoát sớm để launcher dừng toàn bộ cụm."""
+
     for server, process in processes:
         if process.poll() is not None:
             return str(server["name"])
@@ -92,19 +102,27 @@ def _check_early_exit(processes: list[tuple[dict[str, object], subprocess.Popen[
 # 3) Giữ process cha sống cho đến khi user nhấn Ctrl+C hoặc một backend bị lỗi.
 # 4) Khi dừng thì tắt toàn bộ process con một cách gọn gàng.
 def main() -> None:
+    """Khởi động đồng thời Baseline, Hybrid và Graph RAG trong một terminal."""
+
+    # Bước 1: ép stdout/stderr sang UTF-8 để log tiếng Việt không bị lỗi mã hóa.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     processes: list[tuple[dict[str, object], subprocess.Popen[str]]] = []
     exit_code = 0
 
     try:
+        # Bước 2: lần lượt khởi động từng backend và gắn thread đọc log tương ứng.
         for server in RAG_SERVERS:
             process, _reader = _start_process(server)
             processes.append((server, process))
 
+        # Bước 3: in URL truy cập để người dùng mở 3 giao diện song song.
         print("Đã khởi động launcher cho 3 RAG:")
         for server, _ in processes:
             print(f"- {server['name']}: http://{UI_HOST}:{server['ui_port']}/")
         print("Nhấn Ctrl+C để dừng tất cả.")
 
+        # Bước 4: giữ launcher chạy nền và theo dõi backend nào thoát sớm để báo lỗi ngay.
         while True:
             failed_name = _check_early_exit(processes)
             if failed_name:
@@ -116,6 +134,7 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\nĐang dừng tất cả backend...")
     finally:
+        # Bước 5: khi launcher thoát, tắt các process con theo thứ tự ngược lại.
         for _, process in reversed(processes):
             _stop_process(process)
         if exit_code:

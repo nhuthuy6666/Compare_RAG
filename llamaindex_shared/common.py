@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 import uuid
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -232,11 +233,18 @@ def _ensure_collection(
         "text-dense": VectorParams(size=embedding_dim, distance=Distance.COSINE),
     }
     sparse_vectors_config = {"text-sparse-new": SparseVectorParams()} if enable_hybrid else None
-    client.create_collection(
-        collection_name=collection_name,
-        vectors_config=vectors_config,
-        sparse_vectors_config=sparse_vectors_config,
-    )
+    try:
+        client.create_collection(
+            collection_name=collection_name,
+            vectors_config=vectors_config,
+            sparse_vectors_config=sparse_vectors_config,
+        )
+    except Exception as exc:
+        # Một số lần ingest runtime xóa rồi tạo lại collection quá sát nhau khiến Qdrant báo 409.
+        # Nếu collection thực tế đã xuất hiện trở lại thì coi như create thành công; còn không thì ném lỗi ra ngoài.
+        if client.collection_exists(collection_name) and "already exists" in str(exc).lower():
+            return
+        raise
 
 
 # Kiểm tra collection có dữ liệu hay không để quyết định có cần rebuild index.
@@ -253,6 +261,12 @@ def _collection_has_points(client: QdrantClient, collection_name: str) -> bool:
 def _reset_collection(client: QdrantClient, collection_name: str) -> None:
     if client.collection_exists(collection_name):
         client.delete_collection(collection_name=collection_name)
+        deadline = time.time() + 15.0
+        while time.time() < deadline:
+            if not client.collection_exists(collection_name):
+                return
+            time.sleep(0.2)
+        raise TimeoutError(f"Qdrant chưa xóa xong collection {collection_name!r} sau khi reset.")
 
 
 # Đọc toàn bộ chunk records, đổi sang TextNode và gán node id ổn định cho Qdrant.

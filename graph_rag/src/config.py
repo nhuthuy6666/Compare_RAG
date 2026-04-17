@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
 
 from dotenv import load_dotenv
 from llama_index.core import Settings
-from llama_index.vector_stores.qdrant import QdrantVectorStore
-from qdrant_client import AsyncQdrantClient, QdrantClient
-
-from openai_compatible import OpenAICompatibleEmbedding, OpenAICompatibleLLM
-from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
-
+from neo4j import GraphDatabase
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = PROJECT_ROOT.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
+from openai_compatible import OpenAICompatibleEmbedding, OpenAICompatibleLLM
+
+
 DEFAULT_BASELINE_CONFIG = PROJECT_ROOT.parent / "extract_md" / "rag_baseline.json"
 DEFAULT_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 DEFAULT_CHUNK_DIR = DEFAULT_PROCESSED_DIR / "chunks"
@@ -23,6 +27,8 @@ DEFAULT_FACTS_PATH = DEFAULT_PROCESSED_DIR / "graph_facts.jsonl"
 
 @dataclass(frozen=True)
 class AppConfig:
+    """Gói toàn bộ cấu hình runtime cho GraphRAG Neo4j."""
+
     project_root: Path
     baseline_config_path: Path
     source_chunk_root: Path
@@ -30,9 +36,16 @@ class AppConfig:
     processed_dir: Path
     chunk_dir: Path
     facts_path: Path
-    qdrant_url: str
-    qdrant_api_key: str | None
-    qdrant_collection: str
+    neo4j_uri: str
+    neo4j_username: str
+    neo4j_password: str
+    neo4j_database: str
+    neo4j_entity_index: str
+    neo4j_fact_vector_index: str
+    neo4j_chunk_index: str
+    graph_vector_candidates: int
+    graph_neighbor_hops: int
+    graph_neighbor_facts_limit: int
     llm_base_url: str | None
     llm_model: str | None
     embed_model: str | None
@@ -59,8 +72,10 @@ class AppConfig:
     graph_progress_every: int
 
 
-## Đọc biến môi trường kiểu số nguyên và fallback về giá trị mặc định khi chưa khai báo.
+# Đọc biến môi trường kiểu số nguyên với fallback rõ ràng.
 def _get_int_env(name: str, default: int) -> int:
+    """Đọc biến môi trường số nguyên và báo lỗi nếu giá trị không hợp lệ."""
+
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -70,8 +85,10 @@ def _get_int_env(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got: {raw!r}") from exc
 
 
-## Đọc biến môi trường kiểu số thực và báo lỗi sớm nếu giá trị không hợp lệ.
+# Đọc biến môi trường kiểu số thực với fallback rõ ràng.
 def _get_float_env(name: str, default: float) -> float:
+    """Đọc biến môi trường số thực và báo lỗi nếu giá trị không hợp lệ."""
+
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -81,14 +98,18 @@ def _get_float_env(name: str, default: float) -> float:
         raise ValueError(f"Environment variable {name} must be a float, got: {raw!r}") from exc
 
 
+# Quy đổi đường dẫn tương đối thành đường dẫn tuyệt đối theo thư mục gốc được chỉ định.
 def _resolve_project_path(path_like: str | Path, *, base_dir: Path) -> Path:
-    """Resolve path tương đối theo repo hiện tại để tránh phụ thuộc đường dẫn tuyệt đối cũ."""
+    """Chuẩn hóa đường dẫn config để dùng ổn định ở mọi thư mục chạy lệnh."""
 
     path = Path(path_like)
     return path if path.is_absolute() else base_dir / path
 
 
+# Đọc biến môi trường boolean theo các alias thông dụng như true/false, on/off.
 def _get_bool_env(name: str, default: bool) -> bool:
+    """Đọc biến môi trường boolean và hỗ trợ nhiều cách ghi phổ biến."""
+
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -100,8 +121,10 @@ def _get_bool_env(name: str, default: bool) -> bool:
     raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
 
 
-## Nạp file JSON baseline dùng chung để lấy chunk/model/prompt settings.
+# Đọc file baseline JSON để kế thừa cấu hình chung của toàn project.
 def _load_baseline_config(path: Path) -> dict:
+    """Đọc cấu hình baseline JSON và trả về dict rỗng nếu file không tồn tại."""
+
     if not path.exists():
         return {}
     try:
@@ -110,8 +133,10 @@ def _load_baseline_config(path: Path) -> dict:
         raise ValueError(f"Baseline config is not valid JSON: {path}") from exc
 
 
-## Gộp baseline config và biến môi trường thành một AppConfig duy nhất cho GraphRAG.
+# Gộp baseline config, biến môi trường và benchmark override thành một cấu hình thống nhất.
 def load_config(overrides: dict | None = None) -> AppConfig:
+    """Tạo AppConfig hoàn chỉnh cho GraphRAG Neo4j từ mọi nguồn cấu hình."""
+
     load_dotenv()
     baseline_config_path = Path(os.getenv("BASELINE_CONFIG_PATH", DEFAULT_BASELINE_CONFIG))
     baseline = _load_baseline_config(baseline_config_path)
@@ -133,9 +158,16 @@ def load_config(overrides: dict | None = None) -> AppConfig:
         processed_dir=Path(os.getenv("PROCESSED_DIR", DEFAULT_PROCESSED_DIR)),
         chunk_dir=Path(os.getenv("CHUNK_DIR", DEFAULT_CHUNK_DIR)),
         facts_path=Path(os.getenv("GRAPH_FACTS_PATH", DEFAULT_FACTS_PATH)),
-        qdrant_url=os.getenv("QDRANT_URL", "http://127.0.0.1:6333"),
-        qdrant_api_key=os.getenv("QDRANT_API_KEY"),
-        qdrant_collection=os.getenv("QDRANT_COLLECTION", "ntu_graphrag"),
+        neo4j_uri=os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687"),
+        neo4j_username=os.getenv("NEO4J_USERNAME", "neo4j"),
+        neo4j_password=os.getenv("NEO4J_PASSWORD", "12345678"),
+        neo4j_database=os.getenv("NEO4J_DATABASE", "neo4j"),
+        neo4j_entity_index=os.getenv("NEO4J_ENTITY_INDEX", "entity_name_index"),
+        neo4j_fact_vector_index=os.getenv("NEO4J_FACT_VECTOR_INDEX", "fact_embedding_index"),
+        neo4j_chunk_index=os.getenv("NEO4J_CHUNK_INDEX", "chunk_lookup_index"),
+        graph_vector_candidates=_get_int_env("GRAPH_VECTOR_CANDIDATES", 18),
+        graph_neighbor_hops=_get_int_env("GRAPH_NEIGHBOR_HOPS", 1),
+        graph_neighbor_facts_limit=_get_int_env("GRAPH_NEIGHBOR_FACTS_LIMIT", 12),
         llm_base_url=os.getenv("LLM_BASE_URL"),
         llm_model=os.getenv("LLM_MODEL", str(models.get("chat") or "")),
         embed_model=os.getenv("EMBED_MODEL", str(models.get("embedding") or "")),
@@ -183,15 +215,19 @@ def load_config(overrides: dict | None = None) -> AppConfig:
     return replace(config, **supported)
 
 
-## Kiểm tra các biến bắt buộc trước khi khởi tạo model hoặc kết nối dịch vụ.
+# Kiểm tra các giá trị bắt buộc trước khi cấu hình model.
 def _require(values: dict[str, str | None]) -> None:
+    """Đảm bảo các biến cấu hình bắt buộc đã có giá trị."""
+
     missing = [name for name, value in values.items() if not value]
     if missing:
         raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
 
-## Áp cấu hình LLM và embedding vào `llama_index.core.Settings` để toàn bộ pipeline dùng chung.
+# Áp cấu hình LLM và embedding vào Settings để toàn bộ pipeline Neo4j dùng chung.
 def configure_models(config: AppConfig) -> None:
+    """Khởi tạo LLM và embedding model tương thích OpenAI cho GraphRAG."""
+
     _require(
         {
             "LLM_MODEL": config.llm_model,
@@ -220,24 +256,24 @@ def configure_models(config: AppConfig) -> None:
     )
 
 
-## Tạo `QdrantVectorStore` đồng nhất cho ingest và query.
-def build_vector_store(config: AppConfig) -> QdrantVectorStore:
-    client = QdrantClient(url=config.qdrant_url, api_key=config.qdrant_api_key)
-    aclient = AsyncQdrantClient(url=config.qdrant_url, api_key=config.qdrant_api_key)
-    return QdrantVectorStore(
-        collection_name=config.qdrant_collection,
-        client=client,
-        aclient=aclient,
+# Tạo Neo4j driver dùng chung cho ingest và query.
+def build_neo4j_driver(config: AppConfig):
+    """Khởi tạo Neo4j driver theo URI và thông tin xác thực hiện tại."""
+
+    return GraphDatabase.driver(
+        config.neo4j_uri,
+        auth=(config.neo4j_username, config.neo4j_password),
     )
 
 
-## Tạo Qdrant client thô khi cần kiểm tra collection hoặc thao tác reset.
-def build_qdrant_client(config: AppConfig) -> QdrantClient:
-    return QdrantClient(url=config.qdrant_url, api_key=config.qdrant_api_key)
+# Kiểm tra kết nối Neo4j sớm để báo lỗi rõ ràng trước khi ingest hoặc serve request.
+def verify_neo4j_connection(config: AppConfig) -> None:
+    """Kiểm tra Neo4j đã sẵn sàng trước khi dùng trong pipeline."""
 
-
-## Xóa collection Qdrant hiện tại để rebuild graph facts từ đầu.
-def reset_vector_store(config: AppConfig) -> None:
-    client = build_qdrant_client(config)
-    if client.collection_exists(config.qdrant_collection):
-        client.delete_collection(collection_name=config.qdrant_collection)
+    driver = build_neo4j_driver(config)
+    try:
+        driver.verify_connectivity()
+        with driver.session(database=config.neo4j_database) as session:
+            session.run("RETURN 1 AS ok").single()
+    finally:
+        driver.close()

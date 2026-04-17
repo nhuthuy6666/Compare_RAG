@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from llama_index.core.indices.property_graph.base import KG_NODES_KEY, KG_RELATIONS_KEY
-from llama_index.core.schema import TextNode
 
 from admissions_graph import AdmissionsGraphExtractor
 from utils import records_to_nodes
@@ -28,65 +30,113 @@ RELATION_TEXT = {
 }
 
 
-## Map tên quan hệ nội bộ sang câu tiếng Việt tự nhiên hơn để đưa vào fact text.
-def _relation_text(label: str) -> str:
-    if label in RELATION_TEXT:
-        return RELATION_TEXT[label]
-    return label.replace("_", " ").lower()
+@dataclass
+class GraphArtifacts:
+    """Gói dữ liệu trung gian sẽ được ghi vào Neo4j."""
+
+    entities: dict[str, dict[str, Any]] = field(default_factory=dict)
+    chunks: dict[str, dict[str, Any]] = field(default_factory=dict)
+    facts: list[dict[str, Any]] = field(default_factory=list)
 
 
-## Chuyển chunk records thành các graph fact nodes và payload audit tương ứng.
-## Nếu một chunk không tạo ra relation rõ ràng, hàm sẽ fallback sang fact dạng nguyên chunk.
-def build_graph_fact_nodes(records: list[dict], progress_every: int) -> tuple[list[TextNode], list[dict]]:
+# Trích entity, relation và fact text từ shared chunks để ingest vào Neo4j.
+def build_graph_artifacts(records: list[dict], progress_every: int) -> tuple[GraphArtifacts, list[dict]]:
+    """Sinh graph artifacts từ chunk records để phục vụ ingest và audit."""
+
     extracted_nodes = AdmissionsGraphExtractor(progress_every=progress_every)(records_to_nodes(records))
-    fact_nodes: list[TextNode] = []
+    artifacts = GraphArtifacts()
     fact_records: list[dict] = []
 
     for node in extracted_nodes:
         metadata = dict(node.metadata or {})
+        chunk_uid = _chunk_uid(metadata)
+        artifacts.chunks.setdefault(
+            chunk_uid,
+            {
+                "uid": chunk_uid,
+                "relative_path": str(metadata.get("relative_path") or ""),
+                "source_file": str(metadata.get("source_file") or ""),
+                "heading_path": _stringify_heading_path(metadata.get("heading_path")),
+                "chunk_id": str(metadata.get("chunk_id") or ""),
+                "source_year": str(metadata.get("source_year") or ""),
+            },
+        )
+
         entities = {
             entity.id: entity
             for entity in (metadata.get(KG_NODES_KEY) or [])
             if getattr(entity, "id", None) and getattr(entity, "name", None)
         }
+        for entity_id, entity in entities.items():
+            artifacts.entities.setdefault(entity_id, _entity_record(entity))
+
         relations = list(metadata.get(KG_RELATIONS_KEY) or [])
         created = 0
-
         for relation in relations:
             source = entities.get(relation.source_id)
             target = entities.get(relation.target_id)
             if source is None or target is None:
                 continue
 
-            heading_context = metadata.get("heading_path") or metadata.get("title") or metadata.get("source_file") or ""
-            text = f"{source.name} {_relation_text(relation.label)} {target.name}. Bối cảnh: {heading_context}".strip()
+            text = _build_relation_text(
+                source_name=source.name,
+                relation_label=relation.label,
+                target_name=target.name,
+                heading_context=metadata.get("heading_path") or metadata.get("title") or metadata.get("source_file") or "",
+            )
             fact_id = str(
                 uuid.uuid5(
                     uuid.NAMESPACE_URL,
                     f"{node.node_id}:{relation.source_id}:{relation.label}:{relation.target_id}",
                 )
             )
-            fact_metadata = {
-                "relative_path": metadata.get("relative_path", ""),
-                "source_file": metadata.get("source_file", ""),
-                "heading_path": metadata.get("heading_path", ""),
-                "chunk_id": metadata.get("chunk_id", ""),
-                "source_year": metadata.get("source_year", ""),
-                "relation_label": relation.label,
-                "source_entity": source.name,
-                "target_entity": target.name,
+            source_uid = str(source.id)
+            target_uid = str(target.id)
+            source_record = artifacts.entities.setdefault(source_uid, _entity_record(source))
+            target_record = artifacts.entities.setdefault(target_uid, _entity_record(target))
+            fact_payload = {
+                "id": fact_id,
+                "text": text,
+                "relative_path": str(metadata.get("relative_path") or ""),
+                "source_file": str(metadata.get("source_file") or ""),
+                "heading_path": _stringify_heading_path(metadata.get("heading_path")),
+                "chunk_id": str(metadata.get("chunk_id") or ""),
+                "source_year": str(metadata.get("source_year") or ""),
+                "relation_label": str(relation.label),
+                "source_entity": str(source.name),
+                "target_entity": str(target.name),
+                "source_type": str(source.label or ""),
+                "target_type": str(target.label or ""),
                 "fact_type": "relation",
+                "source_fact_id": "",
+                "source_uid": source_uid,
+                "target_uid": target_uid,
+                "chunk_uid": chunk_uid,
+                "edge_uid": str(
+                    uuid.uuid5(
+                        uuid.NAMESPACE_URL,
+                        f"edge:{source_uid}:{relation.label}:{target_uid}",
+                    )
+                ),
             }
-            fact_nodes.append(
-                TextNode(
-                    id_=fact_id,
-                    text=text,
-                    metadata=fact_metadata,
-                    excluded_embed_metadata_keys=list(fact_metadata.keys()),
-                    excluded_llm_metadata_keys=list(fact_metadata.keys()),
-                )
+            artifacts.facts.append(fact_payload)
+            fact_records.append(
+                {
+                    "id": fact_id,
+                    "text": text,
+                    "relative_path": fact_payload["relative_path"],
+                    "source_file": fact_payload["source_file"],
+                    "heading_path": fact_payload["heading_path"],
+                    "chunk_id": fact_payload["chunk_id"],
+                    "source_year": fact_payload["source_year"],
+                    "relation_label": relation.label,
+                    "source_entity": source.name,
+                    "target_entity": target.name,
+                    "source_type": source_record["label"],
+                    "target_type": target_record["label"],
+                    "fact_type": "relation",
+                }
             )
-            fact_records.append({"id": fact_id, "text": text, **fact_metadata})
             created += 1
 
         if created > 0:
@@ -97,34 +147,107 @@ def build_graph_fact_nodes(records: list[dict], progress_every: int) -> tuple[li
             continue
 
         fact_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{node.node_id}:fallback"))
-        fact_metadata = {
-            "relative_path": metadata.get("relative_path", ""),
-            "source_file": metadata.get("source_file", ""),
-            "heading_path": metadata.get("heading_path", ""),
-            "chunk_id": metadata.get("chunk_id", ""),
-            "source_year": metadata.get("source_year", ""),
+        fallback_payload = {
+            "id": fact_id,
+            "text": fallback_text,
+            "relative_path": str(metadata.get("relative_path") or ""),
+            "source_file": str(metadata.get("source_file") or ""),
+            "heading_path": _stringify_heading_path(metadata.get("heading_path")),
+            "chunk_id": str(metadata.get("chunk_id") or ""),
+            "source_year": str(metadata.get("source_year") or ""),
             "relation_label": "FALLBACK_CHUNK",
             "source_entity": "",
             "target_entity": "",
+            "source_type": "",
+            "target_type": "",
             "fact_type": "chunk_fallback",
+            "source_fact_id": "",
+            "source_uid": "",
+            "target_uid": "",
+            "chunk_uid": chunk_uid,
+            "edge_uid": "",
         }
-        fact_nodes.append(
-            TextNode(
-                id_=fact_id,
-                text=fallback_text,
-                metadata=fact_metadata,
-                excluded_embed_metadata_keys=list(fact_metadata.keys()),
-                excluded_llm_metadata_keys=list(fact_metadata.keys()),
-            )
+        artifacts.facts.append(fallback_payload)
+        fact_records.append(
+            {
+                "id": fact_id,
+                "text": fallback_text,
+                "relative_path": fallback_payload["relative_path"],
+                "source_file": fallback_payload["source_file"],
+                "heading_path": fallback_payload["heading_path"],
+                "chunk_id": fallback_payload["chunk_id"],
+                "source_year": fallback_payload["source_year"],
+                "relation_label": "FALLBACK_CHUNK",
+                "source_entity": "",
+                "target_entity": "",
+                "source_type": "",
+                "target_type": "",
+                "fact_type": "chunk_fallback",
+            }
         )
-        fact_records.append({"id": fact_id, "text": fallback_text, **fact_metadata})
 
-    return fact_nodes, fact_records
+    return artifacts, fact_records
 
 
-## Ghi các graph fact đã trích ra JSONL để audit/debug và so sánh giữa các lần ingest.
+# Ghi file audit JSONL để dễ xem fact nào đã được trích trước khi import vào Neo4j.
 def write_fact_records(records: list[dict], output_path: Path) -> None:
+    """Lưu fact audit ra JSONL để tiện kiểm tra dữ liệu trích xuất."""
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as handle:
         for record in records:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+# Ghép một relation thành câu fact tự nhiên để vector search xử lý tốt hơn.
+def _build_relation_text(*, source_name: str, relation_label: str, target_name: str, heading_context: Any) -> str:
+    """Chuyển relation graph thành câu fact ngắn, dễ truy vấn bằng embedding."""
+
+    relation_text = RELATION_TEXT.get(relation_label, relation_label.replace("_", " ").lower())
+    context = _stringify_heading_path(heading_context)
+    base = f"{source_name} {relation_text} {target_name}."
+    if context:
+        base += f" Bối cảnh: {context}"
+    return base.strip()
+
+
+# Chuẩn hóa entity extractor trả về thành payload sẵn sàng ghi vào Neo4j.
+def _entity_record(entity) -> dict[str, Any]:
+    """Đổi entity từ extractor sang dict metadata ổn định."""
+
+    properties = dict(getattr(entity, "properties", {}) or {})
+    return {
+        "uid": str(entity.id),
+        "name": str(entity.name),
+        "name_normalized": _normalize_text(str(entity.name)),
+        "label": str(getattr(entity, "label", "") or ""),
+        "source_year": str(properties.get("source_year") or ""),
+        "relative_path": str(properties.get("relative_path") or ""),
+        "source_file": str(properties.get("source_file") or ""),
+        "heading_path": _stringify_heading_path(properties.get("heading_path")),
+    }
+
+
+# Tạo khóa chunk ổn định để cùng một chunk luôn ánh xạ về đúng node Chunk.
+def _chunk_uid(metadata: dict[str, Any]) -> str:
+    """Sinh UID ổn định cho node Chunk trong graph."""
+
+    relative_path = str(metadata.get("relative_path") or metadata.get("source_file") or "unknown")
+    chunk_id = str(metadata.get("chunk_id") or "unknown")
+    return f"{relative_path}::chunk::{chunk_id}"
+
+
+# Chuẩn hóa heading path về chuỗi dễ lưu và dễ hiển thị.
+def _stringify_heading_path(value: Any) -> str:
+    """Chuyển heading path từ list hoặc giá trị bất kỳ thành chuỗi thống nhất."""
+
+    if isinstance(value, list):
+        return " | ".join(str(item) for item in value if str(item).strip())
+    return str(value or "")
+
+
+# Chuẩn hóa text về lowercase một dòng để phục vụ tìm kiếm fulltext.
+def _normalize_text(value: str) -> str:
+    """Chuẩn hóa text để tăng độ ổn định cho so khớp tên entity."""
+
+    return re.sub(r"\s+", " ", value).strip().lower()

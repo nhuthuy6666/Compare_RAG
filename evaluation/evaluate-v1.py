@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import statistics
 import sys
 from pathlib import Path
@@ -366,6 +367,9 @@ def main() -> None:
     report_strength_rows = [{key: str(value) for key, value in row.items()} for row in strength_rows]
     comparison_md = results_dir / "comparison.md"
     comparison_md.write_text(build_comparison_report(report_rows, report_strength_rows), encoding="utf-8")
+    if args.keep_artifacts:
+        comparison_json = results_dir / "comparison.json"
+        comparison_json.write_text(json.dumps(summaries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     print("\nSummary", flush=True)
     print(

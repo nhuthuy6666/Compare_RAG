@@ -19,6 +19,7 @@ __all__ = ["main"]
 # Entry point chính của GraphRAG ở project root để đồng bộ với `rag/app.py` và `hybrid_rag/app.py`.
 # 1) Thêm `graph_rag/src` vào `sys.path`.
 # 2) Import hàm `main` từ `http_app`.
+# 3) Chuyển điều khiển sang `http_app.main()` để tự chọn CLI hay web server.
 if __name__ == "__main__":
     # Bước 1: dùng entry point ở project root để đồng bộ cách chạy với các hệ RAG khác.
     # Bước 2: chuyển quyền điều khiển cho `main` trong `http_app`.

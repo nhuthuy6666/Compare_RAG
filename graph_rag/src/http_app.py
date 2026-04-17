@@ -14,7 +14,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from chat_service import answer_question
+from chat_service import answer_question, warm_up_graph
+from config import load_config
 from llamaindex_shared import ChatUiConfig, build_chat_ui_tabs, render_chat_ui
 from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload
 from utils import configure_console_utf8
@@ -30,6 +31,7 @@ GRAPH_LOCK = Lock()
 # Chuyển kết quả GraphRAG thành schema thống nhất với 2 hệ còn lại.
 def _answer_to_payload(question: str, result) -> dict:
     """Chuẩn hóa kết quả GraphRAG về schema trả về chung cho frontend và benchmark."""
+
     return {
         "answer": result.answer,
         "rewritten_query": question,
@@ -46,10 +48,11 @@ def _answer_to_payload(question: str, result) -> dict:
     }
 
 
-# Tạo HTML UI dùng chung cho GraphRAG và đánh dấu tab Graph đang được chọn.
+# Tạo HTML UI dùng chung cho GraphRAG và dùng cùng modal ingest với hai hệ còn lại.
 @lru_cache(maxsize=1)
 def load_ui_html() -> str:
-    """Render HTML giao diện chat và cache lại để tránh dựng UI nhiều lần."""
+    """Render HTML giao diện chat của GraphRAG."""
+
     return render_chat_ui(
         ChatUiConfig(
             current_rag_id="graph",
@@ -58,10 +61,10 @@ def load_ui_html() -> str:
             brand_title="NTU Bot",
             brand_description=(
                 "Graph RAG tổng hợp thông tin từ các fact trong đồ thị tri thức. "
-                "Giao diện này được dùng chung với Baseline và Hybrid RAG."
+                "Bạn có thể so sánh trực tiếp với Baseline và Hybrid trên cùng giao diện."
             ),
             header_badge="Graph RAG",
-            header_subtitle="Graph retrieval | Query fusion | Fact graph",
+            header_subtitle="Neo4j graph retrieval | Query fusion | Fact graph",
             assistant_label="Graph NTU Bot",
             empty_title="Graph RAG sẵn sàng",
             empty_description=(
@@ -84,11 +87,14 @@ def load_ui_html() -> str:
 
 
 class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
-    server_version = "NTUGraphRagHTTP/2.0"
+    """HTTP handler cho UI, chat API và ingest API của GraphRAG."""
+
+    server_version = "NTUGraphRagHTTP/4.0"
 
     # Phục vụ UI gốc, health check và favicon cho GraphRAG.
     def do_GET(self) -> None:
         """Phục vụ UI gốc, health check và favicon cho GraphRAG."""
+
         parsed = urlparse(self.path)
         if parsed.path == "/":
             self._send_html(load_ui_html())
@@ -102,13 +108,19 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
-    # Nhận payload chat và trả kết quả cho frontend.
+    # Điều phối request POST sang endpoint chat.
     def do_POST(self) -> None:
-        """Nhận request chat, gọi GraphRAG và trả kết quả JSON cho frontend."""
+        """Điều phối request POST sang endpoint chat."""
+
         parsed = urlparse(self.path)
-        if parsed.path != "/api/chat":
-            self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+        if parsed.path == "/api/chat":
+            self._handle_chat_request()
             return
+        self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+
+    # Xử lý một câu hỏi chat và trả lại kết quả GraphRAG cho frontend.
+    def _handle_chat_request(self) -> None:
+        """Nhận request chat, gọi GraphRAG và trả kết quả JSON cho frontend."""
 
         payload = self._read_json_payload()
         if payload is None:
@@ -137,6 +149,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
     # Đọc body JSON từ request và tự xử lý lỗi payload sai định dạng.
     def _read_json_payload(self) -> dict | None:
         """Đọc body JSON từ request và tự xử lý lỗi payload sai định dạng."""
+
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
             raw_body = self.rfile.read(content_length)
@@ -148,11 +161,13 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
     # Tắt log mặc định của BaseHTTPRequestHandler để console gọn hơn.
     def log_message(self, format: str, *args) -> None:
         """Tắt log mặc định của BaseHTTPRequestHandler để console gọn hơn."""
+
         return
 
     # Gửi HTML cho trình duyệt với content-type phù hợp.
     def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK) -> None:
         """Gửi HTML cho trình duyệt với content-type phù hợp."""
+
         body = html.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -163,6 +178,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
     # Gửi JSON cho frontend và giữ nguyên Unicode để dễ debug.
     def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         """Gửi JSON cho frontend và giữ nguyên Unicode để dễ debug."""
+
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -174,6 +190,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
 # Chạy vòng lặp hỏi đáp trong terminal để test nhanh GraphRAG.
 def run_cli() -> None:
     """Chạy vòng lặp hỏi đáp trong terminal để test nhanh GraphRAG."""
+
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
     print("Graph RAG sẵn sàng. Gõ 'exit' để thoát.")
@@ -190,18 +207,23 @@ def run_cli() -> None:
 # Đọc port UI từ biến môi trường để launcher có thể thống nhất 3 server.
 def resolve_server_port() -> int:
     """Đọc cổng server từ biến môi trường để launcher có thể thống nhất cấu hình."""
+
     return int(os.getenv("UI_PORT", str(DEFAULT_PORT)))
 
 
 # Khởi động HTTP server GraphRAG theo cùng cách với baseline và hybrid.
 def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
     """Khởi động HTTP server GraphRAG theo cùng cách với baseline và hybrid."""
+
     resolved_port = port if port is not None else resolve_server_port()
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
     print("Đang khởi tạo Graph RAG...")
+    config = load_config()
+    warm_up_graph()
     server = ThreadingHTTPServer((host, resolved_port), ChatHTTPRequestHandler)
     print(f"Graph RAG đang chạy tại http://{host}:{resolved_port}")
+    print(f"Neo4j: {config.neo4j_uri} / database={config.neo4j_database}")
     print("Nhấn Ctrl+C để dừng server.")
     try:
         server.serve_forever()
@@ -216,19 +238,14 @@ def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
 # 2) Nếu có `--cli` thì mở vòng lặp hỏi đáp trong terminal.
 # 3) Nếu không thì đọc `UI_PORT` và khởi động web UI/API dùng giao diện chung.
 def main() -> None:
-    """Điểm vào chính của GraphRAG.
+    """Điểm vào chính của GraphRAG."""
 
-    Các bước:
-    1. Kiểm tra xem người dùng có yêu cầu chạy chế độ CLI hay không.
-    2. Nếu có `--cli`, mở vòng lặp hỏi đáp trong terminal để test nhanh.
-    3. Nếu không, dùng cấu hình cổng hiện tại để khởi động web UI và API.
-    """
     # Bước 1: kiểm tra cờ `--cli` để quyết định chạy chế độ terminal hay web server.
     if "--cli" in sys.argv:
         # Bước 2: nếu đang test tay trong terminal, chạy vòng lặp hỏi đáp rồi thoát.
         run_cli()
         return
-    # Bước 3: nếu không có `--cli`, khởi động HTTP server phục vụ UI và API chat.
+    # Bước 3: nếu không có `--cli`, khởi động HTTP server phục vụ UI và API.
     run_server()
 
 
