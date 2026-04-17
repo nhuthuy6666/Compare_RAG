@@ -12,6 +12,7 @@
       --surface-2: #161c28;
       --surface-3: #1d2535;
       --surface-4: #223049;
+      --surface-5: #293752;
       --border: rgba(255, 255, 255, 0.07);
       --border-hi: rgba(99, 182, 255, 0.28);
       --text: #e8edf5;
@@ -21,6 +22,7 @@
       --accent-glow: rgba(59, 130, 246, 0.18);
       --gold: #f59e0b;
       --danger: #ef4444;
+      --success: #22c55e;
       --user-bg: #1e3a5f;
       --user-border: rgba(59, 130, 246, 0.35);
       --assistant-bg: #141922;
@@ -45,7 +47,7 @@
       z-index: 0;
     }
     .app-shell { position: relative; z-index: 1; display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; height: 100vh; min-height: 100dvh; height: 100dvh; }
-    .sidebar { background: rgba(17, 22, 32, 0.96); border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; padding: 24px 16px; overflow: hidden; min-height: 0; }
+    .sidebar { background: rgba(17, 22, 32, 0.96); border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; padding: 24px 16px; overflow: hidden; min-height: 0; }
     .brand { padding: 6px 6px 2px; }
     .brand-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 7px 12px; background: rgba(59, 130, 246, 0.12); color: var(--accent-hi); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
     .brand h1 { margin-top: 16px; font-family: "Playfair Display", serif; font-size: 28px; line-height: 1.08; letter-spacing: 0.02em; }
@@ -54,20 +56,22 @@
     .rag-tab { flex: 1 1 calc(50% - 8px); min-width: 88px; border-radius: 14px; padding: 10px 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); text-decoration: none; font-size: 12px; font-weight: 600; text-align: center; transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease; }
     .rag-tab:hover { transform: translateY(-1px); border-color: var(--border-hi); color: var(--text); }
     .rag-tab.active { background: var(--surface-4); border-color: var(--border-hi); color: var(--accent-hi); }
-    .new-chat-btn { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%); color: #fff; border: none; border-radius: var(--radius-lg); padding: 13px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 20px var(--accent-glow); }
-    .new-chat-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
-    .new-chat-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .new-chat-btn, .manage-data-btn { width: 100%; border: none; border-radius: var(--radius-lg); padding: 13px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s; }
+    .new-chat-btn { background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
+    .manage-data-btn { background: rgba(245, 158, 11, 0.1); color: #f7d08a; border: 1px solid rgba(245, 158, 11, 0.24); }
+    .new-chat-btn:hover:not(:disabled), .manage-data-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+    .new-chat-btn:disabled, .manage-data-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     .sidebar-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: 0 6px; }
     .history-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
     .history-card { border-radius: var(--radius-sm); border: 1px solid transparent; display: flex; align-items: stretch; overflow: hidden; transition: border-color 0.2s, background 0.2s; }
     .history-card:hover { background: var(--surface-2); border-color: var(--border); }
     .history-card.active { background: var(--surface-3); border-color: var(--border-hi); }
-    .history-main, .history-delete { font: inherit; border: none; background: none; }
-    .history-main { flex: 1; padding: 11px 12px; text-align: left; cursor: pointer; min-width: 0; color: inherit; }
+    .history-main, .history-delete, .doc-delete-btn, .modal-close-btn, .data-action-btn, .doc-refresh-btn { font: inherit; border: none; }
+    .history-main { flex: 1; padding: 11px 12px; text-align: left; cursor: pointer; min-width: 0; color: inherit; background: none; }
     .history-main strong, .history-main span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .history-main strong { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
     .history-main span { font-size: 11.5px; color: var(--text-muted); }
-    .history-delete { width: 42px; color: var(--text-muted); cursor: pointer; transition: color 0.2s, background 0.2s; }
+    .history-delete { width: 42px; color: var(--text-muted); cursor: pointer; transition: color 0.2s, background 0.2s; background: none; }
     .history-delete:hover:not(:disabled) { color: var(--danger); background: rgba(239, 68, 68, 0.08); }
     .history-delete:disabled { opacity: 0.35; cursor: not-allowed; }
     .main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
@@ -102,19 +106,73 @@
     .composer { border-top: 1px solid var(--border); background: rgba(17, 22, 32, 0.94); padding: 16px 24px 20px; flex-shrink: 0; }
     .composer-box { display: flex; align-items: flex-end; gap: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 12px 12px 12px 20px; transition: border-color 0.2s, box-shadow 0.2s; }
     .composer-box:focus-within { border-color: rgba(59, 130, 246, 0.45); box-shadow: 0 0 0 3px var(--accent-glow); }
-    textarea { flex: 1; background: transparent; border: none; outline: none; resize: none; font-family: inherit; font-size: 14.5px; color: var(--text); min-height: 28px; max-height: 180px; line-height: 1.6; }
-    textarea::placeholder { color: var(--text-muted); }
-    .send-btn { min-width: 52px; height: 44px; padding: 0 16px; border-radius: 14px; background: var(--accent); border: none; color: white; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; box-shadow: 0 4px 16px var(--accent-glow); }
-    .send-btn:hover:not(:disabled) { background: var(--accent-hi); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35); }
-    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    textarea, input[type="text"], input[type="url"] { flex: 1; background: transparent; border: none; outline: none; resize: none; font-family: inherit; font-size: 14.5px; color: var(--text); min-height: 28px; line-height: 1.6; }
+    textarea::placeholder, input::placeholder { color: var(--text-muted); }
+    .send-btn, .data-action-btn, .doc-refresh-btn, .doc-delete-btn, .modal-close-btn { min-width: 52px; border-radius: 14px; color: white; cursor: pointer; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; }
+    .send-btn { height: 44px; padding: 0 16px; background: var(--accent); box-shadow: 0 4px 16px var(--accent-glow); }
+    .send-btn:hover:not(:disabled), .data-action-btn:hover:not(:disabled), .doc-refresh-btn:hover:not(:disabled), .doc-delete-btn:hover:not(:disabled), .modal-close-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .send-btn:hover:not(:disabled) { background: var(--accent-hi); box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35); }
+    .send-btn:disabled, .data-action-btn:disabled, .doc-refresh-btn:disabled, .doc-delete-btn:disabled, .modal-close-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     .composer-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 0 6px; gap: 12px; }
-    .status-line { font-size: 12px; color: var(--text-muted); min-height: 16px; transition: color 0.2s; }
-    .status-line.error { color: var(--danger); }
+    .status-line, .data-status { font-size: 12px; color: var(--text-muted); min-height: 16px; transition: color 0.2s; }
+    .status-line.error, .data-status.error { color: var(--danger); }
+    .data-status.success { color: var(--success); }
     .composer-hint { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; opacity: 0.78; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(5, 8, 14, 0.62); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 24px; z-index: 30; }
+    .modal-backdrop.open { display: flex; }
+    .modal-panel { width: min(980px, 100%); max-height: min(92vh, 920px); background: rgba(17, 22, 32, 0.98); border: 1px solid var(--border-hi); border-radius: 26px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.38); display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-bottom: 1px solid var(--border); background: rgba(22, 28, 40, 0.96); }
+    .modal-title-wrap { flex: 1; min-width: 0; }
+    .modal-title-wrap h3 { font-size: 18px; font-weight: 700; }
+    .modal-title-wrap p { margin-top: 4px; font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .modal-close-btn { background: var(--surface-4); padding: 10px 14px; }
+    .modal-body { display: grid; grid-template-columns: 1.1fr 1fr; gap: 0; min-height: 0; overflow: hidden; }
+    .modal-column { min-height: 0; overflow-y: auto; padding: 22px 24px; }
+    .modal-column + .modal-column { border-left: 1px solid var(--border); }
+    .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+    .data-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); }
+    .data-card + .data-card { margin-top: 16px; }
+    .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .data-textarea { width: 100%; min-height: 120px; max-height: 240px; padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; resize: vertical; }
+    .file-input { width: 100%; padding: 10px 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; color: var(--text-muted); }
+    .card-hint { margin-top: 10px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+    .data-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+    .data-action-btn { padding: 11px 16px; background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%); box-shadow: 0 4px 16px var(--accent-glow); }
+    .doc-refresh-btn { padding: 11px 16px; background: var(--surface-4); }
+    .documents-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .documents-count { font-size: 12px; color: var(--text-muted); }
+    .documents-list { display: flex; flex-direction: column; gap: 10px; }
+    .doc-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); }
+    .doc-item-body { flex: 1; min-width: 0; }
+    .doc-kind { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    .doc-kind.web { background: rgba(59, 130, 246, 0.12); color: var(--accent-hi); }
+    .doc-kind.pdf { background: rgba(245, 158, 11, 0.12); color: #f7d08a; }
+    .doc-title { margin-top: 8px; font-size: 13.5px; font-weight: 600; line-height: 1.5; word-break: break-word; }
+    .doc-meta { margin-top: 6px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6; word-break: break-word; }
+    .doc-delete-btn { padding: 10px 14px; background: rgba(239, 68, 68, 0.12); color: #fecaca; white-space: nowrap; }
+    .empty-docs { padding: 18px; border-radius: 16px; background: var(--surface-2); border: 1px dashed var(--border); color: var(--text-muted); font-size: 13px; line-height: 1.7; text-align: center; }
     @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-5px); opacity: 1; } }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 960px) { body { overflow: auto; } .app-shell { grid-template-columns: 1fr; min-height: auto; height: auto; } .sidebar { border-right: none; border-bottom: 1px solid var(--border); } }
-    @media (max-width: 640px) { .chat-header { padding: 16px; flex-wrap: wrap; } .messages { padding: 16px; } .composer { padding: 12px; } .composer-footer { flex-direction: column; align-items: flex-start; } .header-badge { margin-left: 0; } .message-wrapper { max-width: 100%; } }
+    @media (max-width: 1120px) {
+      .modal-body { grid-template-columns: 1fr; }
+      .modal-column + .modal-column { border-left: none; border-top: 1px solid var(--border); }
+    }
+    @media (max-width: 960px) {
+      body { overflow: auto; }
+      .app-shell { grid-template-columns: 1fr; min-height: auto; height: auto; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+    @media (max-width: 640px) {
+      .chat-header { padding: 16px; flex-wrap: wrap; }
+      .messages { padding: 16px; }
+      .composer { padding: 12px; }
+      .composer-footer { flex-direction: column; align-items: flex-start; }
+      .header-badge { margin-left: 0; }
+      .message-wrapper { max-width: 100%; }
+      .modal-backdrop { padding: 10px; }
+      .modal-header, .modal-column { padding: 16px; }
+      .data-actions, .documents-toolbar, .doc-item { flex-direction: column; align-items: stretch; }
+    }
   </style>
 </head>
 <body>
@@ -127,6 +185,7 @@
       </div>
       <nav id="ragTabs" class="rag-switcher" aria-label="RAG switcher"></nav>
       <button id="newChatBtn" class="new-chat-btn" type="button"></button>
+      <button id="manageDataBtn" class="manage-data-btn" type="button"></button>
       <span id="historyLabel" class="sidebar-label"></span>
       <div id="historyList" class="history-list"></div>
     </aside>
@@ -152,9 +211,62 @@
       </footer>
     </main>
   </div>
+
+  <div id="dataModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="dataModalTitle">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 id="dataModalTitle"></h3>
+          <p>D&#225;n link m&#7899;i ho&#7863;c t&#7843;i PDF l&#234;n. Sau khi n&#7841;p/x&#243;a, h&#7879; th&#7889;ng s&#7869; c&#7853;p nh&#7853;t l&#7841;i `extract_md` v&#224; reload c&#7843; 3 RAG.</p>
+        </div>
+        <button id="closeDataModalBtn" class="modal-close-btn" type="button">&#272;&#243;ng</button>
+      </div>
+      <div class="modal-body">
+        <section class="modal-column">
+          <div class="section-title">N&#7841;p D&#7919; Li&#7879;u</div>
+          <div class="data-card">
+            <label class="field-label" for="linkInput">Link web</label>
+            <textarea id="linkInput" class="data-textarea" placeholder="M&#7895;i d&#242;ng m&#7897;t URL, ho&#7863;c d&#225;n m&#7897;t &#273;o&#7841;n v&#259;n b&#7843;n c&#243; ch&#7913;a c&#225;c link."></textarea>
+            <p class="card-hint">Link m&#7899;i s&#7869; &#273;&#432;&#7907;c th&#234;m v&#224;o `extract_md/data_raw/web/link.md`, ch&#7881; x&#7917; l&#253; URL m&#7899;i v&#224; b&#7887; qua URL &#273;&#227; c&#243;.</p>
+          </div>
+          <div class="data-card">
+            <label class="field-label" for="pdfInput">File PDF</label>
+            <input id="pdfInput" class="file-input" type="file" accept=".pdf,application/pdf" multiple />
+            <p class="card-hint">PDF m&#7899;i s&#7869; &#273;&#432;&#7907;c l&#432;u v&#224;o `extract_md/data_raw/pdf/...`, sau &#273;&#243; tr&#237;ch text v&#224; t&#7841;o chunk.</p>
+            <div class="data-actions">
+              <button id="addDataBtn" class="data-action-btn" type="button">N&#7841;p d&#7919; li&#7879;u</button>
+            </div>
+          </div>
+          <div id="dataStatus" class="data-status"></div>
+        </section>
+        <section class="modal-column">
+          <div class="documents-toolbar">
+            <div>
+              <div class="section-title" style="margin-bottom: 6px;">X&#243;a T&#224;i Li&#7879;u</div>
+              <div id="documentsCount" class="documents-count"></div>
+            </div>
+            <button id="refreshDocsBtn" class="doc-refresh-btn" type="button">L&#224;m m&#7899;i</button>
+          </div>
+          <div id="documentsList" class="documents-list"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <script id="chatUiConfig" type="application/json">__CHAT_UI_CONFIG__</script>
   <script>
     const APP_CONFIG = JSON.parse(document.getElementById("chatUiConfig").textContent);
+    const UI_TEXT = {
+      new_chat_label: "Cu\u1ed9c tr\u00f2 chuy\u1ec7n m\u1edbi",
+      manage_data_label: "Th\u00eam d\u1eef li\u1ec7u",
+      send_button_label: "G\u1eedi",
+      initial_title: "Cu\u1ed9c tr\u00f2 chuy\u1ec7n m\u1edbi",
+      history_label: "L\u1ecbch s\u1eed",
+      empty_history_text: "Ch\u01b0a c\u00f3 tin nh\u1eafn",
+      continue_history_text: "Ti\u1ebfp t\u1ee5c h\u1ed9i tho\u1ea1i",
+      sending_error_prefix: "Kh\u00f4ng th\u1ec3 x\u1eed l\u00fd c\u00e2u h\u1ecfi.",
+      data_modal_title: "Qu\u1ea3n l\u00fd d\u1eef li\u1ec7u"
+    };
     const STORAGE_KEY = APP_CONFIG.storage_key;
     const ACTIVE_KEY = STORAGE_KEY + ":active";
     const ragTabs = document.getElementById("ragTabs");
@@ -165,20 +277,65 @@
     const sendBtn = document.getElementById("sendBtn");
     const statusLine = document.getElementById("statusLine");
     const newChatBtn = document.getElementById("newChatBtn");
+    const manageDataBtn = document.getElementById("manageDataBtn");
+    const dataModal = document.getElementById("dataModal");
+    const closeDataModalBtn = document.getElementById("closeDataModalBtn");
+    const dataModalTitle = document.getElementById("dataModalTitle");
+    const linkInput = document.getElementById("linkInput");
+    const pdfInput = document.getElementById("pdfInput");
+    const addDataBtn = document.getElementById("addDataBtn");
+    const dataStatus = document.getElementById("dataStatus");
+    const refreshDocsBtn = document.getElementById("refreshDocsBtn");
+    const documentsList = document.getElementById("documentsList");
+    const documentsCount = document.getElementById("documentsCount");
+    const ADMIN_JOB_PREFIX = "/api/admin/jobs";
     let sessions = loadSessions();
     let activeSessionId = loadActiveSessionId();
     let isSending = false;
+    let isAdminBusy = false;
     bootstrapUi();
     if (!sessions.length) { sessions = [createSession()]; }
     if (!sessions.some((session) => session.id === activeSessionId)) { activeSessionId = sessions[0].id; }
     persistState();
     render();
-    newChatBtn.addEventListener("click", () => { const session = createSession(); sessions.unshift(session); activeSessionId = session.id; persistState(); render(); inputEl.focus(); });
-    sendBtn.addEventListener("click", () => void handleSend());
+
+    newChatBtn.addEventListener("click", () => {
+      const session = createSession();
+      sessions.unshift(session);
+      activeSessionId = session.id;
+      persistState();
+      render();
+      inputEl.focus();
+    });
+    manageDataBtn.addEventListener("click", () => { void openDataModal(); });
+    closeDataModalBtn.addEventListener("click", closeDataModal);
+    addDataBtn.addEventListener("click", () => { void handleAddData(); });
+    refreshDocsBtn.addEventListener("click", () => { void fetchDocuments(); });
+    sendBtn.addEventListener("click", () => { void handleSend(); });
     inputEl.addEventListener("input", autoResize);
-    inputEl.addEventListener("keydown", (event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void handleSend(); } });
-    messagesEl.addEventListener("click", (event) => { const chipButton = event.target.closest(".chip"); if (chipButton) { fillInput(chipButton.textContent || ""); } });
+    inputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        void handleSend();
+      }
+    });
+    dataModal.addEventListener("click", (event) => {
+      if (event.target === dataModal) { closeDataModal(); }
+    });
+    documentsList.addEventListener("click", (event) => {
+      const deleteButton = event.target.closest(".doc-delete-btn");
+      if (!deleteButton) { return; }
+      const documentId = deleteButton.getAttribute("data-document-id");
+      if (!documentId) { return; }
+      void handleDeleteDocument(documentId);
+    });
+    messagesEl.addEventListener("click", (event) => {
+      const chipButton = event.target.closest(".chip");
+      if (chipButton) { fillInput(chipButton.textContent || ""); }
+    });
     autoResize();
+    syncDisabledState();
+
     function bootstrapUi() {
       document.title = APP_CONFIG.page_title;
       document.getElementById("brandBadge").textContent = APP_CONFIG.brand_badge;
@@ -187,35 +344,75 @@
       document.getElementById("headerSubtitle").textContent = APP_CONFIG.header_subtitle;
       document.getElementById("headerBadge").textContent = APP_CONFIG.header_badge;
       document.getElementById("composerHint").textContent = APP_CONFIG.composer_hint;
-      document.getElementById("historyLabel").textContent = APP_CONFIG.history_label;
+      document.getElementById("historyLabel").textContent = UI_TEXT.history_label;
+      dataModalTitle.textContent = UI_TEXT.data_modal_title;
       inputEl.placeholder = APP_CONFIG.placeholder;
-      sendBtn.textContent = APP_CONFIG.send_button_label;
-      newChatBtn.textContent = APP_CONFIG.new_chat_label;
+      sendBtn.textContent = UI_TEXT.send_button_label;
+      newChatBtn.textContent = UI_TEXT.new_chat_label;
+      manageDataBtn.textContent = UI_TEXT.manage_data_label;
       renderTabs();
     }
+
     function renderTabs() {
       ragTabs.innerHTML = "";
       APP_CONFIG.tabs.forEach((tab) => {
         const link = document.createElement("a");
-        link.href = tab.href;
+        try {
+          const normalizedUrl = new URL(tab.href, window.location.href);
+          normalizedUrl.protocol = window.location.protocol;
+          normalizedUrl.hostname = window.location.hostname;
+          link.href = normalizedUrl.toString();
+        } catch {
+          link.href = tab.href;
+        }
         link.className = "rag-tab" + (tab.id === APP_CONFIG.current_rag_id ? " active" : "");
         link.textContent = tab.label;
         if (tab.id === APP_CONFIG.current_rag_id) { link.setAttribute("aria-current", "page"); }
         ragTabs.appendChild(link);
       });
     }
-    function createSession() { return { id: generateId(), title: APP_CONFIG.initial_title, messages: [] }; }
-    function generateId() { return window.crypto?.randomUUID?.() ?? ("s-" + Date.now() + "-" + Math.random().toString(16).slice(2)); }
-    function loadSessions() { try { const raw = localStorage.getItem(STORAGE_KEY); const parsed = raw ? JSON.parse(raw) : []; return Array.isArray(parsed) ? parsed : []; } catch { return []; } }
-    function loadActiveSessionId() { return localStorage.getItem(ACTIVE_KEY); }
-    function persistState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); localStorage.setItem(ACTIVE_KEY, activeSessionId || ""); }
-    function getActiveSession() { return sessions.find((session) => session.id === activeSessionId) || sessions[0]; }
+
+    function createSession() {
+      return { id: generateId(), title: UI_TEXT.initial_title, messages: [] };
+    }
+
+    function generateId() {
+      return window.crypto?.randomUUID?.() ?? ("s-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+    }
+
+    function loadSessions() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function loadActiveSessionId() {
+      return localStorage.getItem(ACTIVE_KEY);
+    }
+
+    function persistState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      localStorage.setItem(ACTIVE_KEY, activeSessionId || "");
+    }
+
+    function getActiveSession() {
+      return sessions.find((session) => session.id === activeSessionId) || sessions[0];
+    }
+
     function updateSessionTitle(session) {
       const first = session.messages.find((message) => message.role === "user");
-      if (!first) { session.title = APP_CONFIG.initial_title; return; }
+      if (!first) {
+        session.title = UI_TEXT.initial_title;
+        return;
+      }
       const text = first.content.replace(/\s+/g, " ").trim();
       session.title = text.length > 48 ? text.slice(0, 48) + "..." : text;
     }
+
     function deleteSession(id) {
       sessions = sessions.filter((session) => session.id !== id);
       if (!sessions.length) { sessions = [createSession()]; }
@@ -223,14 +420,21 @@
       persistState();
       render();
     }
-    function selectSession(id) { activeSessionId = id; persistState(); render(); }
+
+    function selectSession(id) {
+      activeSessionId = id;
+      persistState();
+      render();
+    }
+
     function render() {
       renderSidebar();
       renderMessages();
       const activeSession = getActiveSession();
-      titleEl.textContent = activeSession ? activeSession.title : APP_CONFIG.initial_title;
+      titleEl.textContent = activeSession ? activeSession.title : UI_TEXT.initial_title;
       autoResize();
     }
+
     function renderSidebar() {
       historyList.innerHTML = "";
       sessions.forEach((session) => {
@@ -239,29 +443,35 @@
         const openButton = document.createElement("button");
         openButton.type = "button";
         openButton.className = "history-main";
-        openButton.disabled = isSending;
+        openButton.disabled = isSending || isAdminBusy;
         openButton.innerHTML = "<strong></strong><span></span>";
         openButton.querySelector("strong").textContent = session.title;
         const last = session.messages[session.messages.length - 1];
-        openButton.querySelector("span").textContent = last ? (last.content.replace(/\s+/g, " ").trim() || APP_CONFIG.continue_history_text) : APP_CONFIG.empty_history_text;
+        openButton.querySelector("span").textContent = last
+          ? (last.content.replace(/\s+/g, " ").trim() || UI_TEXT.continue_history_text)
+          : UI_TEXT.empty_history_text;
         openButton.addEventListener("click", () => selectSession(session.id));
         const removeButton = document.createElement("button");
         removeButton.type = "button";
         removeButton.className = "history-delete";
         removeButton.textContent = "×";
-        removeButton.title = "Xóa cuộc trò chuyện";
-        removeButton.setAttribute("aria-label", "Xóa cuộc trò chuyện");
-        removeButton.disabled = isSending;
+        removeButton.title = "X\u00f3a cu\u1ed9c tr\u00f2 chuy\u1ec7n";
+        removeButton.setAttribute("aria-label", "X\u00f3a cu\u1ed9c tr\u00f2 chuy\u1ec7n");
+        removeButton.disabled = isSending || isAdminBusy;
         removeButton.addEventListener("click", () => deleteSession(session.id));
         card.appendChild(openButton);
         card.appendChild(removeButton);
         historyList.appendChild(card);
       });
     }
+
     function renderMessages() {
       const session = getActiveSession();
       messagesEl.innerHTML = "";
-      if (!session || !session.messages.length) { renderEmptyState(); return; }
+      if (!session || !session.messages.length) {
+        renderEmptyState();
+        return;
+      }
       session.messages.forEach((message) => {
         const row = document.createElement("div");
         row.className = "message-row " + message.role;
@@ -269,11 +479,14 @@
         wrapper.className = "message-wrapper";
         const meta = document.createElement("div");
         meta.className = "bubble-meta";
-        meta.textContent = message.role === "user" ? "Bạn" : APP_CONFIG.assistant_label;
+        meta.textContent = message.role === "user" ? "B\u1ea1n" : APP_CONFIG.assistant_label;
         const bubble = document.createElement("div");
         bubble.className = "bubble";
-        if (message.loading) { bubble.innerHTML = '<div class="typing" aria-label="Đang trả lời"><span></span><span></span><span></span></div>'; }
-        else { bubble.textContent = message.content; }
+        if (message.loading) {
+          bubble.innerHTML = '<div class="typing" aria-label="\u0110ang tr\u1ea3 l\u1eddi"><span></span><span></span><span></span></div>';
+        } else {
+          bubble.textContent = message.content;
+        }
         wrapper.appendChild(meta);
         wrapper.appendChild(bubble);
         row.appendChild(wrapper);
@@ -281,12 +494,17 @@
       });
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
+
     function renderEmptyState() {
-      const suggestionHtml = APP_CONFIG.suggestions.map((text) => '<button class="chip" type="button">' + escapeHtml(text) + "</button>").join("");
-      messagesEl.innerHTML = `<div class="empty-state"><div class="empty-icon">NTU</div><h3>${escapeHtml(APP_CONFIG.empty_title)}</h3><p>${escapeHtml(APP_CONFIG.empty_description)}</p><div class="suggestion-chips">${suggestionHtml}</div></div>`;
+      const suggestionHtml = APP_CONFIG.suggestions
+        .map((text) => '<button class="chip" type="button">' + escapeHtml(text) + "</button>")
+        .join("");
+      messagesEl.innerHTML =
+        `<div class="empty-state"><div class="empty-icon">NTU</div><h3>${escapeHtml(APP_CONFIG.empty_title)}</h3><p>${escapeHtml(APP_CONFIG.empty_description)}</p><div class="suggestion-chips">${suggestionHtml}</div></div>`;
     }
+
     async function handleSend() {
-      if (isSending) { return; }
+      if (isSending || isAdminBusy) { return; }
       const query = inputEl.value.trim();
       if (!query) { return; }
       const session = getActiveSession();
@@ -296,35 +514,259 @@
       updateSessionTitle(session);
       persistState();
       render();
-      setComposerState(true);
+      setSendingState(true);
       inputEl.value = "";
       autoResize();
       setStatus(APP_CONFIG.loading_message);
       try {
-        const response = await fetch(APP_CONFIG.api_chat_url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query }) });
+        const response = await fetch(APP_CONFIG.api_chat_url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query })
+        });
         const payload = await response.json();
-        if (!response.ok) { throw new Error(payload.error || APP_CONFIG.sending_error_prefix); }
+        if (!response.ok) { throw new Error(payload.error || UI_TEXT.sending_error_prefix); }
         placeholder.loading = false;
         placeholder.content = payload.answer || "";
         placeholder.sources = payload.sources || [];
         setStatus(APP_CONFIG.ready_message);
       } catch (error) {
         placeholder.loading = false;
-        placeholder.content = error.message || APP_CONFIG.sending_error_prefix;
+        placeholder.content = error.message || UI_TEXT.sending_error_prefix;
         placeholder.sources = [];
         setStatus(placeholder.content, true);
       } finally {
         persistState();
         render();
-        setComposerState(false);
+        setSendingState(false);
         inputEl.focus();
       }
     }
-    function setComposerState(disabled) { isSending = disabled; sendBtn.disabled = disabled; inputEl.disabled = disabled; newChatBtn.disabled = disabled; }
-    function setStatus(message, isError = false) { statusLine.textContent = message; statusLine.className = "status-line" + (isError ? " error" : ""); }
-    function autoResize() { inputEl.style.height = "auto"; inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px"; }
-    function fillInput(text) { inputEl.value = text; autoResize(); inputEl.focus(); }
-    function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;"); }
+
+    async function openDataModal() {
+      dataModal.classList.add("open");
+      dataModal.setAttribute("aria-hidden", "false");
+      setDataStatus("");
+      await fetchDocuments();
+    }
+
+    function closeDataModal() {
+      if (isAdminBusy) { return; }
+      dataModal.classList.remove("open");
+      dataModal.setAttribute("aria-hidden", "true");
+    }
+
+    async function fetchDocuments() {
+      setDataStatus("\u0110ang t\u1ea3i danh s\u00e1ch t\u00e0i li\u1ec7u...");
+      try {
+        const response = await fetch(APP_CONFIG.api_documents_url);
+        const payload = await response.json();
+        if (!response.ok) { throw new Error(payload.error || "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch t\u00e0i li\u1ec7u."); }
+        renderDocuments(payload.documents || [], payload.counts || {});
+        setDataStatus("\u0110\u00e3 c\u1eadp nh\u1eadt danh s\u00e1ch t\u00e0i li\u1ec7u.", false, true);
+      } catch (error) {
+        renderDocuments([], {});
+        setDataStatus(error.message || "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch t\u00e0i li\u1ec7u.", true);
+      }
+    }
+
+    function renderDocuments(documents, counts) {
+      const total = Number(counts.total || documents.length || 0);
+      const web = Number(counts.web || documents.filter((item) => item.kind === "web").length);
+      const pdf = Number(counts.pdf || documents.filter((item) => item.kind === "pdf").length);
+      documentsCount.textContent = `T\u1ed5ng ${total} t\u00e0i li\u1ec7u | Web ${web} | PDF ${pdf}`;
+      if (!documents.length) {
+        documentsList.innerHTML = '<div class="empty-docs">Ch\u01b0a c\u00f3 t\u00e0i li\u1ec7u n\u00e0o trong corpus d\u00f9ng chung.</div>';
+        return;
+      }
+      documentsList.innerHTML = documents.map((document) => {
+        const detail = document.kind === "web"
+          ? escapeHtml(document.chunk_relative_path || "")
+          : escapeHtml(document.raw_relative_path || "");
+        return `
+          <div class="doc-item">
+            <div class="doc-item-body">
+              <span class="doc-kind ${escapeHtml(document.kind || "web")}">${escapeHtml(document.kind || "")}</span>
+              <div class="doc-title">${escapeHtml(document.label || "")}</div>
+              <div class="doc-meta">${detail}</div>
+            </div>
+            <button class="doc-delete-btn" type="button" data-document-id="${escapeHtml(document.id || "")}" ${isAdminBusy ? "disabled" : ""}>X\u00f3a</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function handleAddData() {
+      if (isAdminBusy || isSending) { return; }
+      const linksText = linkInput.value.trim();
+      const files = Array.from(pdfInput.files || []);
+      if (!linksText && !files.length) {
+        setDataStatus("Nh\u1eadp \u00edt nh\u1ea5t m\u1ed9t link ho\u1eb7c ch\u1ecdn \u00edt nh\u1ea5t m\u1ed9t file PDF.", true);
+        return;
+      }
+      setAdminState(true);
+      setDataStatus("\u0110ang \u0111\u01b0a d\u1eef li\u1ec7u th\u00f4 v\u00e0o extract_md v\u00e0 c\u1eadp nh\u1eadt 3 h\u1ec7 th\u1ed1ng...");
+      try {
+        const pdfFiles = await Promise.all(files.map(async (file) => ({
+          name: file.name,
+          content_base64: await fileToBase64(file)
+        })));
+        const response = await fetch(APP_CONFIG.api_add_data_url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ async_mode: true, links_text: linksText, pdf_files: pdfFiles })
+        });
+        const payload = await resolveAdminResponse(response, {
+          defaultError: "Kh\u00f4ng n\u1ea1p \u0111\u01b0\u1ee3c d\u1eef li\u1ec7u.",
+          pendingMessage: "\u0110ang n\u1ea1p d\u1eef li\u1ec7u, tr\u00edch xu\u1ea5t chunk v\u00e0 reload 3 h\u1ec7 th\u1ed1ng..."
+        });
+        linkInput.value = "";
+        pdfInput.value = "";
+        await fetchDocuments();
+        const reloadSummary = summarizeReloads(payload.reloads || {});
+        setDataStatus([payload.message, reloadSummary].filter(Boolean).join(" "), false, true);
+      } catch (error) {
+        setDataStatus(error.message || "Kh\u00f4ng n\u1ea1p \u0111\u01b0\u1ee3c d\u1eef li\u1ec7u.", true);
+      } finally {
+        setAdminState(false);
+      }
+    }
+
+    async function handleDeleteDocument(documentId) {
+      if (isAdminBusy || isSending) { return; }
+      if (!window.confirm("X\u00f3a t\u00e0i li\u1ec7u n\u00e0y kh\u1ecfi d\u1eef li\u1ec7u th\u00f4, TXT, chunk v\u00e0 c\u1eadp nh\u1eadt l\u1ea1i c\u1ea3 3 RAG?")) { return; }
+      setAdminState(true);
+      setDataStatus("\u0110ang x\u00f3a t\u00e0i li\u1ec7u v\u00e0 reload h\u1ec7 th\u1ed1ng...");
+      try {
+        const response = await fetch(APP_CONFIG.api_delete_data_url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ async_mode: true, documents: [{ id: documentId }] })
+        });
+        const payload = await resolveAdminResponse(response, {
+          defaultError: "Kh\u00f4ng x\u00f3a \u0111\u01b0\u1ee3c t\u00e0i li\u1ec7u.",
+          pendingMessage: "\u0110ang x\u00f3a d\u1eef li\u1ec7u th\u00f4, chunk v\u00e0 reload 3 h\u1ec7 th\u1ed1ng..."
+        });
+        await fetchDocuments();
+        const reloadSummary = summarizeReloads(payload.reloads || {});
+        setDataStatus([payload.message, reloadSummary].filter(Boolean).join(" "), false, true);
+      } catch (error) {
+        setDataStatus(error.message || "Kh\u00f4ng x\u00f3a \u0111\u01b0\u1ee3c t\u00e0i li\u1ec7u.", true);
+      } finally {
+        setAdminState(false);
+      }
+    }
+
+    async function resolveAdminResponse(response, { defaultError, pendingMessage }) {
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || defaultError);
+      }
+      if (!payload.job_id) {
+        return payload;
+      }
+      return await waitForAdminJob(payload.job_id, pendingMessage);
+    }
+
+    async function waitForAdminJob(jobId, pendingMessage) {
+      while (true) {
+        const response = await fetch(`${ADMIN_JOB_PREFIX}/${encodeURIComponent(jobId)}`);
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "Kh\u00f4ng theo d\u00f5i \u0111\u01b0\u1ee3c ti\u1ebfn tr\u00ecnh x\u1eed l\u00fd.");
+        }
+        if (payload.status === "completed") {
+          return payload.result || {};
+        }
+        if (payload.status === "failed") {
+          throw new Error(payload.error || "T\u00e1c v\u1ee5 qu\u1ea3n l\u00fd d\u1eef li\u1ec7u th\u1ea5t b\u1ea1i.");
+        }
+        setDataStatus(
+          payload.status === "queued"
+            ? "\u0110ang x\u1ebfp h\u00e0ng x\u1eed l\u00fd..."
+            : pendingMessage,
+        );
+        await delay(2000);
+      }
+    }
+
+    function summarizeReloads(reloads) {
+      const entries = Object.entries(reloads || {});
+      if (!entries.length) { return ""; }
+      const failed = entries.filter(([, value]) => value && value.status === "error");
+      if (!failed.length) { return "\u0110\u00e3 y\u00eau c\u1ea7u reload c\u1ea3 3 h\u1ec7 th\u1ed1ng."; }
+      return failed.map(([name, value]) => `${name}: ${value.message}`).join(" | ");
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          const commaIndex = result.indexOf(",");
+          const base64 = commaIndex >= 0 ? result.slice(commaIndex + 1) : result;
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error(`Kh\u00f4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c file ${file.name}.`));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function delay(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    function setSendingState(disabled) {
+      isSending = disabled;
+      syncDisabledState();
+    }
+
+    function setAdminState(disabled) {
+      isAdminBusy = disabled;
+      syncDisabledState();
+      addDataBtn.disabled = disabled;
+      refreshDocsBtn.disabled = disabled;
+      closeDataModalBtn.disabled = disabled;
+      documentsList.querySelectorAll(".doc-delete-btn").forEach((button) => { button.disabled = disabled; });
+    }
+
+    function syncDisabledState() {
+      const disabled = isSending || isAdminBusy;
+      sendBtn.disabled = disabled;
+      inputEl.disabled = disabled;
+      newChatBtn.disabled = disabled;
+      manageDataBtn.disabled = disabled;
+    }
+
+    function setStatus(message, isError = false) {
+      statusLine.textContent = message;
+      statusLine.className = "status-line" + (isError ? " error" : "");
+    }
+
+    function setDataStatus(message, isError = false, isSuccess = false) {
+      dataStatus.textContent = message;
+      dataStatus.className = "data-status" + (isError ? " error" : "") + (isSuccess ? " success" : "");
+    }
+
+    function autoResize() {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px";
+    }
+
+    function fillInput(text) {
+      inputEl.value = text;
+      autoResize();
+      inputEl.focus();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
   </script>
 </body>
 </html>

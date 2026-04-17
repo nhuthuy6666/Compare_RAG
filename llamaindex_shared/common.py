@@ -47,6 +47,11 @@ class SharedRagConfig:
     llm_model: str
     embed_model: str
     llm_api_key: str
+    llm_timeout: int
+    embed_timeout: int
+    embed_batch_size: int
+    embed_retry_attempts: int
+    embed_retry_delay: int
     qdrant_url: str
     qdrant_api_key: str | None
     qdrant_collection: str
@@ -80,6 +85,16 @@ def _get_bool_env(name: str, default: bool) -> bool:
     if normalized in {"0", "false", "no", "off"}:
         return False
     raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
+
+
+def _get_int_env(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise ValueError(f"Environment variable {name} must be an integer, got: {raw!r}") from exc
 
 # Nhận mode dạng chuỗi (từ config/env), chuẩn hóa lowercase rồi map sang enum FUSION_MODES để đưa vào QueryFusionRetriever.
 def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
@@ -140,6 +155,11 @@ def load_shared_config(
         llm_model=os.getenv("LLM_MODEL", str(models.get("chat") or "llama3.1:8b")),
         embed_model=os.getenv("EMBED_MODEL", str(models.get("embedding") or "bge-m3:latest")),
         llm_api_key=os.getenv("LLM_API_KEY", "ollama"),
+        llm_timeout=_get_int_env("LLM_TIMEOUT", 900),
+        embed_timeout=_get_int_env("EMBED_TIMEOUT", 1800),
+        embed_batch_size=_get_int_env("EMBED_BATCH_SIZE", 4),
+        embed_retry_attempts=_get_int_env("EMBED_RETRY_ATTEMPTS", 8),
+        embed_retry_delay=_get_int_env("EMBED_RETRY_DELAY", 8),
         qdrant_url=os.getenv("QDRANT_URL", "http://127.0.0.1:6333"),
         qdrant_api_key=os.getenv("QDRANT_API_KEY"),
         qdrant_collection=collection_name,
@@ -178,7 +198,7 @@ def configure_models(config: SharedRagConfig) -> None:
         model_name=config.llm_model,
         api_key=config.llm_api_key,
         api_base=config.llm_base_url,
-        timeout=180.0,
+        timeout=float(config.llm_timeout),
         max_tokens=config.max_output_tokens,
         temperature=config.generation_temperature,
         top_p=config.generation_top_p,
@@ -188,10 +208,10 @@ def configure_models(config: SharedRagConfig) -> None:
         model_name=config.embed_model,
         api_key=config.llm_api_key,
         api_base=config.llm_base_url,
-        timeout=300.0,
-        embed_batch_size=4,
-        retry_attempts=8,
-        retry_delay=8.0,
+        timeout=float(config.embed_timeout),
+        embed_batch_size=config.embed_batch_size,
+        retry_attempts=config.embed_retry_attempts,
+        retry_delay=float(config.embed_retry_delay),
     )
 
 
