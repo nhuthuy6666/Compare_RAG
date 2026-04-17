@@ -32,6 +32,7 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body { font-family: "Be Vietnam Pro", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; }
     body::before {
       content: "";
@@ -43,8 +44,8 @@
       pointer-events: none;
       z-index: 0;
     }
-    .app-shell { position: relative; z-index: 1; display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
-    .sidebar { background: rgba(17, 22, 32, 0.96); border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; padding: 24px 16px; overflow: hidden; }
+    .app-shell { position: relative; z-index: 1; display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; height: 100vh; min-height: 100dvh; height: 100dvh; }
+    .sidebar { background: rgba(17, 22, 32, 0.96); border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; padding: 24px 16px; overflow: hidden; min-height: 0; }
     .brand { padding: 6px 6px 2px; }
     .brand-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 7px 12px; background: rgba(59, 130, 246, 0.12); color: var(--accent-hi); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
     .brand h1 { margin-top: 16px; font-family: "Playfair Display", serif; font-size: 28px; line-height: 1.08; letter-spacing: 0.02em; }
@@ -57,7 +58,7 @@
     .new-chat-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
     .new-chat-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     .sidebar-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: 0 6px; }
-    .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
+    .history-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; }
     .history-card { border-radius: var(--radius-sm); border: 1px solid transparent; display: flex; align-items: stretch; overflow: hidden; transition: border-color 0.2s, background 0.2s; }
     .history-card:hover { background: var(--surface-2); border-color: var(--border); }
     .history-card.active { background: var(--surface-3); border-color: var(--border-hi); }
@@ -69,14 +70,14 @@
     .history-delete { width: 42px; color: var(--text-muted); cursor: pointer; transition: color 0.2s, background 0.2s; }
     .history-delete:hover:not(:disabled) { color: var(--danger); background: rgba(239, 68, 68, 0.08); }
     .history-delete:disabled { opacity: 0.35; cursor: not-allowed; }
-    .main { display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
+    .main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
     .chat-header { padding: 22px 32px 18px; border-bottom: 1px solid var(--border); background: rgba(17, 22, 32, 0.92); display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
     .chat-header-icon { width: 44px; height: 44px; border-radius: 14px; background: var(--surface-3); border: 1px solid var(--border-hi); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--accent-hi); flex-shrink: 0; }
     .chat-header-text { min-width: 0; }
     .chat-header-text h2 { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
     .chat-header-text p { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
     .header-badge { margin-left: auto; background: var(--surface-3); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 0.05em; white-space: nowrap; }
-    .messages { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+    .messages { flex: 1; min-height: 0; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
     .empty-state { margin: auto; max-width: 560px; text-align: center; }
     .empty-icon { width: 76px; height: 76px; border-radius: 24px; background: var(--surface-2); border: 1px solid var(--border); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent-hi); }
     .empty-state h3 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
@@ -112,7 +113,7 @@
     .composer-hint { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; opacity: 0.78; }
     @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-5px); opacity: 1; } }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 960px) { body { overflow: auto; } .app-shell { grid-template-columns: 1fr; } .sidebar { border-right: none; border-bottom: 1px solid var(--border); } }
+    @media (max-width: 960px) { body { overflow: auto; } .app-shell { grid-template-columns: 1fr; min-height: auto; height: auto; } .sidebar { border-right: none; border-bottom: 1px solid var(--border); } }
     @media (max-width: 640px) { .chat-header { padding: 16px; flex-wrap: wrap; } .messages { padding: 16px; } .composer { padding: 12px; } .composer-footer { flex-direction: column; align-items: flex-start; } .header-badge { margin-left: 0; } .message-wrapper { max-width: 100%; } }
   </style>
 </head>
