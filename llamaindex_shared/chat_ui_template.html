@@ -132,12 +132,16 @@
     .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
     .data-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); }
     .data-card + .data-card { margin-top: 16px; }
+    .data-card.busy { opacity: 0.72; }
     .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .data-text-input { width: 100%; min-height: 46px; padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; }
     .data-textarea { width: 100%; min-height: 120px; max-height: 240px; padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; resize: vertical; }
     .file-input { width: 100%; padding: 10px 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; color: var(--text-muted); }
+    .data-card.busy .data-text-input, .data-card.busy .data-textarea, .data-card.busy .file-input { filter: blur(0.7px); }
     .card-hint { margin-top: 10px; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
     .data-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
     .data-action-btn { padding: 11px 16px; background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%); box-shadow: 0 4px 16px var(--accent-glow); }
+    .data-action-btn:disabled { filter: grayscale(0.2) blur(0.4px); box-shadow: none; }
     .doc-refresh-btn { padding: 11px 16px; background: var(--surface-4); }
     .documents-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
     .documents-count { font-size: 12px; color: var(--text-muted); }
@@ -217,7 +221,7 @@
       <div class="modal-header">
         <div class="modal-title-wrap">
           <h3 id="dataModalTitle"></h3>
-          <p>D&#225;n link m&#7899;i ho&#7863;c t&#7843;i PDF l&#234;n. Sau khi n&#7841;p/x&#243;a, h&#7879; th&#7889;ng s&#7869; c&#7853;p nh&#7853;t l&#7841;i `extract_md` v&#224; reload c&#7843; 3 RAG.</p>
+          <p>M&#7895;i l&#7847;n ch&#7881; n&#7841;p 1 t&#224;i li&#7879;u: 1 link ho&#7863;c 1 PDF. Sau khi n&#7841;p/x&#243;a, h&#7879; th&#7889;ng s&#7869; c&#7853;p nh&#7853;t l&#7841;i `extract_md` v&#224; reload c&#7843; 3 RAG.</p>
         </div>
         <button id="closeDataModalBtn" class="modal-close-btn" type="button">&#272;&#243;ng</button>
       </div>
@@ -225,14 +229,19 @@
         <section class="modal-column">
           <div class="section-title">N&#7841;p D&#7919; Li&#7879;u</div>
           <div class="data-card">
+            <label class="field-label" for="documentNameInput">T&#234;n hi&#7875;n th&#7883;</label>
+            <input id="documentNameInput" class="data-text-input" type="text" placeholder="V&#237; d&#7909;: &#272;&#7873; &#225;n tuy&#7875;n sinh &#273;&#7841;i h&#7885;c 2018" />
+            <p class="card-hint">N&#7871;u nh&#7853;p t&#234;n, giao di&#7879;n s&#7869; d&#249;ng t&#234;n n&#224;y &#273;&#7875; hi&#7875;n th&#7883; t&#224;i li&#7879;u.</p>
+          </div>
+          <div class="data-card">
             <label class="field-label" for="linkInput">Link web</label>
-            <textarea id="linkInput" class="data-textarea" placeholder="M&#7895;i d&#242;ng m&#7897;t URL, ho&#7863;c d&#225;n m&#7897;t &#273;o&#7841;n v&#259;n b&#7843;n c&#243; ch&#7913;a c&#225;c link."></textarea>
-            <p class="card-hint">Link m&#7899;i s&#7869; &#273;&#432;&#7907;c th&#234;m v&#224;o `extract_md/data_raw/web/link.md`, ch&#7881; x&#7917; l&#253; URL m&#7899;i v&#224; b&#7887; qua URL &#273;&#227; c&#243;.</p>
+            <textarea id="linkInput" class="data-textarea" placeholder="D&#225;n 1 URL duy nh&#7845;t."></textarea>
+            <p class="card-hint">Link m&#7899;i s&#7869; &#273;&#432;&#7907;c th&#234;m v&#224;o `extract_md/data_raw/web/link.md`, ch&#7881; x&#7917; l&#253; 1 URL cho m&#7895;i l&#7847;n n&#7841;p.</p>
           </div>
           <div class="data-card">
             <label class="field-label" for="pdfInput">File PDF</label>
-            <input id="pdfInput" class="file-input" type="file" accept=".pdf,application/pdf" multiple />
-            <p class="card-hint">PDF m&#7899;i s&#7869; &#273;&#432;&#7907;c l&#432;u v&#224;o `extract_md/data_raw/pdf/...`, sau &#273;&#243; tr&#237;ch text v&#224; t&#7841;o chunk.</p>
+            <input id="pdfInput" class="file-input" type="file" accept=".pdf,application/pdf" />
+            <p class="card-hint">PDF m&#7899;i s&#7869; &#273;&#432;&#7907;c l&#432;u v&#224;o `extract_md/data_raw/pdf/...`, sau &#273;&#243; tr&#237;ch text v&#224; t&#7841;o chunk. M&#7895;i l&#7847;n ch&#7881; ch&#7885;n 1 file.</p>
             <div class="data-actions">
               <button id="addDataBtn" class="data-action-btn" type="button">N&#7841;p d&#7919; li&#7879;u</button>
             </div>
@@ -246,6 +255,10 @@
               <div id="documentsCount" class="documents-count"></div>
             </div>
             <button id="refreshDocsBtn" class="doc-refresh-btn" type="button">L&#224;m m&#7899;i</button>
+          </div>
+          <div class="data-card" style="margin-bottom: 14px;">
+            <label class="field-label" for="documentsSearchInput">T&#236;m ki&#7871;m t&#224;i li&#7879;u</label>
+            <input id="documentsSearchInput" class="data-text-input" type="text" placeholder="T&#236;m theo t&#234;n hi&#7875;n th&#7883;, t&#234;n file ho&#7863;c URL" />
           </div>
           <div id="documentsList" class="documents-list"></div>
         </section>
@@ -281,18 +294,29 @@
     const dataModal = document.getElementById("dataModal");
     const closeDataModalBtn = document.getElementById("closeDataModalBtn");
     const dataModalTitle = document.getElementById("dataModalTitle");
+    const documentNameInput = document.getElementById("documentNameInput");
     const linkInput = document.getElementById("linkInput");
     const pdfInput = document.getElementById("pdfInput");
+    const nameCard = documentNameInput.closest(".data-card");
+    const linkCard = linkInput.closest(".data-card");
+    const pdfCard = pdfInput.closest(".data-card");
     const addDataBtn = document.getElementById("addDataBtn");
     const dataStatus = document.getElementById("dataStatus");
     const refreshDocsBtn = document.getElementById("refreshDocsBtn");
+    const documentsSearchInput = document.getElementById("documentsSearchInput");
     const documentsList = document.getElementById("documentsList");
     const documentsCount = document.getElementById("documentsCount");
     const ADMIN_JOB_PREFIX = "/api/admin/jobs";
+    const ADD_DATA_BUTTON_LABEL = addDataBtn.textContent;
+    const ADMIN_STATUS_PROCESSING = "Đang xử lý...";
+    const ADMIN_STATUS_SUCCESS = "Xử lý thành công.";
     let sessions = loadSessions();
     let activeSessionId = loadActiveSessionId();
     let isSending = false;
     let isAdminBusy = false;
+    let currentDocuments = [];
+    let currentDocumentCounts = {};
+    let documentSearchTerm = "";
     bootstrapUi();
     if (!sessions.length) { sessions = [createSession()]; }
     if (!sessions.some((session) => session.id === activeSessionId)) { activeSessionId = sessions[0].id; }
@@ -312,6 +336,10 @@
     addDataBtn.addEventListener("click", () => { void handleAddData(); });
     refreshDocsBtn.addEventListener("click", () => { void fetchDocuments(); });
     sendBtn.addEventListener("click", () => { void handleSend(); });
+    documentsSearchInput.addEventListener("input", (event) => {
+      documentSearchTerm = String(event.target.value || "").trim().toLowerCase();
+      renderDocuments(currentDocuments, currentDocumentCounts);
+    });
     inputEl.addEventListener("input", autoResize);
     inputEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
@@ -336,6 +364,8 @@
     autoResize();
     syncDisabledState();
 
+    // Khởi tạo các nhãn và cấu hình chung cho giao diện hiện tại.
+    // Khởi tạo toàn bộ nhãn và cấu hình giao diện cho tab hiện tại.
     function bootstrapUi() {
       document.title = APP_CONFIG.page_title;
       document.getElementById("brandBadge").textContent = APP_CONFIG.brand_badge;
@@ -353,6 +383,8 @@
       renderTabs();
     }
 
+    // Render các tab để chuyển nhanh giữa 3 hệ RAG.
+    // Render thanh tab để chuyển giữa 3 hệ RAG.
     function renderTabs() {
       ragTabs.innerHTML = "";
       APP_CONFIG.tabs.forEach((tab) => {
@@ -372,14 +404,20 @@
       });
     }
 
+    // Tạo một phiên chat mới với tiêu đề mặc định.
+    // Tạo một phiên chat mới với tiêu đề mặc định.
     function createSession() {
       return { id: generateId(), title: UI_TEXT.initial_title, messages: [] };
     }
 
+    // Sinh mã định danh duy nhất cho từng phiên chat.
+    // Sinh mã định danh duy nhất cho từng phiên chat.
     function generateId() {
       return window.crypto?.randomUUID?.() ?? ("s-" + Date.now() + "-" + Math.random().toString(16).slice(2));
     }
 
+    // Đọc lịch sử chat từ localStorage.
+    // Đọc toàn bộ lịch sử chat đã lưu trong localStorage.
     function loadSessions() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -390,19 +428,27 @@
       }
     }
 
+    // Đọc mã phiên đang được chọn gần nhất.
+    // Đọc mã phiên chat đang được chọn gần nhất.
     function loadActiveSessionId() {
       return localStorage.getItem(ACTIVE_KEY);
     }
 
+    // Lưu toàn bộ trạng thái phiên chat xuống localStorage.
+    // Lưu danh sách phiên chat và phiên đang mở xuống localStorage.
     function persistState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
       localStorage.setItem(ACTIVE_KEY, activeSessionId || "");
     }
 
+    // Lấy phiên chat đang hoạt động để render và gửi câu hỏi.
+    // Lấy phiên chat đang hoạt động để render hoặc cập nhật nội dung.
     function getActiveSession() {
       return sessions.find((session) => session.id === activeSessionId) || sessions[0];
     }
 
+    // Rút gọn câu hỏi đầu tiên để làm tiêu đề phiên chat.
+    // Cập nhật tiêu đề phiên từ câu hỏi đầu tiên của người dùng.
     function updateSessionTitle(session) {
       const first = session.messages.find((message) => message.role === "user");
       if (!first) {
@@ -413,6 +459,8 @@
       session.title = text.length > 48 ? text.slice(0, 48) + "..." : text;
     }
 
+    // Xóa một phiên chat khỏi lịch sử cục bộ.
+    // Xóa một phiên chat khỏi lịch sử cục bộ.
     function deleteSession(id) {
       sessions = sessions.filter((session) => session.id !== id);
       if (!sessions.length) { sessions = [createSession()]; }
@@ -421,12 +469,16 @@
       render();
     }
 
+    // Chuyển sang phiên chat mà người dùng vừa chọn.
+    // Chuyển sang phiên chat mà người dùng vừa chọn.
     function selectSession(id) {
       activeSessionId = id;
       persistState();
       render();
     }
 
+    // Render lại toàn bộ phần sidebar và khung chat hiện hành.
+    // Render lại sidebar, khung chat và tiêu đề phiên hiện hành.
     function render() {
       renderSidebar();
       renderMessages();
@@ -435,6 +487,8 @@
       autoResize();
     }
 
+    // Render danh sách lịch sử chat ở cột trái.
+    // Render danh sách lịch sử chat ở cột trái.
     function renderSidebar() {
       historyList.innerHTML = "";
       sessions.forEach((session) => {
@@ -443,7 +497,7 @@
         const openButton = document.createElement("button");
         openButton.type = "button";
         openButton.className = "history-main";
-        openButton.disabled = isSending || isAdminBusy;
+        openButton.disabled = isSending;
         openButton.innerHTML = "<strong></strong><span></span>";
         openButton.querySelector("strong").textContent = session.title;
         const last = session.messages[session.messages.length - 1];
@@ -457,7 +511,7 @@
         removeButton.textContent = "×";
         removeButton.title = "X\u00f3a cu\u1ed9c tr\u00f2 chuy\u1ec7n";
         removeButton.setAttribute("aria-label", "X\u00f3a cu\u1ed9c tr\u00f2 chuy\u1ec7n");
-        removeButton.disabled = isSending || isAdminBusy;
+        removeButton.disabled = isSending;
         removeButton.addEventListener("click", () => deleteSession(session.id));
         card.appendChild(openButton);
         card.appendChild(removeButton);
@@ -465,6 +519,8 @@
       });
     }
 
+    // Render các tin nhắn của phiên chat đang mở.
+    // Render toàn bộ tin nhắn của phiên chat đang mở.
     function renderMessages() {
       const session = getActiveSession();
       messagesEl.innerHTML = "";
@@ -495,6 +551,8 @@
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
+    // Hiển thị màn hình chờ khi chưa có tin nhắn nào.
+    // Hiển thị màn hình chờ khi phiên chat chưa có tin nhắn nào.
     function renderEmptyState() {
       const suggestionHtml = APP_CONFIG.suggestions
         .map((text) => '<button class="chip" type="button">' + escapeHtml(text) + "</button>")
@@ -503,8 +561,10 @@
         `<div class="empty-state"><div class="empty-icon">NTU</div><h3>${escapeHtml(APP_CONFIG.empty_title)}</h3><p>${escapeHtml(APP_CONFIG.empty_description)}</p><div class="suggestion-chips">${suggestionHtml}</div></div>`;
     }
 
+    // Gửi câu hỏi lên backend và cập nhật bong bóng phản hồi.
+    // Gửi câu hỏi lên backend và cập nhật bong bóng trả lời của bot.
     async function handleSend() {
-      if (isSending || isAdminBusy) { return; }
+      if (isSending) { return; }
       const query = inputEl.value.trim();
       if (!query) { return; }
       const session = getActiveSession();
@@ -543,6 +603,8 @@
       }
     }
 
+    // Mở modal quản lý dữ liệu và tải danh sách tài liệu hiện có.
+    // Mở modal quản lý dữ liệu và tải danh sách tài liệu hiện có.
     async function openDataModal() {
       dataModal.classList.add("open");
       dataModal.setAttribute("aria-hidden", "false");
@@ -550,45 +612,86 @@
       await fetchDocuments();
     }
 
+    // Đóng modal khi không còn tác vụ quản trị nào đang chạy.
+    // Đóng modal khi không còn tác vụ quản trị nào đang chạy.
     function closeDataModal() {
       if (isAdminBusy) { return; }
       dataModal.classList.remove("open");
       dataModal.setAttribute("aria-hidden", "true");
     }
 
-    async function fetchDocuments() {
-      setDataStatus("\u0110ang t\u1ea3i danh s\u00e1ch t\u00e0i li\u1ec7u...");
+    // Tải lại danh sách tài liệu trong corpus dùng chung.
+    // Tải lại danh sách tài liệu trong corpus dùng chung.
+    async function fetchDocuments({ silent = false } = {}) {
+      if (!silent) {
+        setDataStatus("Đang tải tài liệu...");
+      }
       try {
         const response = await fetch(APP_CONFIG.api_documents_url);
         const payload = await response.json();
         if (!response.ok) { throw new Error(payload.error || "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch t\u00e0i li\u1ec7u."); }
-        renderDocuments(payload.documents || [], payload.counts || {});
-        setDataStatus("\u0110\u00e3 c\u1eadp nh\u1eadt danh s\u00e1ch t\u00e0i li\u1ec7u.", false, true);
+        currentDocuments = payload.documents || [];
+        currentDocumentCounts = payload.counts || {};
+        renderDocuments(currentDocuments, currentDocumentCounts);
+        if (!silent) {
+          setDataStatus("Đã cập nhật danh sách.", false, true);
+        }
       } catch (error) {
-        renderDocuments([], {});
-        setDataStatus(error.message || "Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch t\u00e0i li\u1ec7u.", true);
+        currentDocuments = [];
+        currentDocumentCounts = {};
+        renderDocuments(currentDocuments, currentDocumentCounts);
+        if (silent) {
+          throw error;
+        }
+        setDataStatus(error.message || "Không tải được danh sách tài liệu.", true);
       }
     }
 
+    // Kiểm tra tài liệu có khớp với từ khóa tìm kiếm hiện tại hay không.
+    function matchesDocumentSearch(document, keyword) {
+      const haystacks = [
+        document.label,
+        document.source_label,
+        document.raw_relative_path,
+        document.chunk_relative_path,
+        document.txt_relative_path,
+      ];
+      return haystacks.some((value) => String(value || "").toLowerCase().includes(keyword));
+    }
+
+    // Render danh sách tài liệu và bộ đếm tổng số web/PDF.
     function renderDocuments(documents, counts) {
+      const filteredDocuments = documentSearchTerm
+        ? documents.filter((document) => matchesDocumentSearch(document, documentSearchTerm))
+        : documents;
       const total = Number(counts.total || documents.length || 0);
       const web = Number(counts.web || documents.filter((item) => item.kind === "web").length);
       const pdf = Number(counts.pdf || documents.filter((item) => item.kind === "pdf").length);
-      documentsCount.textContent = `T\u1ed5ng ${total} t\u00e0i li\u1ec7u | Web ${web} | PDF ${pdf}`;
+      documentsCount.textContent = documentSearchTerm
+        ? `Tổng ${total} tài liệu | Web ${web} | PDF ${pdf} | Khớp ${filteredDocuments.length}`
+        : `T\u1ed5ng ${total} t\u00e0i li\u1ec7u | Web ${web} | PDF ${pdf}`;
       if (!documents.length) {
         documentsList.innerHTML = '<div class="empty-docs">Ch\u01b0a c\u00f3 t\u00e0i li\u1ec7u n\u00e0o trong corpus d\u00f9ng chung.</div>';
         return;
       }
-      documentsList.innerHTML = documents.map((document) => {
+      if (!filteredDocuments.length) {
+        documentsList.innerHTML = '<div class="empty-docs">Không tìm thấy tài liệu khớp với từ khóa hiện tại.</div>';
+        return;
+      }
+      documentsList.innerHTML = filteredDocuments.map((document) => {
         const detail = document.kind === "web"
           ? escapeHtml(document.chunk_relative_path || "")
           : escapeHtml(document.raw_relative_path || "");
+        const sourceLabel = String(document.source_label || "").trim();
+        const meta = [sourceLabel && sourceLabel !== document.label ? escapeHtml(sourceLabel) : "", detail]
+          .filter(Boolean)
+          .join("<br>");
         return `
           <div class="doc-item">
             <div class="doc-item-body">
               <span class="doc-kind ${escapeHtml(document.kind || "web")}">${escapeHtml(document.kind || "")}</span>
               <div class="doc-title">${escapeHtml(document.label || "")}</div>
-              <div class="doc-meta">${detail}</div>
+              <div class="doc-meta">${meta}</div>
             </div>
             <button class="doc-delete-btn" type="button" data-document-id="${escapeHtml(document.id || "")}" ${isAdminBusy ? "disabled" : ""}>X\u00f3a</button>
           </div>
@@ -596,16 +699,58 @@
       }).join("");
     }
 
+    // Tách tối đa một URL hợp lệ từ nội dung người dùng dán vào ô link.
+    function extractSubmittedUrls(rawText) {
+      const text = String(rawText || "");
+      const urls = [];
+      const seen = new Set();
+      const patterns = [
+        /\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/gi,
+        /(https?:\/\/[^\s<>"')]+)/gi,
+      ];
+      for (const pattern of patterns) {
+        let match = pattern.exec(text);
+        while (match) {
+          const value = String(match[1] || match[0] || "").trim();
+          if (value && !seen.has(value)) {
+            seen.add(value);
+            urls.push(value);
+          }
+          match = pattern.exec(text);
+        }
+      }
+      return urls;
+    }
+
+    // Thêm link hoặc PDF mới vào dữ liệu dùng chung.
     async function handleAddData() {
-      if (isAdminBusy || isSending) { return; }
+      if (isSending || isAdminBusy) { return; }
+      const displayName = documentNameInput.value.trim();
       const linksText = linkInput.value.trim();
       const files = Array.from(pdfInput.files || []);
+      const submittedUrls = extractSubmittedUrls(linksText);
       if (!linksText && !files.length) {
-        setDataStatus("Nh\u1eadp \u00edt nh\u1ea5t m\u1ed9t link ho\u1eb7c ch\u1ecdn \u00edt nh\u1ea5t m\u1ed9t file PDF.", true);
+        setDataStatus("Nh\u1eadp 1 link ho\u1eb7c ch\u1ecdn 1 file PDF.", true);
+        return;
+      }
+      if (linksText && !submittedUrls.length) {
+        setDataStatus("Ch\u1ec9 d\u00e1n 1 URL h\u1ee3p l\u1ec7.", true);
+        return;
+      }
+      if (submittedUrls.length && files.length) {
+        setDataStatus("M\u1ed7i l\u1ea7n ch\u1ec9 \u0111\u01b0\u1ee3c n\u1ea1p 1 t\u00e0i li\u1ec7u: ch\u1ecdn 1 link ho\u1eb7c 1 PDF.", true);
+        return;
+      }
+      if (submittedUrls.length > 1) {
+        setDataStatus("M\u1ed7i l\u1ea7n ch\u1ec9 \u0111\u01b0\u1ee3c n\u1ea1p 1 link.", true);
+        return;
+      }
+      if (files.length > 1) {
+        setDataStatus("M\u1ed7i l\u1ea7n ch\u1ec9 \u0111\u01b0\u1ee3c n\u1ea1p 1 file PDF.", true);
         return;
       }
       setAdminState(true);
-      setDataStatus("\u0110ang \u0111\u01b0a d\u1eef li\u1ec7u th\u00f4 v\u00e0o extract_md v\u00e0 c\u1eadp nh\u1eadt 3 h\u1ec7 th\u1ed1ng...");
+      setDataStatus(ADMIN_STATUS_PROCESSING);
       try {
         const pdfFiles = await Promise.all(files.map(async (file) => ({
           name: file.name,
@@ -614,29 +759,39 @@
         const response = await fetch(APP_CONFIG.api_add_data_url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ async_mode: true, links_text: linksText, pdf_files: pdfFiles })
+          body: JSON.stringify({ async_mode: true, display_name: displayName, links_text: linksText, pdf_files: pdfFiles })
         });
         const payload = await resolveAdminResponse(response, {
           defaultError: "Kh\u00f4ng n\u1ea1p \u0111\u01b0\u1ee3c d\u1eef li\u1ec7u.",
-          pendingMessage: "\u0110ang n\u1ea1p d\u1eef li\u1ec7u, tr\u00edch xu\u1ea5t chunk v\u00e0 reload 3 h\u1ec7 th\u1ed1ng..."
+          pendingMessage: ADMIN_STATUS_PROCESSING
         });
+        documentNameInput.value = "";
         linkInput.value = "";
         pdfInput.value = "";
-        await fetchDocuments();
-        const reloadSummary = summarizeReloads(payload.reloads || {});
-        setDataStatus([payload.message, reloadSummary].filter(Boolean).join(" "), false, true);
+        setAdminState(false);
+        void fetchDocuments({ silent: true }).catch(() => {});
+        if (payload.reload_job_id) {
+          setDataStatus(ADMIN_STATUS_SUCCESS, false, true);
+          void monitorReloadJob(payload.reload_job_id);
+        } else {
+          setDataStatus(ADMIN_STATUS_SUCCESS, false, true);
+        }
       } catch (error) {
         setDataStatus(error.message || "Kh\u00f4ng n\u1ea1p \u0111\u01b0\u1ee3c d\u1eef li\u1ec7u.", true);
       } finally {
-        setAdminState(false);
+        if (isAdminBusy) {
+          setAdminState(false);
+        }
       }
     }
 
+    // Xóa một tài liệu khỏi dữ liệu thô, TXT và chunk liên quan.
+    // Xóa một tài liệu khỏi dữ liệu thô, TXT và chunk liên quan.
     async function handleDeleteDocument(documentId) {
-      if (isAdminBusy || isSending) { return; }
+      if (isSending || isAdminBusy) { return; }
       if (!window.confirm("X\u00f3a t\u00e0i li\u1ec7u n\u00e0y kh\u1ecfi d\u1eef li\u1ec7u th\u00f4, TXT, chunk v\u00e0 c\u1eadp nh\u1eadt l\u1ea1i c\u1ea3 3 RAG?")) { return; }
       setAdminState(true);
-      setDataStatus("\u0110ang x\u00f3a t\u00e0i li\u1ec7u v\u00e0 reload h\u1ec7 th\u1ed1ng...");
+      setDataStatus(ADMIN_STATUS_PROCESSING);
       try {
         const response = await fetch(APP_CONFIG.api_delete_data_url, {
           method: "POST",
@@ -645,18 +800,27 @@
         });
         const payload = await resolveAdminResponse(response, {
           defaultError: "Kh\u00f4ng x\u00f3a \u0111\u01b0\u1ee3c t\u00e0i li\u1ec7u.",
-          pendingMessage: "\u0110ang x\u00f3a d\u1eef li\u1ec7u th\u00f4, chunk v\u00e0 reload 3 h\u1ec7 th\u1ed1ng..."
+          pendingMessage: ADMIN_STATUS_PROCESSING
         });
-        await fetchDocuments();
-        const reloadSummary = summarizeReloads(payload.reloads || {});
-        setDataStatus([payload.message, reloadSummary].filter(Boolean).join(" "), false, true);
+        setAdminState(false);
+        void fetchDocuments({ silent: true }).catch(() => {});
+        if (payload.reload_job_id) {
+          setDataStatus(ADMIN_STATUS_SUCCESS, false, true);
+          void monitorReloadJob(payload.reload_job_id);
+        } else {
+          setDataStatus(ADMIN_STATUS_SUCCESS, false, true);
+        }
       } catch (error) {
         setDataStatus(error.message || "Kh\u00f4ng x\u00f3a \u0111\u01b0\u1ee3c t\u00e0i li\u1ec7u.", true);
       } finally {
-        setAdminState(false);
+        if (isAdminBusy) {
+          setAdminState(false);
+        }
       }
     }
 
+    // Giải mã phản hồi admin và theo dõi job bất đồng bộ khi cần.
+    // Giải mã phản hồi admin và theo dõi job bất đồng bộ khi cần.
     async function resolveAdminResponse(response, { defaultError, pendingMessage }) {
       const payload = await response.json();
       if (!response.ok) {
@@ -665,10 +829,12 @@
       if (!payload.job_id) {
         return payload;
       }
-      return await waitForAdminJob(payload.job_id, pendingMessage);
+      return await waitForAdminJob(payload.job_id, { pendingMessage, updateStatus: true });
     }
 
-    async function waitForAdminJob(jobId, pendingMessage) {
+    // Poll trạng thái job quản trị cho đến khi hoàn tất hoặc thất bại.
+    // Poll trạng thái job quản trị cho đến khi hoàn tất hoặc thất bại.
+    async function waitForAdminJob(jobId, { pendingMessage, updateStatus = true } = {}) {
       while (true) {
         const response = await fetch(`${ADMIN_JOB_PREFIX}/${encodeURIComponent(jobId)}`);
         const payload = await response.json();
@@ -681,23 +847,29 @@
         if (payload.status === "failed") {
           throw new Error(payload.error || "T\u00e1c v\u1ee5 qu\u1ea3n l\u00fd d\u1eef li\u1ec7u th\u1ea5t b\u1ea1i.");
         }
-        setDataStatus(
-          payload.status === "queued"
-            ? "\u0110ang x\u1ebfp h\u00e0ng x\u1eed l\u00fd..."
-            : pendingMessage,
-        );
+        if (updateStatus) {
+          setDataStatus(
+            payload.status === "queued"
+              ? ADMIN_STATUS_PROCESSING
+              : pendingMessage,
+          );
+        }
         await delay(2000);
       }
     }
 
-    function summarizeReloads(reloads) {
-      const entries = Object.entries(reloads || {});
-      if (!entries.length) { return ""; }
-      const failed = entries.filter(([, value]) => value && value.status === "error");
-      if (!failed.length) { return "\u0110\u00e3 y\u00eau c\u1ea7u reload c\u1ea3 3 h\u1ec7 th\u1ed1ng."; }
-      return failed.map(([name, value]) => `${name}: ${value.message}`).join(" | ");
+    // Theo dõi job reload nền nhưng chỉ hiển thị trạng thái ngắn gọn.
+    // Theo dõi job reload nền nhưng chỉ can thiệp khi có lỗi thật sự.
+    async function monitorReloadJob(jobId) {
+      try {
+        await waitForAdminJob(jobId, { pendingMessage: ADMIN_STATUS_PROCESSING, updateStatus: false });
+      } catch (error) {
+        setDataStatus(error.message || "Xử lý thất bại.", true);
+      }
     }
 
+    // Chuyển nội dung PDF sang base64 để gửi qua API JSON.
+    // Chuyển nội dung PDF sang base64 để gửi qua API JSON.
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -712,53 +884,78 @@
       });
     }
 
+    // Tạm dừng giữa các lần poll trạng thái job.
+    // Tạm dừng giữa các lần poll trạng thái job.
     function delay(ms) {
       return new Promise((resolve) => window.setTimeout(resolve, ms));
     }
 
+    // Bật hoặc tắt trạng thái gửi câu hỏi.
+    // Bật hoặc tắt trạng thái gửi câu hỏi của khung chat.
     function setSendingState(disabled) {
       isSending = disabled;
       syncDisabledState();
     }
 
+    // Bật hoặc tắt trạng thái thao tác quản trị dữ liệu.
+    // Bật hoặc tắt trạng thái thao tác quản trị dữ liệu trong modal.
     function setAdminState(disabled) {
       isAdminBusy = disabled;
       syncDisabledState();
       addDataBtn.disabled = disabled;
+      addDataBtn.textContent = disabled ? ADMIN_STATUS_PROCESSING : ADD_DATA_BUTTON_LABEL;
       refreshDocsBtn.disabled = disabled;
       closeDataModalBtn.disabled = disabled;
+      documentNameInput.disabled = disabled;
+      linkInput.disabled = disabled;
+      pdfInput.disabled = disabled;
+      nameCard?.classList.toggle("busy", disabled);
+      linkCard?.classList.toggle("busy", disabled);
+      pdfCard?.classList.toggle("busy", disabled);
       documentsList.querySelectorAll(".doc-delete-btn").forEach((button) => { button.disabled = disabled; });
     }
 
+    // Đồng bộ trạng thái khóa hoặc mở của các nút chính.
+    // Đồng bộ trạng thái khóa hoặc mở của các nút chính trên giao diện.
     function syncDisabledState() {
-      const disabled = isSending || isAdminBusy;
+      const disabled = isSending;
       sendBtn.disabled = disabled;
       inputEl.disabled = disabled;
       newChatBtn.disabled = disabled;
       manageDataBtn.disabled = disabled;
     }
 
+    // Cập nhật dòng trạng thái cho khu vực chat.
+    // Cập nhật dòng trạng thái cho khu vực chat.
     function setStatus(message, isError = false) {
       statusLine.textContent = message;
       statusLine.className = "status-line" + (isError ? " error" : "");
     }
 
+    // Cập nhật dòng trạng thái cho modal quản lý dữ liệu.
+    // Cập nhật dòng trạng thái cho modal quản lý dữ liệu.
     function setDataStatus(message, isError = false, isSuccess = false) {
       dataStatus.textContent = message;
       dataStatus.className = "data-status" + (isError ? " error" : "") + (isSuccess ? " success" : "");
     }
 
+    // Tự co giãn chiều cao ô nhập theo số dòng hiện có.
+    // Tự co giãn chiều cao ô nhập theo nội dung hiện có.
     function autoResize() {
       inputEl.style.height = "auto";
       inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px";
     }
 
+    // Đổ nhanh một gợi ý vào ô nhập.
+    // Đổ nhanh một gợi ý vào ô nhập câu hỏi.
     function fillInput(text) {
       inputEl.value = text;
       autoResize();
       inputEl.focus();
     }
 
+    // Escape HTML trước khi render dữ liệu động ra giao diện.
+    // Escape HTML trước khi render dữ liệu động ra giao diện.
     function escapeHtml(value) {
       return String(value)
         .replaceAll("&", "&amp;")

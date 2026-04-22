@@ -17,7 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from chat_service import answer_question, warm_up_graph
 from config import load_config
-from ingest import _load_records, _run_ingest_pipeline
+from ingest import _load_records, _run_ingest_pipeline, sync_shared_chunk_changes
 from llamaindex_shared import (
     ChatUiConfig,
     add_corpus_documents,
@@ -41,8 +41,10 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8502
 CURRENT_RAG_ID = "graph"
 GRAPH_LOCK = Lock()
+ADMIN_LOCK = Lock()
 
 
+# Chuẩn hóa kết quả truy vấn graph thành payload JSON cho giao diện chat.
 def _answer_to_payload(question: str, result) -> dict:
     return {
         "answer": result.answer,
@@ -61,6 +63,7 @@ def _answer_to_payload(question: str, result) -> dict:
 
 
 @lru_cache(maxsize=1)
+# Tạo HTML giao diện dùng chung cho tab Graph RAG.
 def load_ui_html() -> str:
     return render_chat_ui(
         ChatUiConfig(
@@ -104,15 +107,17 @@ def load_ui_html() -> str:
     )
 
 
+# Reload toàn bộ graph từ shared chunks khi cần full rebuild.
 def reload_local_resources() -> dict[str, str]:
     config = load_config()
     args = SimpleNamespace(chunk_jsonl_root=None, output_dir=None, limit=None, dry_run=False, reset_graph=True)
-    all_records = _load_records(args, config)
+    all_records = _load_records(args, config, verbose=False)
     summary = _run_ingest_pipeline(
         all_records=all_records,
         config=config,
         reset_graph_first=True,
         dry_run=False,
+        verbose=False,
     )
     warm_up_graph.cache_clear()
     warm_up_graph()
@@ -126,9 +131,54 @@ def reload_local_resources() -> dict[str, str]:
     }
 
 
-def reload_cluster_resources() -> dict[str, dict[str, str]]:
+# Chuẩn hóa danh sách chunk mới/xóa để dùng lại trong luồng đồng bộ graph.
+def _build_graph_sync_payload(summary: dict | None) -> dict[str, list[str] | bool]:
+    summary = summary or {}
+    chunk_relative_paths: list[str] = []
+    deleted_relative_paths: list[str] = []
+
+    for item in list((summary.get("added") or {}).get("web") or []):
+        chunk_relative_path = str(item.get("chunk_relative_path") or "").strip()
+        if chunk_relative_path:
+            chunk_relative_paths.append(chunk_relative_path)
+    for item in list((summary.get("added") or {}).get("pdf") or []):
+        chunk_relative_path = str(item.get("chunk_relative_path") or "").strip()
+        if chunk_relative_path:
+            chunk_relative_paths.append(chunk_relative_path)
+    for item in list(summary.get("removed") or []):
+        txt_relative_path = str(item.get("txt_relative_path") or "").strip()
+        if txt_relative_path:
+            deleted_relative_paths.append(txt_relative_path.replace("data_txt/", "", 1))
+
+    return {
+        "full_reload": False,
+        "chunk_relative_paths": chunk_relative_paths,
+        "deleted_relative_paths": deleted_relative_paths,
+    }
+
+
+# Đồng bộ delta graph chỉ với những chunk vừa thay đổi.
+def sync_local_resources(*, chunk_relative_paths: list[str] | None = None, deleted_relative_paths: list[str] | None = None) -> dict[str, str]:
+    config = load_config()
+    summary = sync_shared_chunk_changes(
+        config=config,
+        chunk_relative_paths=chunk_relative_paths,
+        deleted_relative_paths=deleted_relative_paths,
+        verbose=False,
+    )
+    warm_up_graph.cache_clear()
+    warm_up_graph()
+    return {
+        "rag_id": CURRENT_RAG_ID,
+        "fact_count": str(summary["fact_count"]),
+        "message": str(summary.get("message") or "Đã đồng bộ delta graph."),
+    }
+
+
+# Reload Graph cục bộ rồi yêu cầu các backend còn lại đồng bộ theo job.
+def reload_cluster_resources(graph_sync_payload: dict | None = None) -> dict[str, dict[str, str]]:
     results: dict[str, dict[str, str]] = {}
-    local_summary = reload_local_resources()
+    local_summary = run_reload_job(graph_sync_payload)
     results[CURRENT_RAG_ID] = {"status": "ok", "message": local_summary["message"]}
     for rag_id, base_url in build_cluster_server_urls().items():
         if rag_id == CURRENT_RAG_ID:
@@ -146,6 +196,7 @@ def reload_cluster_resources() -> dict[str, dict[str, str]]:
     return results
 
 
+# Kiểm tra kết quả reload cụm và báo lỗi nếu còn backend nào thất bại.
 def ensure_reload_success(reloads: dict[str, dict[str, str]], *, action_label: str) -> None:
     failed = {rag_id: result for rag_id, result in reloads.items() if result.get("status") != "ok"}
     if not failed:
@@ -154,6 +205,25 @@ def ensure_reload_success(reloads: dict[str, dict[str, str]], *, action_label: s
     raise RuntimeError(f"Đã {action_label} dữ liệu thô nhưng chưa reload xong toàn bộ hệ thống. {details}")
 
 
+# Tạo job nền để đồng bộ lại cụm sau khi có thay đổi dữ liệu.
+def start_cluster_reload_job(*, graph_sync_payload: dict | None, action_label: str) -> dict:
+    return create_job(
+        action="cluster_reload",
+        runner=lambda: _run_cluster_reload_job(graph_sync_payload=graph_sync_payload, action_label=action_label),
+    )
+
+
+# Thực thi job reload cụm và trả về thông tin tổng hợp cho UI.
+def _run_cluster_reload_job(*, graph_sync_payload: dict | None, action_label: str) -> dict:
+    reloads = reload_cluster_resources(graph_sync_payload)
+    ensure_reload_success(reloads, action_label=action_label)
+    return {
+        "reloads": reloads,
+        "message": f"Đã reload xong 3 hệ sau khi {action_label} dữ liệu.",
+    }
+
+
+# Warm-up graph trong nền để server có thể mở cổng sớm hơn.
 def warm_resources_in_background() -> None:
     try:
         warm_up_graph.cache_clear()
@@ -163,33 +233,68 @@ def warm_resources_in_background() -> None:
         print(f"[graph] Warm-up lỗi: {exc}")
 
 
-def run_reload_job() -> dict[str, str]:
+# Chọn full reload hoặc delta sync cho Graph tùy payload nhận được.
+def run_reload_job(sync_payload: dict | None = None) -> dict[str, str]:
     with GRAPH_LOCK:
-        return reload_local_resources()
+        payload = sync_payload or {}
+        chunk_relative_paths = list(payload.get("chunk_relative_paths") or [])
+        deleted_relative_paths = list(payload.get("deleted_relative_paths") or [])
+        if payload.get("full_reload") or (not chunk_relative_paths and not deleted_relative_paths):
+            return reload_local_resources()
+        return sync_local_resources(
+            chunk_relative_paths=chunk_relative_paths,
+            deleted_relative_paths=deleted_relative_paths,
+        )
 
 
-def run_add_data_job(*, links_text: str, pdf_files: list[dict] | None = None) -> dict:
-    with GRAPH_LOCK:
+# Chuyển job thêm dữ liệu sang trạng thái lỗi nếu mọi PDF mới đều bị hoàn tác.
+def _raise_if_add_failed(summary: dict[str, object]) -> None:
+    if summary.get("changed"):
+        return
+    if summary.get("has_failures"):
+        raise RuntimeError(str(summary.get("message") or "Không thể nạp dữ liệu PDF."))
+
+
+# Thêm dữ liệu thô mới, build chunk và xếp job reload nền cho toàn cụm.
+def run_add_data_job(*, links_text: str, pdf_files: list[dict] | None = None, display_name: str = "") -> dict:
+    with ADMIN_LOCK:
         summary = add_corpus_documents(
             links_text=links_text,
             pdf_files=list(pdf_files or []),
+            display_name=display_name,
         )
-        reloads = reload_cluster_resources() if summary.get("changed") else {}
-        ensure_reload_success(reloads, action_label="nạp")
-        return {**summary, "reloads": reloads}
+    _raise_if_add_failed(summary)
+    reload_job = start_cluster_reload_job(
+        graph_sync_payload=_build_graph_sync_payload(summary),
+        action_label="nạp",
+    ) if summary.get("changed") else None
+    return {
+        **summary,
+        "reload_job_id": str((reload_job or {}).get("job_id") or ""),
+        "reload_status": "queued" if reload_job else "skipped",
+    }
 
 
+# Xóa tài liệu khỏi corpus dùng chung rồi xếp job reload nền cho toàn cụm.
 def run_delete_data_job(document_ids: list[str]) -> dict:
-    with GRAPH_LOCK:
+    with ADMIN_LOCK:
         summary = delete_corpus_documents(document_ids)
-        reloads = reload_cluster_resources() if summary.get("changed") else {}
-        ensure_reload_success(reloads, action_label="xóa")
-        return {**summary, "reloads": reloads}
+    reload_job = start_cluster_reload_job(
+        graph_sync_payload=_build_graph_sync_payload(summary),
+        action_label="xóa",
+    ) if summary.get("changed") else None
+    return {
+        **summary,
+        "reload_job_id": str((reload_job or {}).get("job_id") or ""),
+        "reload_status": "queued" if reload_job else "skipped",
+    }
 
 
+# Xử lý toàn bộ API HTTP cho giao diện chat và quản trị dữ liệu của Graph.
 class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
     server_version = "NTUGraphRagHTTP/5.0"
 
+    # Điều phối các route GET như UI, health, danh sách tài liệu và trạng thái job.
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/":
@@ -210,6 +315,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
+    # Điều phối các route POST như chat, add/delete dữ liệu và reload.
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/api/chat":
@@ -226,6 +332,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
+    # Xử lý request chat và gọi Graph RAG để sinh câu trả lời.
     def _handle_chat_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
@@ -251,21 +358,23 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         response_payload["benchmark_profile"] = profile_name
         self._send_json(response_payload, status=HTTPStatus.OK)
 
+    # Xử lý request thêm dữ liệu và hỗ trợ chế độ async bằng job.
     def _handle_add_data_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
             return
         links_text = str(payload.get("links_text") or "")
+        display_name = str(payload.get("display_name") or "")
         pdf_files = list(payload.get("pdf_files") or [])
         if payload.get("async_mode"):
             job = create_job(
                 action="add_data",
-                runner=lambda: run_add_data_job(links_text=links_text, pdf_files=pdf_files),
+                runner=lambda: run_add_data_job(links_text=links_text, pdf_files=pdf_files, display_name=display_name),
             )
             self._send_json(job, status=HTTPStatus.ACCEPTED)
             return
         try:
-            summary = run_add_data_job(links_text=links_text, pdf_files=pdf_files)
+            summary = run_add_data_job(links_text=links_text, pdf_files=pdf_files, display_name=display_name)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể nạp dữ liệu. Chi tiết: {exc}"},
@@ -274,6 +383,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json(summary, status=HTTPStatus.OK)
 
+    # Xử lý request xóa tài liệu và hỗ trợ chế độ async bằng job.
     def _handle_delete_data_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
@@ -301,16 +411,19 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json(summary, status=HTTPStatus.OK)
 
+    # Xử lý request reload Graph, hỗ trợ cả delta sync lẫn full reload.
     def _handle_reload_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
             return
         if payload.get("async_mode"):
-            job = create_job(action="reload", runner=run_reload_job)
+            job_payload = dict(payload)
+            job_payload.pop("async_mode", None)
+            job = create_job(action="reload", runner=lambda: run_reload_job(job_payload))
             self._send_json(job, status=HTTPStatus.ACCEPTED)
             return
         try:
-            summary = run_reload_job()
+            summary = run_reload_job(payload)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể reload Graph RAG. Chi tiết: {exc}"},
@@ -319,6 +432,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json(summary, status=HTTPStatus.OK)
 
+    # Trả về trạng thái hiện tại của một job quản trị theo job_id.
     def _handle_admin_job_request(self, path: str) -> None:
         job_id = path.rsplit("/", 1)[-1].strip()
         if not job_id:
@@ -330,6 +444,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json(job, status=HTTPStatus.OK)
 
+    # Đọc và parse JSON body từ request hiện tại.
     def _read_json_payload(self) -> dict | None:
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
@@ -339,9 +454,11 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Payload JSON không hợp lệ."}, status=HTTPStatus.BAD_REQUEST)
             return None
 
+    # Tắt log mặc định của BaseHTTPRequestHandler để terminal gọn hơn.
     def log_message(self, format: str, *args) -> None:
         return
 
+    # Gửi phản hồi HTML UTF-8 cho giao diện chat.
     def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = html.encode("utf-8")
         self.send_response(status)
@@ -350,6 +467,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    # Gửi phản hồi JSON UTF-8 cho API.
     def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -359,6 +477,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+# Chạy Graph RAG ở chế độ CLI đơn giản để hỏi đáp trong terminal.
 def run_cli() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -373,10 +492,12 @@ def run_cli() -> None:
         print(result.answer)
 
 
+# Lấy cổng server từ biến môi trường hoặc dùng mặc định của Graph.
 def resolve_server_port() -> int:
     return int(os.getenv("UI_PORT", str(DEFAULT_PORT)))
 
 
+# Khởi động HTTP server, warm-up graph nền và giữ vòng lặp phục vụ request.
 def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
     resolved_port = port if port is not None else resolve_server_port()
     sys.stdout.reconfigure(encoding="utf-8")
@@ -397,10 +518,13 @@ def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
         server.server_close()
 
 
+# Chọn chế độ chạy phù hợp cho app Graph.
 def main() -> None:
     if "--cli" in sys.argv:
+        # Bước 1: nếu người dùng yêu cầu CLI thì chuyển sang chế độ hỏi đáp trong terminal.
         run_cli()
         return
+    # Bước 2: nếu không có cờ CLI thì khởi động server HTTP cho giao diện web.
     run_server()
 
 

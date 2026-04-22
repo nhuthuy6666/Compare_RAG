@@ -206,7 +206,7 @@ def load_config(overrides: dict | None = None) -> AppConfig:
             "QUERY_REFUSAL_RESPONSE",
             str(baseline.get("query_refusal_response") or "").strip(),
         ),
-        graph_progress_every=_get_int_env("GRAPH_PROGRESS_EVERY", 5),
+        graph_progress_every=_get_int_env("GRAPH_PROGRESS_EVERY", 0),
     )
     runtime_overrides = normalize_runtime_overrides(overrides)
     if not runtime_overrides:

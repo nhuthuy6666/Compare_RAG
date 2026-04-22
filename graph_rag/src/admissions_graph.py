@@ -33,7 +33,7 @@ class AdmissionsGraphExtractor:
     # Khởi tạo extractor rule-based và cấu hình tần suất in tiến độ.
     def __init__(self, progress_every: int = 5) -> None:
         """Khởi tạo extractor và cấu hình tần suất in tiến độ khi xử lý chunk."""
-        self._progress_every = max(progress_every, 1)
+        self._progress_every = int(progress_every)
 
     @classmethod
     # Trả về tên lớp để LlamaIndex có thể nhận diện extractor này.
@@ -58,7 +58,7 @@ class AdmissionsGraphExtractor:
         results: list[BaseNode] = []
         for index, node in enumerate(nodes, start=1):
             results.append(self._extract_node(node))
-            if index % self._progress_every == 0 or index == total:
+            if self._progress_every > 0 and (index % self._progress_every == 0 or index == total):
                 print(f"Extracted {index}/{total} chunks")
         return results
 

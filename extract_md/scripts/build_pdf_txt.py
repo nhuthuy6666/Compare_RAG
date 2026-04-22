@@ -317,6 +317,17 @@ def pdf_pages_to_lines(pages: list[dict]) -> list[str]:
     content_started = False
     previous_heading_level = 1
     table_index = 1
+    preface_buffer: list[str] = []
+    preface_chars = 0
+
+    def flush_preface() -> None:
+        nonlocal preface_buffer, preface_chars, content_started
+        if not preface_buffer:
+            return
+        output.extend(preface_buffer)
+        preface_buffer = []
+        preface_chars = 0
+        content_started = True
 
     for page_index, lines in enumerate(page_lines):
         # 1) Duyệt line text để phát hiện bắt đầu nội dung, bỏ mục lục, và suy ra heading/bullets.
@@ -336,15 +347,25 @@ def pdf_pages_to_lines(pages: list[dict]) -> list[str]:
                     continue
 
             if line.startswith(("-", "*", "•")):
+                bullet_line = f"- {line.lstrip('-*• ').strip()}"
                 if content_started:
-                    output.append(f"- {line.lstrip('-*• ').strip()}")
+                    output.append(bullet_line)
+                else:
+                    preface_buffer.append(bullet_line)
+                    preface_chars += len(bullet_line)
                 continue
 
             info = extract_heading_info(line)
             if not content_started:
                 if info and info["kind"] in {"roman", "numeric"}:
-                    content_started = True
+                    flush_preface()
+                elif heading_level_from_text(line) == 2:
+                    flush_preface()
                 else:
+                    preface_buffer.append(line)
+                    preface_chars += len(line)
+                    if preface_chars >= 200 or len(preface_buffer) >= 4:
+                        flush_preface()
                     continue
 
             if info:
@@ -361,13 +382,16 @@ def pdf_pages_to_lines(pages: list[dict]) -> list[str]:
 
             output.append(line)
 
-        if not content_started:
+        if not content_started and not preface_buffer:
             continue
 
         # 2) Append bảng (nếu có) sau phần text của trang.
         for table_rows in page_tables[page_index]:
             output.extend(render_table_lines(table_rows, table_index))
             table_index += 1
+
+    if not output and preface_buffer:
+        output.extend(preface_buffer)
 
     return output
 

@@ -9,7 +9,7 @@
     "min_chars": 120,
     "max_chars": 700,
     "max_sections_per_chunk": 2,
-    "chunk_count": 820
+    "chunk_count": 834
   },
   "models": {
     "chat": "llama3.1:8b",

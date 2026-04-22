@@ -21,6 +21,7 @@ WEB_CACHE_ROOT = EXTRACT_ROOT / "data_raw" / "web_links"
 TXT_ROOT = EXTRACT_ROOT / "data_txt"
 CHUNK_ROOT = EXTRACT_ROOT / "data_chunks"
 BASELINE_CONFIG_PATH = EXTRACT_ROOT / "rag_baseline.json"
+DOCUMENT_LABELS_PATH = EXTRACT_ROOT / "document_labels.json"
 
 if str(EXTRACT_SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(EXTRACT_SCRIPTS_ROOT))
@@ -39,9 +40,23 @@ def _get_int_env(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got: {raw!r}") from exc
 
 
+def _get_bool_env(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
+
+
+# Liệt kê toàn bộ tài liệu dùng chung kèm tên hiển thị nếu người dùng đã đặt.
 def list_corpus_documents() -> dict[str, Any]:
-    web_documents = _list_web_documents()
-    pdf_documents = _list_pdf_documents()
+    labels = _load_document_labels()
+    web_documents = _list_web_documents(labels)
+    pdf_documents = _list_pdf_documents(labels)
     return {
         "documents": [*web_documents, *pdf_documents],
         "counts": {
@@ -52,11 +67,18 @@ def list_corpus_documents() -> dict[str, Any]:
     }
 
 
-def add_corpus_documents(*, links_text: str = "", pdf_files: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+# Thêm link/PDF mới vào corpus dùng chung và gán tên hiển thị nếu có.
+def add_corpus_documents(
+    *,
+    links_text: str = "",
+    pdf_files: list[dict[str, Any]] | None = None,
+    display_name: str = "",
+) -> dict[str, Any]:
     build_web_txt, dedupe_preserve_order, extract_urls_from_markdown, _safe_slug_from_url = _load_web_tools()
     build_pdf_txt = _load_pdf_builder()
     pdf_payloads = pdf_files or []
     added_urls: list[dict[str, Any]] = []
+    repaired_urls: list[dict[str, Any]] = []
     skipped_urls: list[str] = []
     added_pdfs: list[dict[str, Any]] = []
     skipped_pdfs: list[dict[str, str]] = []
@@ -65,14 +87,16 @@ def add_corpus_documents(*, links_text: str = "", pdf_files: list[dict[str, Any]
     existing_urls = extract_urls_from_markdown(_read_text(WEB_LINK_MD))
     existing_url_set = set(existing_urls)
     requested_urls = dedupe_preserve_order(extract_urls_from_markdown(links_text or ""))
+    _validate_single_document_request(requested_urls=requested_urls, pdf_payloads=pdf_payloads)
     new_urls = [url for url in requested_urls if url not in existing_url_set]
-    skipped_urls.extend([url for url in requested_urls if url in existing_url_set])
+    repair_urls = [url for url in requested_urls if url in existing_url_set and not _web_artifacts_ready(url)]
+    skipped_urls.extend([url for url in requested_urls if url in existing_url_set and url not in repair_urls])
 
     if new_urls:
         updated_urls = [*existing_urls, *new_urls]
         _write_link_md(updated_urls)
 
-    for url in new_urls:
+    for url in [*new_urls, *repair_urls]:
         try:
             txt_path = build_web_txt(
                 url=url,
@@ -80,17 +104,20 @@ def add_corpus_documents(*, links_text: str = "", pdf_files: list[dict[str, Any]
                 cache_root=WEB_CACHE_ROOT,
                 allow_fetch=True,
                 timeout=_get_int_env("WEB_FETCH_TIMEOUT", 300),
-                render_js=False,
+                render_js=_get_bool_env("WEB_RENDER_JS", True),
             )
             chunk_count, chunk_path = _chunk_txt_file(txt_path)
-            added_urls.append(
-                {
-                    "url": url,
-                    "txt_relative_path": _relative_to_extract(txt_path),
-                    "chunk_relative_path": _relative_to_extract(chunk_path),
-                    "chunk_count": chunk_count,
-                }
-            )
+            record = {
+                "url": url,
+                "txt_relative_path": _relative_to_extract(txt_path),
+                "chunk_relative_path": _relative_to_extract(chunk_path),
+                "chunk_count": chunk_count,
+                "is_new": url in new_urls,
+            }
+            if url in new_urls:
+                added_urls.append(record)
+            else:
+                repaired_urls.append(record)
         except Exception as exc:
             warnings.append(f"Không thể xử lý link {url}: {exc}")
 
@@ -114,7 +141,13 @@ def add_corpus_documents(*, links_text: str = "", pdf_files: list[dict[str, Any]
         try:
             txt_path = build_pdf_txt(raw_pdf_path, TXT_ROOT)
             if txt_path is None:
-                warnings.append(f"Không trích xuất được nội dung PDF: {raw_pdf_path.name}")
+                _rollback_pdf_artifacts(raw_pdf_path)
+                skipped_pdfs.append(
+                    {
+                        "name": raw_pdf_path.name,
+                        "reason": "Không trích xuất được nội dung PDF; đã hoàn tác file tải lên.",
+                    }
+                )
                 continue
             chunk_count, chunk_path = _chunk_txt_file(txt_path)
             added_pdfs.append(
@@ -127,22 +160,55 @@ def add_corpus_documents(*, links_text: str = "", pdf_files: list[dict[str, Any]
                 }
             )
         except Exception as exc:
-            warnings.append(f"Không thể xử lý PDF {raw_pdf_path.name}: {exc}")
+            _rollback_pdf_artifacts(raw_pdf_path)
+            skipped_pdfs.append(
+                {
+                    "name": raw_pdf_path.name,
+                    "reason": f"Không thể xử lý PDF: {exc}",
+                }
+            )
 
     _refresh_baseline_chunk_count()
-    changed = bool(new_urls or added_pdfs)
+    duplicate_pdf_count = sum(1 for item in skipped_pdfs if _is_duplicate_pdf_skip(item))
+    failed_pdfs = [item for item in skipped_pdfs if not _is_duplicate_pdf_skip(item)]
+    changed = bool(new_urls or repair_urls or added_pdfs)
+    named_documents = _apply_display_name(
+        added_web=[*added_urls, *repaired_urls],
+        added_pdfs=added_pdfs,
+        display_name=display_name,
+    )
     return {
         "changed": changed,
         "added": {
-            "web": added_urls,
+            "web": [*added_urls, *repaired_urls],
             "pdf": added_pdfs,
+        },
+        "repaired": {
+            "web": repaired_urls,
+            "pdf": [],
         },
         "skipped": {
             "web": skipped_urls,
             "pdf": skipped_pdfs,
         },
+        "failed": {
+            "web": [],
+            "pdf": failed_pdfs,
+        },
+        "duplicate_count": {
+            "pdf": duplicate_pdf_count,
+        },
+        "named_documents": named_documents,
+        "has_failures": bool(failed_pdfs),
         "warnings": warnings,
-        "message": _build_add_message(added_urls, added_pdfs, skipped_urls, skipped_pdfs, warnings),
+        "message": _build_add_message(
+            added_urls,
+            repaired_urls,
+            added_pdfs,
+            skipped_urls,
+            skipped_pdfs,
+            warnings,
+        ),
     }
 
 
@@ -173,11 +239,20 @@ def delete_corpus_documents(document_ids: list[str]) -> dict[str, Any]:
                 remaining_urls = [item for item in remaining_urls if item != url]
             removed_any = existed
             removed_any = _remove_file(WEB_CACHE_ROOT / "html" / f"{slug}.html") or removed_any
+            removed_any = _remove_file(WEB_CACHE_ROOT / "rendered_html" / f"{slug}.html") or removed_any
             removed_any = _remove_file(TXT_ROOT / "web" / f"{slug}.txt") or removed_any
             removed_any = _remove_file(CHUNK_ROOT / "web" / f"{slug}.jsonl") or removed_any
             removed_any = _remove_file(GRAPH_PROCESSED_CHUNK_ROOT / "web" / f"{slug}.jsonl") or removed_any
             if removed_any:
-                removed.append({"id": document_id, "kind": "web", "label": url})
+                removed.append(
+                    {
+                        "id": document_id,
+                        "kind": "web",
+                        "label": url,
+                        "txt_relative_path": f"data_txt/web/{slug}.txt",
+                        "chunk_relative_path": f"data_chunks/web/{slug}.jsonl",
+                    }
+                )
             else:
                 skipped.append({"id": document_id, "reason": "Tài liệu web không còn tồn tại."})
             continue
@@ -196,7 +271,15 @@ def delete_corpus_documents(document_ids: list[str]) -> dict[str, Any]:
             removed_any = _remove_file(chunk_path) or removed_any
             removed_any = _remove_file(graph_chunk_path) or removed_any
             if removed_any:
-                removed.append({"id": document_id, "kind": "pdf", "label": raw_pdf_path.name})
+                removed.append(
+                    {
+                        "id": document_id,
+                        "kind": "pdf",
+                        "label": raw_pdf_path.name,
+                        "txt_relative_path": _relative_to_extract(txt_path),
+                        "chunk_relative_path": _relative_to_extract(chunk_path),
+                    }
+                )
             else:
                 skipped.append({"id": document_id, "reason": "PDF không còn tồn tại."})
             continue
@@ -204,6 +287,7 @@ def delete_corpus_documents(document_ids: list[str]) -> dict[str, Any]:
         skipped.append({"id": document_id, "reason": "Loại tài liệu không được hỗ trợ."})
 
     _write_link_md(remaining_urls)
+    _remove_document_labels([item["id"] for item in removed])
     _prune_empty_dirs(WEB_CACHE_ROOT)
     _prune_empty_dirs(TXT_ROOT)
     _prune_empty_dirs(CHUNK_ROOT)
@@ -233,16 +317,18 @@ def load_document_ids_from_payload(payload: dict[str, Any]) -> list[str]:
     return document_ids
 
 
-def _list_web_documents() -> list[dict[str, Any]]:
+def _list_web_documents(labels: dict[str, str]) -> list[dict[str, Any]]:
     _, extract_urls_from_markdown, safe_slug_from_url = _load_web_listing_tools()
     documents: list[dict[str, Any]] = []
     for url in extract_urls_from_markdown(_read_text(WEB_LINK_MD)):
         slug = safe_slug_from_url(url)
+        document_id = f"web::{url}"
         documents.append(
             {
-                "id": f"web::{url}",
+                "id": document_id,
                 "kind": "web",
-                "label": url,
+                "label": labels.get(document_id) or url,
+                "source_label": url,
                 "source_key": url,
                 "raw_relative_path": _relative_to_extract(WEB_LINK_MD),
                 "cache_relative_path": f"data_raw/web_links/html/{slug}.html",
@@ -253,17 +339,19 @@ def _list_web_documents() -> list[dict[str, Any]]:
     return documents
 
 
-def _list_pdf_documents() -> list[dict[str, Any]]:
+def _list_pdf_documents(labels: dict[str, str]) -> list[dict[str, Any]]:
     documents: list[dict[str, Any]] = []
     for pdf_path in sorted(PDF_ROOT.rglob("*.pdf")):
         txt_path = _pdf_txt_path(pdf_path)
         chunk_path = _txt_to_chunk_path(txt_path)
         raw_relative_path = _relative_to_extract(pdf_path)
+        document_id = f"pdf::{raw_relative_path}"
         documents.append(
             {
-                "id": f"pdf::{raw_relative_path}",
+                "id": document_id,
                 "kind": "pdf",
-                "label": pdf_path.name,
+                "label": labels.get(document_id) or pdf_path.name,
+                "source_label": pdf_path.name,
                 "source_key": raw_relative_path,
                 "raw_relative_path": raw_relative_path,
                 "txt_relative_path": _relative_to_extract(txt_path),
@@ -408,10 +496,28 @@ def _txt_to_chunk_path(txt_path: Path) -> Path:
     return (CHUNK_ROOT / txt_path.relative_to(TXT_ROOT)).with_suffix(".jsonl")
 
 
+def _rollback_pdf_artifacts(raw_pdf_path: Path) -> None:
+    txt_path = _pdf_txt_path(raw_pdf_path)
+    chunk_path = _txt_to_chunk_path(txt_path)
+    graph_chunk_path = GRAPH_PROCESSED_CHUNK_ROOT / chunk_path.relative_to(CHUNK_ROOT)
+    _remove_file(raw_pdf_path)
+    _remove_file(txt_path)
+    _remove_file(chunk_path)
+    _remove_file(graph_chunk_path)
+
+
 def _read_text(path: Path) -> str:
     if not path.exists():
         return ""
     return path.read_text(encoding="utf-8", errors="ignore")
+
+
+def _web_artifacts_ready(url: str) -> bool:
+    _, _, safe_slug_from_url = _load_web_listing_tools()
+    slug = safe_slug_from_url(url)
+    txt_path = TXT_ROOT / "web" / f"{slug}.txt"
+    chunk_path = CHUNK_ROOT / "web" / f"{slug}.jsonl"
+    return txt_path.exists() and chunk_path.exists()
 
 
 def _write_link_md(urls: list[str]) -> None:
@@ -440,18 +546,121 @@ def _prune_empty_dirs(root: Path) -> None:
                 continue
 
 
+# Chuẩn hóa tên hiển thị để tránh dư khoảng trắng hoặc chuỗi rỗng.
+def _normalize_display_name(value: str) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip())
+
+
+# Chặn request nạp nhiều hơn một tài liệu hoặc trộn link và PDF trong cùng một lần gửi.
+def _validate_single_document_request(*, requested_urls: list[str], pdf_payloads: list[dict[str, Any]]) -> None:
+    if requested_urls and pdf_payloads:
+        raise ValueError("Mỗi lần chỉ được nạp 1 tài liệu: chọn 1 link hoặc 1 PDF.")
+    if len(requested_urls) > 1:
+        raise ValueError("Mỗi lần chỉ được nạp 1 link.")
+    if len(pdf_payloads) > 1:
+        raise ValueError("Mỗi lần chỉ được nạp 1 file PDF.")
+
+
+# Tạo mapping tên hiển thị cho một hoặc nhiều tài liệu vừa được thêm.
+def _build_display_name_mapping(document_ids: list[str], display_name: str) -> dict[str, str]:
+    normalized = _normalize_display_name(display_name)
+    if not normalized or not document_ids:
+        return {}
+    if len(document_ids) == 1:
+        return {document_ids[0]: normalized}
+    return {
+        document_id: f"{normalized} {index}"
+        for index, document_id in enumerate(document_ids, start=1)
+    }
+
+
+# Ghi tên hiển thị vào metadata chung sau khi thêm tài liệu thành công.
+def _apply_display_name(
+    *,
+    added_web: list[dict[str, Any]],
+    added_pdfs: list[dict[str, Any]],
+    display_name: str,
+) -> dict[str, str]:
+    web_ids = [f"web::{item['url']}" for item in added_web if item.get("url")]
+    pdf_ids = [f"pdf::{item['raw_relative_path']}" for item in added_pdfs if item.get("raw_relative_path")]
+    mapping = _build_display_name_mapping([*web_ids, *pdf_ids], display_name)
+    if not mapping:
+        return {}
+    labels = _load_document_labels()
+    labels.update(mapping)
+    _write_document_labels(labels)
+    return mapping
+
+
+# Đọc metadata tên hiển thị của tài liệu từ file JSON dùng chung.
+def _load_document_labels() -> dict[str, str]:
+    if not DOCUMENT_LABELS_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(DOCUMENT_LABELS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    return {
+        str(key): _normalize_display_name(value)
+        for key, value in payload.items()
+        if _normalize_display_name(value)
+    }
+
+
+# Ghi lại metadata tên hiển thị của tài liệu xuống file JSON dùng chung.
+def _write_document_labels(labels: dict[str, str]) -> None:
+    cleaned = {
+        str(key): _normalize_display_name(value)
+        for key, value in labels.items()
+        if _normalize_display_name(value)
+    }
+    if not cleaned:
+        _remove_file(DOCUMENT_LABELS_PATH)
+        return
+    DOCUMENT_LABELS_PATH.write_text(
+        json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+# Xóa metadata tên hiển thị của các tài liệu vừa bị xóa khỏi corpus.
+def _remove_document_labels(document_ids: list[str]) -> None:
+    if not document_ids:
+        return
+    labels = _load_document_labels()
+    changed = False
+    for document_id in document_ids:
+        if labels.pop(str(document_id), None) is not None:
+            changed = True
+    if changed:
+        _write_document_labels(labels)
+
+
+def _is_duplicate_pdf_skip(item: dict[str, Any]) -> bool:
+    return "trùng nội dung" in str(item.get("reason") or "").lower()
+
+
 def _build_add_message(
     added_urls: list[dict[str, Any]],
+    repaired_urls: list[dict[str, Any]],
     added_pdfs: list[dict[str, Any]],
     skipped_urls: list[str],
     skipped_pdfs: list[dict[str, str]],
     warnings: list[str],
 ) -> str:
     parts: list[str] = []
+    duplicate_pdf_count = sum(1 for item in skipped_pdfs if _is_duplicate_pdf_skip(item))
+    failed_pdf_count = len(skipped_pdfs) - duplicate_pdf_count
     if added_urls or added_pdfs:
         parts.append(f"Đã thêm {len(added_urls)} link mới và {len(added_pdfs)} PDF mới.")
-    if skipped_urls or skipped_pdfs:
-        parts.append(f"Bỏ qua {len(skipped_urls) + len(skipped_pdfs)} tài liệu đã có.")
+    if repaired_urls:
+        parts.append(f"Đã xử lý lại {len(repaired_urls)} link đã có nhưng còn thiếu TXT hoặc chunk.")
+    if skipped_urls or duplicate_pdf_count:
+        parts.append(f"Bỏ qua {len(skipped_urls) + duplicate_pdf_count} tài liệu đã có.")
+    if failed_pdf_count:
+        parts.append(f"Có {failed_pdf_count} PDF không xử lý được và đã hoàn tác.")
     if warnings:
         parts.append(f"Có {len(warnings)} cảnh báo khi trích xuất dữ liệu.")
     if not parts:

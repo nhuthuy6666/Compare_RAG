@@ -69,6 +69,18 @@ def reset_graph(driver, config) -> None:
         session.run("MATCH (n) DETACH DELETE n")
 
 
+def delete_graph_for_relative_paths(driver, config, *, relative_paths: list[str]) -> None:
+    """Xóa dữ liệu graph theo danh sách tài liệu đã đổi/xóa trước khi upsert delta."""
+
+    normalized = sorted({str(path).strip() for path in relative_paths if str(path).strip()})
+    if not normalized:
+        return
+
+    with driver.session(database=config.neo4j_database) as session:
+        session.execute_write(_delete_paths, normalized)
+        session.execute_write(_delete_orphan_entities)
+
+
 # Ghi entity, chunk và fact vào Neo4j theo batch để ingest ổn định hơn.
 def upsert_graph_artifacts(driver, config, artifacts, *, batch_size: int = 200) -> None:
     """Ghi toàn bộ graph artifacts vào Neo4j theo lô nhỏ."""
@@ -288,6 +300,35 @@ def _iter_batches(items: list[dict[str, Any]], batch_size: int):
 
     for start in range(0, len(items), batch_size):
         yield items[start : start + batch_size]
+
+
+def _delete_paths(tx, relative_paths: list[str]) -> None:
+    tx.run(
+        """
+        UNWIND $relative_paths AS relative_path
+        OPTIONAL MATCH (f:Fact {relative_path: relative_path})
+        DETACH DELETE f
+        """,
+        relative_paths=relative_paths,
+    )
+    tx.run(
+        """
+        UNWIND $relative_paths AS relative_path
+        OPTIONAL MATCH (c:Chunk {relative_path: relative_path})
+        DETACH DELETE c
+        """,
+        relative_paths=relative_paths,
+    )
+
+
+def _delete_orphan_entities(tx) -> None:
+    tx.run(
+        """
+        MATCH (e:Entity)
+        WHERE NOT (e)-[:SOURCE_OF|TARGET_OF]->(:Fact)
+        DETACH DELETE e
+        """
+    )
 
 
 # Chuẩn hóa một dòng Cypher trả về thành `RetrievedFact`.

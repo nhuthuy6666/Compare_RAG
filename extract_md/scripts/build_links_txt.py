@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import json
 import re
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -18,6 +19,40 @@ URL_RE = re.compile(r"https?://[^\s)>\"]+")
 HEADING_MD_RE = re.compile(r"^(#{2,6})\s+(.+?)\s*$")
 TABLE_HEADING_RE = re.compile(r"^Bang\s+\d+$", re.IGNORECASE)
 CONTENT_TAGS = ("h1", "h2", "h3", "h4", "h5", "h6", "p", "li", "blockquote", "pre", "table")
+RENDERED_CONTENT_SELECTORS = (
+    "#nộiDung",
+    "#bàiViết",
+    ".nộiDungBV",
+    ".bàiViếtXem",
+    ".nộiDungChính",
+    "#contentview",
+    ".NewsContent",
+    "#dnn_ContentPane",
+    ".DNNModuleContent",
+    "[id$='_ModuleContent']",
+    "[id$='_ContentPane']",
+    ".article-content",
+    ".post-content",
+    ".detail-content",
+    ".content-detail",
+    ".news-detail",
+    ".detail-news",
+    ".content-news",
+    ".article-detail",
+    ".box-content",
+    ".content-wrap",
+    ".page-content",
+    ".inner-content",
+    "article",
+    "main",
+    ".entry-content",
+    ".post",
+    ".content",
+)
+RENDERED_NOISE_RE = re.compile(
+    r"^(print(In)? bài viết|cached(Làm mới)?|calendar_month.*|remove_red_eye.*|home|more_horiz|search)$",
+    re.IGNORECASE,
+)
 
 
 # Loại bỏ URL trùng lặp nhưng vẫn giữ thứ tự xuất hiện ban đầu.
@@ -54,8 +89,14 @@ def safe_slug_from_url(url: str) -> str:
 
 # Tải HTML bằng trình duyệt (Playwright) để lấy nội dung tab/collapse (render JS).
 def fetch_html_rendered(url: str, timeout: int) -> str:
-    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
-    from playwright.sync_api import sync_playwright
+    try:
+        from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.sync_api import sync_playwright
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Thiếu dependency `playwright`. Hãy cài `python -m pip install playwright` "
+            "và chạy `python -m playwright install chromium`."
+        ) from exc
 
     timeout_ms = max(timeout, 5) * 1000
     with sync_playwright() as p:
@@ -107,6 +148,115 @@ def fetch_html_rendered(url: str, timeout: int) -> str:
             browser.close()
 
 
+def fetch_rendered_page_payload(url: str, timeout: int) -> dict[str, str]:
+    try:
+        from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.sync_api import sync_playwright
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "Thiếu dependency `playwright`. Hãy cài `python -m pip install playwright` "
+            "và chạy `python -m playwright install chromium`."
+        ) from exc
+
+    timeout_ms = max(timeout, 5) * 1000
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+            page.wait_for_timeout(3000)
+            page.mouse.wheel(0, 1200)
+            page.wait_for_timeout(1500)
+
+            page.evaluate(
+                """
+                () => {
+                  const selectors = [
+                    '[data-toggle="tab"]',
+                    '[data-bs-toggle="tab"]',
+                    '[role="tab"]',
+                    '[data-toggle="collapse"]',
+                    '[data-bs-toggle="collapse"]',
+                    '.accordion-button',
+                    '.nav-tabs a'
+                  ];
+                  const click = (el) => {
+                    try { el.click(); } catch (_) {}
+                    try {
+                      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                    } catch (_) {}
+                  };
+
+                  for (let round = 0; round < 3; round++) {
+                    for (const selector of selectors) {
+                      for (const el of document.querySelectorAll(selector)) {
+                        click(el);
+                      }
+                    }
+                  }
+
+                  for (const detail of document.querySelectorAll('details')) {
+                    detail.open = true;
+                  }
+                }
+                """
+            )
+            page.wait_for_timeout(2500)
+            payload = page.evaluate(
+                f"""
+                () => {{
+                  const selectors = {json.dumps(RENDERED_CONTENT_SELECTORS, ensure_ascii=False)};
+                  const scoreNode = (node) => {{
+                    const text = (node?.innerText || '').trim();
+                    if (text.length < 120) {{
+                      return -1;
+                    }}
+                    const pCount = node.querySelectorAll('p').length;
+                    const headingCount = node.querySelectorAll('h1, h2, h3').length;
+                    const liCount = node.querySelectorAll('li').length;
+                    const navPenalty = liCount > Math.max(10, pCount * 3) ? Math.min(liCount * 100, 5000) : 0;
+                    return text.length + (pCount * 500) + (headingCount * 250) - navPenalty;
+                  }};
+
+                  let bestNode = null;
+                  let bestScore = -1;
+                  for (const selector of selectors) {{
+                    for (const node of document.querySelectorAll(selector)) {{
+                      const score = scoreNode(node);
+                      if (score > bestScore) {{
+                        bestNode = node;
+                        bestScore = score;
+                      }}
+                    }}
+                  }}
+                  if (!bestNode || bestScore < 300) {{
+                    for (const node of document.querySelectorAll('article, main, section, div')) {{
+                      const score = scoreNode(node);
+                      if (score > bestScore) {{
+                        bestNode = node;
+                        bestScore = score;
+                      }}
+                    }}
+                  }}
+                  return {{
+                    title: document.title || '',
+                    text: (bestNode?.innerText || document.body?.innerText || '').trim(),
+                    html: document.documentElement?.outerHTML || ''
+                  }};
+                }}
+                """
+            )
+            return {
+                "title": str(payload.get("title") or ""),
+                "text": str(payload.get("text") or ""),
+                "html": str(payload.get("html") or ""),
+            }
+        except PlaywrightTimeoutError as exc:
+            raise RuntimeError(f"Timeout rendering HTML: {url}") from exc
+        finally:
+            browser.close()
+
+
 # Tải HTML từ web và cố gắng giải mã theo charset khai báo.
 def fetch_html(url: str, timeout: int, render_js: bool = False) -> str:
     if render_js:
@@ -150,6 +300,23 @@ def load_or_fetch_html(
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text(html, encoding="utf-8")
     return html
+
+
+def rendered_text_to_lines(text: str) -> list[str]:
+    lines: list[str] = []
+    seen: set[str] = set()
+    for raw_line in text.splitlines():
+        if RENDERED_NOISE_RE.match(normalize_line(raw_line)):
+            continue
+        classified = classify_text_line(raw_line)
+        cleaned = normalize_line(classified)
+        if not cleaned:
+            continue
+        if cleaned in seen:
+            continue
+        seen.add(cleaned)
+        lines.append(classified)
+    return lines
 
 
 # Chọn các node “nội dung chính” (có thể nhiều khối/tab) theo thứ tự ưu tiên.
@@ -362,19 +529,30 @@ def build_web_txt(
 
     # B1: Resolve slug + cache path và nạp HTML (ưu tiên cache).
     slug = safe_slug_from_url(url)
-    cache_path = cache_root / "html" / f"{slug}.html"
-    html = load_or_fetch_html(
-        url,
-        cache_path=cache_path,
-        allow_fetch=allow_fetch,
-        timeout=timeout,
-        render_js=render_js,
-    )
+    cache_folder = "rendered_html" if render_js else "html"
+    cache_path = cache_root / cache_folder / f"{slug}.html"
 
-    # B2: Rút tiêu đề + body lines rồi finalize thành document text.
-    soup = BeautifulSoup(html, "lxml")
-    title = normalize_line(soup.title.get_text(" ", strip=True) if soup.title else "") or slug
-    body_lines = [f"Source: {url}", *html_to_lines(html)]
+    if render_js:
+        payload = fetch_rendered_page_payload(url, timeout=timeout)
+        html = payload["html"]
+        if html.strip():
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(html, encoding="utf-8")
+        title = normalize_line(payload["title"]) or slug
+        rendered_lines = rendered_text_to_lines(payload["text"])
+        body_lines = [f"Source: {url}", *(rendered_lines or html_to_lines(html))]
+    else:
+        html = load_or_fetch_html(
+            url,
+            cache_path=cache_path,
+            allow_fetch=allow_fetch,
+            timeout=timeout,
+            render_js=render_js,
+        )
+        soup = BeautifulSoup(html, "lxml")
+        title = normalize_line(soup.title.get_text(" ", strip=True) if soup.title else "") or slug
+        body_lines = [f"Source: {url}", *html_to_lines(html)]
+
     text = finalize_document(title=title, body_lines=body_lines)
 
     # B3: Ghi TXT vào data_txt/web/<slug>.txt.

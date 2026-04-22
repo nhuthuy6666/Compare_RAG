@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shutil
 import uuid
@@ -12,9 +13,10 @@ from openai import APIConnectionError, APITimeoutError
 
 from config import build_neo4j_driver, configure_models, load_config, verify_neo4j_connection
 from fact_graph import build_graph_artifacts, write_fact_records
-from neo4j_store import ensure_schema, reset_graph, upsert_graph_artifacts
+from neo4j_store import delete_graph_for_relative_paths, ensure_schema, reset_graph, upsert_graph_artifacts
 from utils import (
     configure_console_utf8,
+    load_chunk_records_from_jsonl,
     load_chunk_record_groups,
     summarize_records,
     write_chunk_records,
@@ -78,7 +80,7 @@ def parse_args() -> argparse.Namespace:
 
 
 # Nạp shared chunks từ extract_md để GraphRAG luôn đi cùng corpus với hai hệ còn lại.
-def _load_records(args: argparse.Namespace, config) -> list[dict]:
+def _load_records(args: argparse.Namespace, config, *, verbose: bool = True) -> list[dict]:
     """Đọc chunk JSONL dùng chung từ pipeline chuẩn của project."""
 
     chunk_jsonl_root = args.chunk_jsonl_root or config.source_chunk_root
@@ -97,13 +99,64 @@ def _load_records(args: argparse.Namespace, config) -> list[dict]:
             relative_path = jsonl_path.relative_to(chunk_jsonl_root)
             output_path = output_root / relative_path
             write_chunk_records(records, output_path)
-            print(f"[shared-chunks] {jsonl_path} -> {output_path} ({len(records)} chunks)")
+            if verbose:
+                print(f"[shared-chunks] {jsonl_path} -> {output_path} ({len(records)} chunks)")
         return all_records
 
     raise FileNotFoundError(
         f"Không tìm thấy shared chunk JSONL trong {chunk_jsonl_root} (scope={config.corpus_scope}). "
         "Hãy tạo/cập nhật corpus chunk trước khi ingest GraphRAG."
     )
+
+
+def _chunk_relative_to_txt_relative(relative_path: str) -> str:
+    normalized = str(relative_path).replace("\\", "/").strip()
+    if normalized.startswith("data_chunks/"):
+        normalized = normalized[len("data_chunks/") :]
+    path = Path(normalized)
+    if path.suffix.lower() == ".jsonl":
+        return path.with_suffix(".txt").as_posix()
+    return path.as_posix()
+
+
+def _txt_relative_to_chunk_relative(relative_path: str) -> str:
+    normalized = str(relative_path).replace("\\", "/").strip()
+    if normalized.startswith("data_txt/"):
+        normalized = normalized[len("data_txt/") :]
+    path = Path(normalized)
+    if path.suffix.lower() == ".txt":
+        return path.with_suffix(".jsonl").as_posix()
+    return path.as_posix()
+
+
+def _normalize_relative_paths(relative_paths: list[str] | None) -> list[str]:
+    normalized_values: set[str] = set()
+    for path in relative_paths or []:
+        value = str(path).replace("\\", "/").strip()
+        if not value:
+            continue
+        normalized_values.add(value)
+    return sorted(normalized_values)
+
+
+def _load_records_for_chunk_relative_paths(*, chunk_relative_paths: list[str], config) -> list[dict]:
+    records: list[dict] = []
+    for chunk_relative_path in _normalize_relative_paths(chunk_relative_paths):
+        normalized_path = chunk_relative_path
+        if normalized_path.startswith("data_chunks/"):
+            normalized_path = normalized_path[len("data_chunks/") :]
+        jsonl_path = config.source_chunk_root / Path(normalized_path)
+        if not jsonl_path.exists():
+            continue
+        chunk_records = load_chunk_records_from_jsonl(
+            jsonl_path=jsonl_path,
+            chunk_root=config.source_chunk_root,
+        )
+        if not chunk_records:
+            continue
+        write_chunk_records(chunk_records, config.chunk_dir / Path(normalized_path))
+        records.extend(chunk_records)
+    return records
 
 
 # Chuẩn hóa danh sách tài liệu thô do UI gửi lên trước khi chunk và ingest.
@@ -395,6 +448,9 @@ def _run_ingest_pipeline(
     config,
     reset_graph_first: bool,
     dry_run: bool = False,
+    write_facts_audit: bool = True,
+    replace_relative_paths: list[str] | None = None,
+    verbose: bool = True,
 ) -> dict[str, Any]:
     """Thực thi pipeline ingest dùng chung cho cả CLI và UI."""
 
@@ -402,16 +458,17 @@ def _run_ingest_pipeline(
         raise ValueError("Không tạo được chunk nào từ dữ liệu đầu vào.")
 
     summary = summarize_records(all_records)
-    print(
-        f"Tạo {summary['chunk_count']} chunks, tổng {summary['total_chars']} ký tự. "
-        f"Nguồn ưu tiên: {config.source_chunk_root}"
-    )
+    if verbose:
+        print(
+            f"Tạo {summary['chunk_count']} chunks, tổng {summary['total_chars']} ký tự. "
+            f"Nguồn ưu tiên: {config.source_chunk_root}"
+        )
 
     configure_models(config)
     try:
         artifacts, fact_records = build_graph_artifacts(
             all_records,
-            progress_every=config.graph_progress_every,
+            progress_every=config.graph_progress_every if verbose else 0,
         )
     except (APIConnectionError, APITimeoutError) as exc:
         raise RuntimeError(
@@ -422,8 +479,10 @@ def _run_ingest_pipeline(
     if not artifacts.facts:
         raise RuntimeError("Không trích được graph fact nào từ tập chunk hiện tại.")
 
-    write_fact_records(fact_records, config.facts_path)
-    print(f"Đã trích {len(artifacts.facts)} graph facts vào {config.facts_path}.")
+    if write_facts_audit:
+        write_fact_records(fact_records, config.facts_path)
+        if verbose:
+            print(f"Đã trích {len(artifacts.facts)} graph facts vào {config.facts_path}.")
 
     if dry_run:
         return {
@@ -441,7 +500,8 @@ def _run_ingest_pipeline(
         batch_size=config.embed_batch_size,
     )
     if not embedded_facts:
-        print("Không embed được fact trích xuất; đang fallback sang chunk fact gốc...")
+        if verbose:
+            print("Không embed được fact trích xuất; đang fallback sang chunk fact gốc...")
         embedded_facts = attach_fact_embeddings(
             _build_runtime_fallback_facts(all_records),
             Settings.embed_model,
@@ -457,8 +517,11 @@ def _run_ingest_pipeline(
     try:
         ensure_schema(driver, config, embedding_dim=embedding_dim)
         if reset_graph_first:
-            print("Đang xóa graph Neo4j cũ trước khi ingest lại...")
+            if verbose:
+                print("Đang xóa graph Neo4j cũ trước khi ingest lại...")
             reset_graph(driver, config)
+        elif replace_relative_paths:
+            delete_graph_for_relative_paths(driver, config, relative_paths=list(replace_relative_paths))
         upsert_graph_artifacts(driver, config, artifacts)
     finally:
         driver.close()
@@ -469,7 +532,117 @@ def _run_ingest_pipeline(
         "entity_count": len(artifacts.entities),
         "table_chunks": summary["table_chunks"],
         "dry_run": False,
+        "fact_records": fact_records,
     }
+
+
+def _rewrite_fact_audit(*, config, replace_relative_paths: list[str], new_fact_records: list[dict[str, Any]]) -> None:
+    kept_records: list[dict[str, Any]] = []
+    normalized_paths = set(_normalize_relative_paths(replace_relative_paths))
+    if config.facts_path.exists():
+        with config.facts_path.open("r", encoding="utf-8", errors="ignore") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                relative_path = str(record.get("relative_path") or "").replace("\\", "/").strip()
+                if relative_path and relative_path in normalized_paths:
+                    continue
+                kept_records.append(record)
+    write_fact_records([*kept_records, *new_fact_records], config.facts_path)
+
+
+def _remove_chunk_audit_files(*, config, txt_relative_paths: list[str]) -> None:
+    for txt_relative_path in _normalize_relative_paths(txt_relative_paths):
+        jsonl_path = config.chunk_dir / Path(_txt_relative_to_chunk_relative(txt_relative_path))
+        if jsonl_path.exists():
+            jsonl_path.unlink()
+
+
+def sync_shared_chunk_changes(
+    *,
+    config,
+    chunk_relative_paths: list[str] | None = None,
+    deleted_relative_paths: list[str] | None = None,
+    verbose: bool = True,
+) -> dict[str, Any]:
+    chunk_relative_paths = _normalize_relative_paths(chunk_relative_paths)
+    deleted_relative_paths = _normalize_relative_paths(deleted_relative_paths)
+    affected_relative_paths = sorted(
+        {
+            *(_chunk_relative_to_txt_relative(path) for path in chunk_relative_paths),
+            *deleted_relative_paths,
+        }
+    )
+
+    if not affected_relative_paths:
+        return {
+            "chunk_count": 0,
+            "fact_count": 0,
+            "entity_count": 0,
+            "table_chunks": 0,
+            "dry_run": False,
+            "message": "Không có chunk thay đổi để đồng bộ vào graph.",
+        }
+
+    all_records = _load_records_for_chunk_relative_paths(
+        chunk_relative_paths=chunk_relative_paths,
+        config=config,
+    )
+    _remove_chunk_audit_files(config=config, txt_relative_paths=deleted_relative_paths)
+
+    if not all_records and not deleted_relative_paths:
+        return {
+            "chunk_count": 0,
+            "fact_count": 0,
+            "entity_count": 0,
+            "table_chunks": 0,
+            "dry_run": False,
+            "message": "Không tìm thấy chunk mới trong extract_md để nạp vào graph.",
+        }
+
+    if all_records:
+        summary = _run_ingest_pipeline(
+            all_records=all_records,
+            config=config,
+            reset_graph_first=False,
+            dry_run=False,
+            write_facts_audit=False,
+            replace_relative_paths=affected_relative_paths,
+            verbose=verbose,
+        )
+        fact_records = list(summary.pop("fact_records", []))
+    else:
+        summary = {
+            "chunk_count": 0,
+            "fact_count": 0,
+            "entity_count": 0,
+            "table_chunks": 0,
+            "dry_run": False,
+        }
+        fact_records = []
+        verify_neo4j_connection(config)
+        driver = build_neo4j_driver(config)
+        try:
+            delete_graph_for_relative_paths(driver, config, relative_paths=affected_relative_paths)
+        finally:
+            driver.close()
+
+    _rewrite_fact_audit(
+        config=config,
+        replace_relative_paths=affected_relative_paths,
+        new_fact_records=fact_records,
+    )
+    summary["deleted_count"] = len(deleted_relative_paths)
+    summary["affected_count"] = len(affected_relative_paths)
+    summary["message"] = (
+        f"Đã đồng bộ delta graph cho {len(chunk_relative_paths)} file chunk mới/cập nhật và "
+        f"{len(deleted_relative_paths)} tài liệu bị xóa."
+    )
+    return summary
 
 
 # Nhận danh sách tài liệu thô mới từ UI, ghi đè processed audit cũ và reset graph để ingest lại từ đầu.

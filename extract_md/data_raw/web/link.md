@@ -7,3 +7,5 @@ https://tuyensinh.ntu.edu.vn/de-an-tuyen-sinh/tuyen-sinh-lien-thong-bang-2
 https://tuyensinh.ntu.edu.vn/diem-trung-tuyen-cac-nam
 https://tuyensinh.ntu.edu.vn/tu-van
 https://tuyensinh.ntu.edu.vn/nhap-hoc
+https://ntu.edu.vn/co-cau-to-chuc/hoi-dong-khoa-hoc-va-dao-tao-truong
+https://ntu.edu.vn/gioi-thieu/thong-diep-cua-truong-dai-hoc-nha-trang
