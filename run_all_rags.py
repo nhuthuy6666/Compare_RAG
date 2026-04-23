@@ -6,17 +6,66 @@ import subprocess
 import sys
 import threading
 import time
+import json
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 UI_HOST = "127.0.0.1"
+FASTEMBED_CACHE_ROOT = PROJECT_ROOT / ".cache" / "fastembed"
+FASTEMBED_BM25_CACHE_DIR = FASTEMBED_CACHE_ROOT / "models--Qdrant--bm25"
 
 RAG_SERVERS = [
     {"name": "hybrid", "path": PROJECT_ROOT / "hybrid_rag" / "app.py", "ui_port": 8000},
     {"name": "baseline", "path": PROJECT_ROOT / "rag" / "app.py", "ui_port": 8001},
     {"name": "graph", "path": PROJECT_ROOT / "graph_rag" / "app.py", "ui_port": 8502},
 ]
+
+
+def _ensure_fastembed_cache_root() -> Path:
+    FASTEMBED_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
+    return FASTEMBED_CACHE_ROOT
+
+
+def _bm25_cache_metadata_matches(snapshot_dir: Path) -> bool:
+    metadata_path = snapshot_dir / "files_metadata.json"
+    if not metadata_path.exists():
+        return True
+    try:
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+
+    for rel_path, metadata in payload.items():
+        if not isinstance(metadata, dict):
+            return False
+        file_path = snapshot_dir / rel_path
+        expected_size = metadata.get("size")
+        if not file_path.exists() or not isinstance(expected_size, int):
+            return False
+        try:
+            if file_path.stat().st_size != expected_size:
+                return False
+        except OSError:
+            return False
+    return True
+
+
+def _repair_fastembed_bm25_cache_if_needed() -> None:
+    snapshot_dir = FASTEMBED_BM25_CACHE_DIR
+    if not snapshot_dir.exists():
+        return
+    if _bm25_cache_metadata_matches(snapshot_dir):
+        return
+
+    quarantine_dir = snapshot_dir.with_name(f"{snapshot_dir.name}.corrupt-{int(time.time())}")
+    snapshot_dir.rename(quarantine_dir)
+    print(
+        "[launcher] Phat hien cache fastembed BM25 lech metadata. "
+        f"Da co lap sang {quarantine_dir} de tai lai sach."
+    )
 
 
 # Tạo biến môi trường dùng chung để mỗi process biết port của cả 3 tab giao diện.
@@ -30,6 +79,8 @@ def _build_child_env(ui_port: int) -> dict[str, str]:
     child_env["BASELINE_UI_PORT"] = "8001"
     child_env["GRAPH_UI_PORT"] = "8502"
     child_env["UI_PORT"] = str(ui_port)
+    child_env["FASTEMBED_CACHE_PATH"] = str(_ensure_fastembed_cache_root())
+    child_env["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
     return child_env
 
 
@@ -107,6 +158,8 @@ def main() -> None:
     # Bước 1: ép stdout/stderr sang UTF-8 để log tiếng Việt không bị lỗi mã hóa.
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
+    _ensure_fastembed_cache_root()
+    _repair_fastembed_bm25_cache_if_needed()
     processes: list[tuple[dict[str, object], subprocess.Popen[str]]] = []
     exit_code = 0
 

@@ -207,7 +207,7 @@ def graph_ready(driver, config) -> bool:
     """Kiểm tra database Neo4j đã có ít nhất một fact hay chưa."""
 
     with driver.session(database=config.neo4j_database) as session:
-        row = session.run("MATCH (f:Fact) RETURN count(f) AS total").single()
+        row = session.run("MATCH (n) WHERE 'Fact' IN labels(n) RETURN count(n) AS total").single()
     return bool(row and int(row["total"]) > 0)
 
 
