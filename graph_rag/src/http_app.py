@@ -72,8 +72,8 @@ def load_ui_html() -> str:
             brand_badge="NTU Admissions",
             brand_title="NTU Bot",
             brand_description=(
-                "Graph RAG tổng hợp thông tin từ các fact trong đồ thị tri thức. "
-                "Bạn có thể so sánh trực tiếp với Baseline và Hybrid trên cùng giao diện."
+                "Graph RAG truy xuất fact và quan hệ từ Neo4j, "
+                "sau đó tổng hợp câu trả lời bằng query fusion trên dữ liệu tuyển sinh."
             ),
             header_badge="Graph RAG",
             header_subtitle="Neo4j graph retrieval | Query fusion | Fact graph",
@@ -461,20 +461,28 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
     # Gửi phản hồi HTML UTF-8 cho giao diện chat.
     def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = html.encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        self._send_response_body(body, "text/html; charset=utf-8", status=status)
 
     # Gửi phản hồi JSON UTF-8 cho API.
     def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        self._send_response_body(body, "application/json; charset=utf-8", status=status)
+
+    def _send_response_body(
+        self,
+        body: bytes,
+        content_type: str,
+        *,
+        status: HTTPStatus = HTTPStatus.OK,
+    ) -> None:
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            self.close_connection = True
 
 
 # Chạy Graph RAG ở chế độ CLI đơn giản để hỏi đáp trong terminal.
