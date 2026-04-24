@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from chat_service import answer_question, warm_up_graph
-from config import load_config
+from config import build_neo4j_driver, load_config
 from ingest import _load_records, _run_ingest_pipeline, sync_shared_chunk_changes
 from llamaindex_shared import (
     ChatUiConfig,
@@ -32,6 +32,7 @@ from llamaindex_shared import (
     wait_for_job,
 )
 from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload
+from neo4j_store import graph_ready
 from utils import configure_console_utf8
 
 
@@ -42,6 +43,42 @@ DEFAULT_PORT = 8502
 CURRENT_RAG_ID = "graph"
 GRAPH_LOCK = Lock()
 ADMIN_LOCK = Lock()
+EMPTY_GRAPH_ERROR_ASCII_MARKERS = ("Graph Neo4j", "reset-graph")
+
+
+def _graph_has_data(config) -> bool:
+    warm_up_graph.cache_clear()
+    driver = build_neo4j_driver(config)
+    try:
+        return graph_ready(driver, config)
+    finally:
+        driver.close()
+
+
+def _is_empty_graph_reload_error(exc: Exception) -> bool:
+    message = str(exc)
+    return all(marker in message for marker in EMPTY_GRAPH_ERROR_ASCII_MARKERS)
+
+
+def _build_empty_graph_reload_result(action: str) -> dict[str, str]:
+    return {
+        "rag_id": CURRENT_RAG_ID,
+        "fact_count": "0",
+        "message": (
+            f"Đã {action} đồng bộ graph. "
+            "Neo4j hiện không còn fact nào sau khi cập nhật."
+        ),
+    }
+
+
+def _run_reload_job_safe(sync_payload: dict | None = None) -> dict[str, str]:
+    try:
+        return run_reload_job(sync_payload)
+    except Exception as exc:
+        if _is_empty_graph_reload_error(exc):
+            action = "xóa dữ liệu và" if sync_payload and sync_payload.get("deleted_relative_paths") else "reload và"
+            return _build_empty_graph_reload_result(action)
+        raise
 
 
 # Chuẩn hóa kết quả truy vấn graph thành payload JSON cho giao diện chat.
@@ -119,8 +156,7 @@ def reload_local_resources() -> dict[str, str]:
         dry_run=False,
         verbose=False,
     )
-    warm_up_graph.cache_clear()
-    warm_up_graph()
+    _graph_has_data(config)
     return {
         "rag_id": CURRENT_RAG_ID,
         "fact_count": str(summary["fact_count"]),
@@ -166,8 +202,12 @@ def sync_local_resources(*, chunk_relative_paths: list[str] | None = None, delet
         deleted_relative_paths=deleted_relative_paths,
         verbose=False,
     )
-    warm_up_graph.cache_clear()
-    warm_up_graph()
+    graph_has_data = _graph_has_data(config)
+    if not graph_has_data:
+        summary["message"] = (
+            f"{summary.get('message') or 'Đã đồng bộ delta graph.'} "
+            "Neo4j hiện không còn fact nào sau khi đồng bộ."
+        )
     return {
         "rag_id": CURRENT_RAG_ID,
         "fact_count": str(summary["fact_count"]),
@@ -178,7 +218,7 @@ def sync_local_resources(*, chunk_relative_paths: list[str] | None = None, delet
 # Reload Graph cục bộ rồi yêu cầu các backend còn lại đồng bộ theo job.
 def reload_cluster_resources(graph_sync_payload: dict | None = None) -> dict[str, dict[str, str]]:
     results: dict[str, dict[str, str]] = {}
-    local_summary = run_reload_job(graph_sync_payload)
+    local_summary = _run_reload_job_safe(graph_sync_payload)
     results[CURRENT_RAG_ID] = {"status": "ok", "message": local_summary["message"]}
     for rag_id, base_url in build_cluster_server_urls().items():
         if rag_id == CURRENT_RAG_ID:
@@ -198,7 +238,18 @@ def reload_cluster_resources(graph_sync_payload: dict | None = None) -> dict[str
 
 # Kiểm tra kết quả reload cụm và báo lỗi nếu còn backend nào thất bại.
 def ensure_reload_success(reloads: dict[str, dict[str, str]], *, action_label: str) -> None:
-    failed = {rag_id: result for rag_id, result in reloads.items() if result.get("status") != "ok"}
+    failed = {}
+    for rag_id, result in reloads.items():
+        status = result.get("status")
+        message = str(result.get("message") or "")
+        if (
+            status != "ok"
+            and not (
+                rag_id == "graph"
+                and all(marker in message for marker in EMPTY_GRAPH_ERROR_ASCII_MARKERS)
+            )
+        ):
+            failed[rag_id] = result
     if not failed:
         return
     details = " | ".join(f"{rag_id}: {result.get('message') or 'Lỗi chưa xác định'}" for rag_id, result in failed.items())
@@ -419,11 +470,11 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         if payload.get("async_mode"):
             job_payload = dict(payload)
             job_payload.pop("async_mode", None)
-            job = create_job(action="reload", runner=lambda: run_reload_job(job_payload))
+            job = create_job(action="reload", runner=lambda: _run_reload_job_safe(job_payload))
             self._send_json(job, status=HTTPStatus.ACCEPTED)
             return
         try:
-            summary = run_reload_job(payload)
+            summary = _run_reload_job_safe(payload)
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể reload Graph RAG. Chi tiết: {exc}"},

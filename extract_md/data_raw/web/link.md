@@ -9,3 +9,4 @@ https://tuyensinh.ntu.edu.vn/tu-van
 https://tuyensinh.ntu.edu.vn/nhap-hoc
 https://ntu.edu.vn/co-cau-to-chuc/hoi-dong-khoa-hoc-va-dao-tao-truong
 https://ntu.edu.vn/gioi-thieu/thong-diep-cua-truong-dai-hoc-nha-trang
+https://trungtampvth.ntu.edu.vn/dich-vu/he-thong-ky-tuc-xa

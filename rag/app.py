@@ -193,7 +193,19 @@ def reload_cluster_resources(graph_sync_payload: dict | None = None) -> dict[str
 
 # Kiểm tra kết quả reload cụm và báo lỗi nếu còn backend nào thất bại.
 def ensure_reload_success(reloads: dict[str, dict[str, str]], *, action_label: str) -> None:
-    failed = {rag_id: result for rag_id, result in reloads.items() if result.get("status") != "ok"}
+    failed = {}
+    for rag_id, result in reloads.items():
+        status = result.get("status")
+        message = str(result.get("message") or "")
+        if (
+            status != "ok"
+            and not (
+                rag_id == "graph"
+                and "Graph Neo4j" in message
+                and "reset-graph" in message
+            )
+        ):
+            failed[rag_id] = result
     if not failed:
         return
     details = " | ".join(f"{rag_id}: {result.get('message') or 'Lỗi chưa xác định'}" for rag_id, result in failed.items())

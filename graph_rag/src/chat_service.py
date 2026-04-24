@@ -349,6 +349,14 @@ def _ensure_graph_ready(config) -> None:
         driver.close()
 
 
+def _graph_is_ready(config) -> bool:
+    driver = build_neo4j_driver(config)
+    try:
+        return graph_ready(driver, config)
+    finally:
+        driver.close()
+
+
 # Cache bước warm-up để web server không phải kiểm tra Neo4j và model lặp lại quá nhiều.
 @lru_cache(maxsize=8)
 def warm_up_graph(overrides_key: str = "{}") -> dict[str, Any]:
@@ -357,8 +365,9 @@ def warm_up_graph(overrides_key: str = "{}") -> dict[str, Any]:
     overrides = json.loads(overrides_key)
     config = load_config(overrides=overrides)
     configure_models(config)
-    _ensure_graph_ready(config)
+    is_ready = _graph_is_ready(config)
     return {
+        "graph_ready": is_ready,
         "retrieval_top_n": config.retrieval_top_n,
         "query_fusion_enabled": config.query_fusion_enabled,
     }
@@ -377,7 +386,8 @@ def answer_question(question: str, top_k: int | None = None, runtime_overrides: 
             }
         )
     configure_models(config)
-    _ensure_graph_ready(config)
+    if not _graph_is_ready(config):
+        return ChatAnswer(question=question, answer=config.query_refusal_response, facts=[])
 
     facts = retrieve_facts(question, config)
     threshold = config.retrieval_similarity_threshold if _should_apply_similarity_threshold(config) else 0.0

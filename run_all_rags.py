@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -68,6 +69,25 @@ def _repair_fastembed_bm25_cache_if_needed() -> None:
     )
 
 
+def _is_port_listening(host: str, port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(0.5)
+        return sock.connect_ex((host, port)) == 0
+
+
+def _ensure_ports_available() -> None:
+    conflicts = [
+        f"{server['name']}:{server['ui_port']}"
+        for server in RAG_SERVERS
+        if _is_port_listening(UI_HOST, int(server["ui_port"]))
+    ]
+    if conflicts:
+        raise RuntimeError(
+            "Khong the khoi dong launcher vi mot so cong dang duoc su dung: "
+            f"{', '.join(conflicts)}. Hay dung cac launcher/backend cu truoc khi chay lai."
+        )
+
+
 # Tạo biến môi trường dùng chung để mỗi process biết port của cả 3 tab giao diện.
 def _build_child_env(ui_port: int) -> dict[str, str]:
     """Tạo bộ biến môi trường con cho từng backend RAG."""
@@ -99,6 +119,11 @@ def _stream_output(name: str, stream) -> None:
 def _start_process(server: dict[str, object]) -> tuple[subprocess.Popen[str], threading.Thread]:
     """Khởi động một backend RAG và tạo thread đọc log của backend đó."""
 
+    popen_kwargs: dict[str, object] = {}
+    if os.name == "nt":
+        # Tách process group để Ctrl+C ở launcher không đẩy KeyboardInterrupt xuống backend.
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+
     process = subprocess.Popen(
         [sys.executable, str(server["path"])],
         cwd=str(PROJECT_ROOT),
@@ -109,6 +134,7 @@ def _start_process(server: dict[str, object]) -> tuple[subprocess.Popen[str], th
         encoding="utf-8",
         errors="replace",
         bufsize=1,
+        **popen_kwargs,
     )
     reader = threading.Thread(
         target=_stream_output,
@@ -160,6 +186,7 @@ def main() -> None:
     sys.stderr.reconfigure(encoding="utf-8")
     _ensure_fastembed_cache_root()
     _repair_fastembed_bm25_cache_if_needed()
+    _ensure_ports_available()
     processes: list[tuple[dict[str, object], subprocess.Popen[str]]] = []
     exit_code = 0
 
