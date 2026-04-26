@@ -114,7 +114,7 @@ def normalize_text(text: str) -> str:
     lines = [line.rstrip() for line in text.splitlines()]
     return "\n".join(lines).strip()
 
-
+# Normalize + bỏ dấu chuỗi
 def fold_text(text: str) -> str:
     decomposed = unicodedata.normalize("NFKD", text)
     return "".join(char for char in decomposed if not unicodedata.combining(char)).lower()
@@ -135,7 +135,7 @@ def collapse_blank_lines(lines: list[str]) -> list[str]:
         output.pop()
     return output
 
-
+# Chuẩn hóa cấp độ heading Markdown (#, ##, …)
 def normalize_heading_hierarchy(lines: list[str]) -> list[str]:
     normalized: list[str] = []
     previous_level = 1
@@ -163,7 +163,7 @@ def normalize_heading_hierarchy(lines: list[str]) -> list[str]:
 
     return normalized
 
-
+# Xóa các dòng trống ở đầu và cuối danh sách
 def trim_blank_edges(lines: list[str]) -> list[str]:
     start = 0
     end = len(lines)
@@ -173,7 +173,7 @@ def trim_blank_edges(lines: list[str]) -> list[str]:
         end -= 1
     return lines[start:end]
 
-
+# Dùng để nhận diện một dòng có dạng key: value ngắn
 def is_inline_fact_heading(text: str) -> bool:
     return ":" in text and len(text) <= 120
 
@@ -320,23 +320,23 @@ def render_table_lines(rows: list[list[str]], table_index: int, style: str = "pi
         lines.append(rendered)
     return lines
 
-
+# Nhận diện xem một dòng có phải heading của bảng hay không
 def is_table_heading(text: str) -> bool:
     return bool(TABLE_HEADING_ONLY_RE.match(text.strip()))
 
-
+# Kiểm tra một dòng có phải dòng dữ liệu của bảng đã render hay không
 def is_table_row(line: str) -> bool:
     stripped = line.strip()
     return stripped.startswith("- ") and " | " in stripped
 
-
+# Kiểm tra một Section có phải là section bảng hay không
 def is_table_section(section: Section) -> bool:
     last_heading = section.heading_path[-1] if section.heading_path else ""
     return bool(last_heading) and is_table_heading(f"### {last_heading}") and bool(section.lines) and all(
         is_table_row(line) for line in section.lines
     )
 
-
+# Tính độ dài phần prefix chung của 2 danh sách heading
 def common_heading_prefix_len(left: list[HeadingNode], right: list[HeadingNode]) -> int:
     count = 0
     for lhs, rhs in zip(left, right):
@@ -345,7 +345,7 @@ def common_heading_prefix_len(left: list[HeadingNode], right: list[HeadingNode])
         count += 1
     return count
 
-
+# Quyết định 2 Section có nên merge lại hay không
 def same_merge_anchor(left: Section, right: Section) -> bool:
     if left.document_title != right.document_title:
         return False
@@ -353,18 +353,18 @@ def same_merge_anchor(left: Section, right: Section) -> bool:
     # tránh trộn các fact ngắn ở top-level với các phần khác trong cùng tài liệu.
     return common_heading_prefix_len(left.headings, right.headings) >= 2
 
-
+# Xác định một Section có quá ít nội dung hay không
 def is_sparse_section(section: Section, min_chars: int) -> bool:
     body = section.render_body()
     non_blank_lines = [line for line in section.lines if line.strip()]
     return len(body) < min_chars and len(non_blank_lines) <= 2
 
-
+# Kiểm tra một Section có chỉ chứa Source hay không
 def is_source_only_section(section: Section) -> bool:
     non_blank_lines = [line.strip() for line in section.lines if line.strip()]
     return bool(non_blank_lines) and all(line.startswith("Source: ") for line in non_blank_lines)
 
-
+# tạo metadata context cho mỗi chunk text
 def build_chunk_context(section: Section) -> str:
     # Tạo phần "document_context" để đính kèm vào mỗi chunk (dùng cho truy hồi/ghi dấu vết nguồn).
     parts = ["<document_context>"]
@@ -375,7 +375,7 @@ def build_chunk_context(section: Section) -> str:
     parts.append("</document_context>")
     return "\n".join(parts)
 
-
+# Đóng gói chunk: ghép context + tiêu đề/mục + nội dung + alias tra cứu thành một đoạn text hoàn chỉnh.
 def finalize_chunk_text(section: Section, chunk_body: str) -> str:
     # Đóng gói chunk: context + tiêu đề/mục + nội dung; có thể thêm alias "Tra cứu nhanh" từ fact/bảng.
     chunk_body = chunk_body.strip()
@@ -392,7 +392,7 @@ def finalize_chunk_text(section: Section, chunk_body: str) -> str:
         parts.append("\n".join(aliases))
     return "\n\n".join(part for part in parts if part).strip()
 
-
+# Đọc từng dòng text dạng key value, rồi biến chúng thành các câu mô tả ngắn
 def build_basic_fact_aliases(chunk_body: str) -> list[str]:
     aliases: list[str] = []
     seen: set[str] = set()
@@ -410,7 +410,7 @@ def build_basic_fact_aliases(chunk_body: str) -> list[str]:
         aliases.extend(_append_unique_aliases(seen, [f"Tra cứu nhanh: {key} là {value}."]))
     return aliases
 
-
+# Đọc một đoạn text có bảng, rồi tạo ra tối đa max_aliases câu tóm tắt ngắn từ các dòng dữ liệu trong bảng
 def build_basic_table_aliases(chunk_body: str, max_aliases: int = 8) -> list[str]:
     table_lines = [line.strip() for line in chunk_body.splitlines() if is_table_row(line)]
     if len(table_lines) < 2:
@@ -426,8 +426,6 @@ def build_basic_table_aliases(chunk_body: str, max_aliases: int = 8) -> list[str
         header_rows.append(rows[1])
         data_start = 2
     headers = merge_table_headers(header_rows)
-    if is_low_signal_table(headers):
-        return []
 
     aliases: list[str] = []
     seen: set[str] = set()
@@ -440,7 +438,7 @@ def build_basic_table_aliases(chunk_body: str, max_aliases: int = 8) -> list[str
             break
     return aliases
 
-
+# Biến một dòng trong bảng thành một câu mô tả ngắn
 def summarize_table_row_simple(headers: list[str], row: list[str]) -> str:
     pairs: list[str] = []
     for header, value in zip_longest(headers, row, fillvalue=""):
@@ -455,7 +453,7 @@ def summarize_table_row_simple(headers: list[str], row: list[str]) -> str:
         return ""
     return "Tra cứu bảng: " + "; ".join(pairs) + "."
 
-# NOTE: Các hàm alias nâng cao (FAQ/question alias) đã được loại bỏ vì không còn được dùng trong baseline hiện tại.
+# Lọc trùng và chỉ trả về những alias chưa xuất hiện
 def _append_unique_aliases(seen: set[str], aliases: list[str]) -> list[str]:
     appended: list[str] = []
     for alias in aliases:
@@ -465,7 +463,7 @@ def _append_unique_aliases(seen: set[str], aliases: list[str]) -> list[str]:
         appended.append(alias)
     return appended
 
-
+# Lọc bỏ các dòng không phù hợp, giữ lại text thường
 def should_skip_fact_alias_line(line: str) -> bool:
     if not line:
         return True
@@ -474,13 +472,14 @@ def should_skip_fact_alias_line(line: str) -> bool:
     lowered = line.lower()
     return "http://" in lowered or "https://" in lowered
 
+# Biến một dòng bảng thành danh sách các ô
 def parse_table_cells(line: str) -> list[str]:
     stripped = line.strip()
     if stripped.startswith("- "):
         stripped = stripped[2:]
     return [normalize_line(cell) for cell in stripped.split(" | ")]
 
-
+# Kiểm tra một dòng có phải là header của bảng hay không
 def looks_like_table_header(row: list[str]) -> bool:
     meaningful_cells = [normalize_line(cell) for cell in row if normalize_line(cell) and normalize_line(cell) != "-"]
     if not meaningful_cells:
@@ -503,14 +502,14 @@ def looks_like_table_header(row: list[str]) -> bool:
             informative += 1
     return non_empty > 0 and informative >= max(2, non_empty // 2)
 
-
+# kiểm tra một dòng có phải là dòng nhóm trong bảng hay không
 def is_table_group_row(row: list[str]) -> bool:
     meaningful_cells = [normalize_line(cell) for cell in row if normalize_line(cell) and normalize_line(cell) != "-"]
     if not meaningful_cells:
         return False
     return bool(ROMAN_TOKEN_RE.fullmatch(meaningful_cells[0]))
 
-
+# gộp 1 hoặc 2 dòng header thành 1 danh sách tên cột rõ ràng
 def merge_table_headers(header_rows: list[list[str]]) -> list[str]:
     if len(header_rows) == 1:
         return [normalize_line(cell) for cell in header_rows[0]]
@@ -527,13 +526,6 @@ def merge_table_headers(header_rows: list[list[str]]) -> list[str]:
             continue
         merged.append(f"{upper_clean} ({lower_clean})")
     return merged
-
-
-def is_low_signal_table(headers: list[str]) -> bool:
-    folded_headers = [fold_text(header) for header in headers if header and header != "-"]
-    if not folded_headers:
-        return False
-    return any("cac trang thiet bi chinh" in header for header in folded_headers)
 
 
 # Tách tài liệu thành các section dựa trên heading markdown và giữ stack heading cha.
@@ -675,7 +667,7 @@ def split_large_section(section: Section, max_chars: int) -> list[str]:
         chunks.append("\n".join(current_lines).strip())
     return [chunk for chunk in chunks if chunk]
 
-
+# Tách bảng lớn thành nhiều bảng nhỏ, nhưng vẫn giữ cấu trúc (header + group)
 def split_large_table_section(section: Section, max_chars: int) -> list[str]:
     lines = [line.rstrip() for line in section.render_body().splitlines() if line.strip()]
     if not lines:
@@ -738,7 +730,7 @@ def split_large_table_section(section: Section, max_chars: int) -> list[str]:
         chunks.append("\n".join(current_lines).strip())
     return [chunk for chunk in chunks if chunk]
 
-
+# Chia dòng dài thành các đoạn nhỏ
 def split_long_line(line: str, max_chars: int) -> list[str]:
     stripped = line.strip()
     if len(stripped) <= max_chars:
@@ -751,7 +743,7 @@ def split_long_line(line: str, max_chars: int) -> list[str]:
 
     return wrap_text_by_words(stripped, max_chars=max_chars)
 
-
+# Chia một dòng bảng dài thành nhiều dòng nhỏ bằng cách tách các mục được đánh số ở cột cuối
 def split_long_table_row(line: str, max_chars: int) -> list[str]:
     if " | " not in line:
         return []
@@ -787,7 +779,7 @@ def split_long_table_row(line: str, max_chars: int) -> list[str]:
         chunks.append(f"{base}{'; '.join(current_items)}".strip())
     return chunks
 
-
+# Word wrap thủ công: xuống dòng theo từ, giữ độ dài tối đa.
 def wrap_text_by_words(text: str, max_chars: int) -> list[str]:
     stripped = text.strip()
     if len(stripped) <= max_chars:
@@ -817,14 +809,12 @@ def wrap_text_by_words(text: str, max_chars: int) -> list[str]:
         chunks.append(" ".join(current_words))
     return [chunk for chunk in chunks if chunk.strip()]
 
-
+# Lọc bỏ bảng rác dựa trên từ khóa trong header
 def is_low_value_table_section(section: Section) -> bool:
     if not is_table_section(section):
         return False
     header_sample = re.sub(r"[\W_]+", " ", "\n".join(section.lines[:3]).lower()).strip()
     normalized_markers = [re.sub(r"[\W_]+", " ", marker.lower()).strip() for marker in LOW_VALUE_TABLE_MARKERS]
-    if "cac trang thiet bi chinh" in fold_text("\n".join(section.lines[:3])):
-        return True
     return all(marker in header_sample for marker in normalized_markers)
 
 

@@ -62,7 +62,7 @@ def normalize_block_lines(text: str) -> list[str]:
 
 
 def cluster_blocks_by_x(blocks: list[dict], tolerance: float) -> list[list[dict]]:
-    # Gom các block text theo vị trí X (ước lượng “cột” trong PDF).
+    # Gom các block text theo vị trí X (ước lượng cột trong PDF).
     bands: list[list[dict]] = []
     for block in sorted(blocks, key=lambda item: item["x0"]):
         placed = False

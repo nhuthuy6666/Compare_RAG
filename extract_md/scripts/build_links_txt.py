@@ -147,7 +147,7 @@ def fetch_html_rendered(url: str, timeout: int) -> str:
         finally:
             browser.close()
 
-
+# Crawler thông minh: render JS + lấy nội dung chính của trang web
 def fetch_rendered_page_payload(url: str, timeout: int) -> dict[str, str]:
     try:
         from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
@@ -301,7 +301,7 @@ def load_or_fetch_html(
     cache_path.write_text(html, encoding="utf-8")
     return html
 
-
+# Làm sạch text render thành list dòng gọn, không rác, không trùng
 def rendered_text_to_lines(text: str) -> list[str]:
     lines: list[str] = []
     seen: set[str] = set()
@@ -369,7 +369,7 @@ def pick_main_containers(soup) -> list:
         return rich_picked or picked
     return [soup.body or soup]
 
-
+# Parse số an toàn, luôn trả về >= 1
 def safe_span(value: str | None) -> int:
     try:
         parsed = int((value or "1").strip())
@@ -377,7 +377,7 @@ def safe_span(value: str | None) -> int:
         return 1
     return max(parsed, 1)
 
-
+# Convert bảng HTML matrix chuẩn, giữ đúng cấu trúc span
 def extract_table_rows(table) -> list[list[str]]:
     active_spans: dict[int, tuple[int, str]] = {}
     rows: list[list[str]] = []
