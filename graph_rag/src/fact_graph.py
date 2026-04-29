@@ -30,9 +30,9 @@ RELATION_TEXT = {
 }
 
 
+# Gói dữ liệu trung gian sẽ được ghi vào Neo4j.
 @dataclass
 class GraphArtifacts:
-    """Gói dữ liệu trung gian sẽ được ghi vào Neo4j."""
 
     entities: dict[str, dict[str, Any]] = field(default_factory=dict)
     chunks: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -41,7 +41,6 @@ class GraphArtifacts:
 
 # Trích entity, relation và fact text từ shared chunks để ingest vào Neo4j.
 def build_graph_artifacts(records: list[dict], progress_every: int) -> tuple[GraphArtifacts, list[dict]]:
-    """Sinh graph artifacts từ chunk records để phục vụ ingest và audit."""
 
     extracted_nodes = AdmissionsGraphExtractor(progress_every=progress_every)(records_to_nodes(records))
     artifacts = GraphArtifacts()
@@ -191,7 +190,6 @@ def build_graph_artifacts(records: list[dict], progress_every: int) -> tuple[Gra
 
 # Ghi file audit JSONL để dễ xem fact nào đã được trích trước khi import vào Neo4j.
 def write_fact_records(records: list[dict], output_path: Path) -> None:
-    """Lưu fact audit ra JSONL để tiện kiểm tra dữ liệu trích xuất."""
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as handle:
@@ -201,7 +199,6 @@ def write_fact_records(records: list[dict], output_path: Path) -> None:
 
 # Ghép một relation thành câu fact tự nhiên để vector search xử lý tốt hơn.
 def _build_relation_text(*, source_name: str, relation_label: str, target_name: str, heading_context: Any) -> str:
-    """Chuyển relation graph thành câu fact ngắn, dễ truy vấn bằng embedding."""
 
     relation_text = RELATION_TEXT.get(relation_label, relation_label.replace("_", " ").lower())
     context = _stringify_heading_path(heading_context)
@@ -213,7 +210,6 @@ def _build_relation_text(*, source_name: str, relation_label: str, target_name: 
 
 # Chuẩn hóa entity extractor trả về thành payload sẵn sàng ghi vào Neo4j.
 def _entity_record(entity) -> dict[str, Any]:
-    """Đổi entity từ extractor sang dict metadata ổn định."""
 
     properties = dict(getattr(entity, "properties", {}) or {})
     return {
@@ -230,7 +226,6 @@ def _entity_record(entity) -> dict[str, Any]:
 
 # Tạo khóa chunk ổn định để cùng một chunk luôn ánh xạ về đúng node Chunk.
 def _chunk_uid(metadata: dict[str, Any]) -> str:
-    """Sinh UID ổn định cho node Chunk trong graph."""
 
     relative_path = str(metadata.get("relative_path") or metadata.get("source_file") or "unknown")
     chunk_id = str(metadata.get("chunk_id") or "unknown")
@@ -239,7 +234,6 @@ def _chunk_uid(metadata: dict[str, Any]) -> str:
 
 # Chuẩn hóa heading path về chuỗi dễ lưu và dễ hiển thị.
 def _stringify_heading_path(value: Any) -> str:
-    """Chuyển heading path từ list hoặc giá trị bất kỳ thành chuỗi thống nhất."""
 
     if isinstance(value, list):
         return " | ".join(str(item) for item in value if str(item).strip())
@@ -248,6 +242,5 @@ def _stringify_heading_path(value: Any) -> str:
 
 # Chuẩn hóa text về lowercase một dòng để phục vụ tìm kiếm fulltext.
 def _normalize_text(value: str) -> str:
-    """Chuẩn hóa text để tăng độ ổn định cho so khớp tên entity."""
 
     return re.sub(r"\s+", " ", value).strip().lower()

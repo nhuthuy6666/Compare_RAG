@@ -25,13 +25,11 @@ from utils import (
 
 # Embed fact text theo batch và tự chia nhỏ batch khi gặp lỗi để ingest không gãy giữa chừng.
 def attach_fact_embeddings(facts: list[dict], embed_model, batch_size: int) -> list[dict]:
-    """Gắn embedding cho từng fact trước khi ghi vào Neo4j."""
 
     embedded_facts: list[dict] = []
 
     # Thử embed nguyên một batch; nếu lỗi thì chia đôi batch để cứu phần dữ liệu còn lại.
     def _embed_batch(batch_rows: list[dict]) -> None:
-        """Embed một batch fact và tự thu nhỏ batch nếu backend embedding không ổn định."""
 
         if not batch_rows:
             return
@@ -64,7 +62,6 @@ def attach_fact_embeddings(facts: list[dict], embed_model, batch_size: int) -> l
 
 # Khai báo tham số CLI cho pipeline ingest GraphRAG dùng chung trong terminal.
 def parse_args() -> argparse.Namespace:
-    """Parse tham số CLI cho ingest từ shared chunks."""
 
     parser = argparse.ArgumentParser(description="Ingest GraphRAG từ shared chunk JSONL vào Neo4j.")
     parser.add_argument("--chunk-jsonl-root", type=Path, help="Folder shared chunk JSONL để dùng đúng chunk baseline.")
@@ -81,7 +78,6 @@ def parse_args() -> argparse.Namespace:
 
 # Nạp shared chunks từ extract_md để GraphRAG luôn đi cùng corpus với hai hệ còn lại.
 def _load_records(args: argparse.Namespace, config, *, verbose: bool = True) -> list[dict]:
-    """Đọc chunk JSONL dùng chung từ pipeline chuẩn của project."""
 
     chunk_jsonl_root = args.chunk_jsonl_root or config.source_chunk_root
     output_root = args.output_dir or config.chunk_dir
@@ -161,7 +157,6 @@ def _load_records_for_chunk_relative_paths(*, chunk_relative_paths: list[str], c
 
 # Chuẩn hóa danh sách tài liệu thô do UI gửi lên trước khi chunk và ingest.
 def _prepare_documents(documents: list[dict[str, Any]]) -> list[dict[str, str]]:
-    """Lọc tài liệu rỗng, chuẩn hóa tên nguồn và tránh trùng tên file đầu ra."""
 
     prepared: list[dict[str, str]] = []
     seen_names: dict[str, int] = {}
@@ -192,7 +187,6 @@ def _prepare_documents(documents: list[dict[str, Any]]) -> list[dict[str, str]]:
 
 # Chuẩn hóa tên file để dữ liệu audit ghi ra đĩa ổn định và không chứa ký tự nguy hiểm.
 def _slugify_source_name(name: str, fallback_index: int) -> str:
-    """Chuyển tên nguồn bất kỳ thành tên file an toàn cho thư mục processed."""
 
     path = Path(name)
     suffix = path.suffix or ".md"
@@ -204,7 +198,6 @@ def _slugify_source_name(name: str, fallback_index: int) -> str:
 
 # Suy ra năm nguồn để metadata của GraphRAG vẫn giữ được ngữ cảnh theo năm tuyển sinh.
 def _extract_source_year(source_name: str, content: str) -> str:
-    """Suy ra năm 20xx từ tên nguồn hoặc nội dung đầu vào nếu có."""
 
     for candidate in (source_name, content[:400]):
         matched = re.search(r"(20\d{2})", candidate)
@@ -215,7 +208,6 @@ def _extract_source_year(source_name: str, content: str) -> str:
 
 # Tách văn bản thô theo heading Markdown để giữ lại phần nào cấu trúc tài liệu gốc.
 def _split_document_sections(content: str) -> list[tuple[list[str], str]]:
-    """Tách tài liệu thành các section dựa trên heading Markdown."""
 
     normalized = content.replace("\r\n", "\n").replace("\r", "\n").strip()
     if not normalized:
@@ -228,7 +220,6 @@ def _split_document_sections(content: str) -> list[tuple[list[str], str]]:
 
     # Đẩy phần nội dung đang gom vào danh sách section trước khi chuyển heading.
     def _flush_current_section() -> None:
-        """Đưa section hiện tại vào danh sách kết quả nếu có nội dung hữu ích."""
 
         section_text = "\n".join(current_lines).strip()
         if section_text:
@@ -255,7 +246,6 @@ def _split_document_sections(content: str) -> list[tuple[list[str], str]]:
 
 # Cắt một đoạn quá dài thành nhiều đoạn nhỏ hơn khi một paragraph vượt quá ngưỡng chunk.
 def _split_oversized_paragraph(paragraph: str, max_chars: int) -> list[str]:
-    """Tách paragraph quá dài theo câu, và fallback về cắt cứng nếu cần."""
 
     cleaned = paragraph.strip()
     if len(cleaned) <= max_chars:
@@ -294,7 +284,6 @@ def _split_oversized_paragraph(paragraph: str, max_chars: int) -> list[str]:
 
 # Gom paragraph thành chunk theo ngưỡng min/max để extractor có đầu vào ổn định hơn.
 def _chunk_section_text(section_text: str, min_chars: int, max_chars: int) -> list[str]:
-    """Chia section thành các chunk gần với cấu hình chunk chuẩn của project."""
 
     paragraphs = [part.strip() for part in re.split(r"\n\s*\n", section_text) if part.strip()]
     if not paragraphs:
@@ -333,7 +322,6 @@ def _chunk_section_text(section_text: str, min_chars: int, max_chars: int) -> li
 
 # Chuyển tài liệu thô người dùng vừa nạp thành chunk record cùng schema với shared chunks.
 def _build_raw_chunk_records(documents: list[dict[str, str]], config) -> list[dict]:
-    """Sinh chunk records mới hoàn toàn từ văn bản thô do UI gửi lên."""
 
     records: list[dict] = []
 
@@ -379,7 +367,6 @@ def _build_raw_chunk_records(documents: list[dict[str, str]], config) -> list[di
 
 # Xóa dữ liệu audit cũ trong thư mục processed để lần ingest mới chỉ phản ánh dữ liệu vừa nạp.
 def _reset_processed_outputs(config) -> None:
-    """Dọn riêng vùng audit `uploads` trước khi ingest từ dữ liệu thô mới."""
 
     uploads_dir = config.chunk_dir / "uploads"
     if uploads_dir.exists():
@@ -392,7 +379,6 @@ def _reset_processed_outputs(config) -> None:
 
 # Ghi lại chunk audit theo từng nguồn để người dùng có thể kiểm tra dữ liệu mới đã được chunk ra sao.
 def _write_raw_chunk_audit(records: list[dict], config) -> None:
-    """Lưu chunk records từ dữ liệu thô mới ra các file JSONL audit."""
 
     grouped_records: dict[str, list[dict]] = {}
     for record in records:
@@ -405,7 +391,6 @@ def _write_raw_chunk_audit(records: list[dict], config) -> None:
 
 # Tạo fact fallback trực tiếp từ chunk gốc để GraphRAG vẫn ingest được khi extractor/embedding relation bị lỗi.
 def _build_runtime_fallback_facts(records: list[dict]) -> list[dict]:
-    """Sinh fact fallback bám theo từng chunk gốc, dùng làm lưới an toàn cho ingest runtime."""
 
     fallback_facts: list[dict] = []
     for record in records:
@@ -452,7 +437,6 @@ def _run_ingest_pipeline(
     replace_relative_paths: list[str] | None = None,
     verbose: bool = True,
 ) -> dict[str, Any]:
-    """Thực thi pipeline ingest dùng chung cho cả CLI và UI."""
 
     if not all_records:
         raise ValueError("Không tạo được chunk nào từ dữ liệu đầu vào.")
@@ -647,7 +631,6 @@ def sync_shared_chunk_changes(
 
 # Nhận danh sách tài liệu thô mới từ UI, ghi đè processed audit cũ và reset graph để ingest lại từ đầu.
 def ingest_raw_documents(documents: list[dict[str, Any]], runtime_overrides: dict | None = None) -> dict[str, Any]:
-    """Xử lý dữ liệu thô mới ngay trên UI và thay thế hoàn toàn graph hiện tại."""
 
     config = load_config(overrides=runtime_overrides)
     prepared_documents = _prepare_documents(documents)
@@ -677,7 +660,6 @@ def ingest_raw_documents(documents: list[dict[str, Any]], runtime_overrides: dic
 
 # Pipeline ingest mới cho GraphRAG dùng Neo4j làm graph database chuyên dụng.
 def main() -> None:
-    """Điểm vào CLI cho pipeline ingest GraphRAG."""
 
     # Bước 1: cấu hình UTF-8 để log tiếng Việt hiển thị đúng trên terminal.
     configure_console_utf8()

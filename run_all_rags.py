@@ -22,12 +22,12 @@ RAG_SERVERS = [
     {"name": "graph", "path": PROJECT_ROOT / "graph_rag" / "app.py", "ui_port": 8502},
 ]
 
-
+# Đảm bảo thư mục cache tồn tại
 def _ensure_fastembed_cache_root() -> Path:
     FASTEMBED_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
     return FASTEMBED_CACHE_ROOT
 
-
+# Kiểm tra xem cache BM25 có đủ hay không
 def _bm25_cache_metadata_matches(snapshot_dir: Path) -> bool:
     metadata_path = snapshot_dir / "files_metadata.json"
     if not metadata_path.exists():
@@ -53,7 +53,7 @@ def _bm25_cache_metadata_matches(snapshot_dir: Path) -> bool:
             return False
     return True
 
-
+# Kiểm tra và tự động sửa cache BM25 của FastEmbed nếu cache bị lỗi hoặc không còn đồng bộ
 def _repair_fastembed_bm25_cache_if_needed() -> None:
     snapshot_dir = FASTEMBED_BM25_CACHE_DIR
     if not snapshot_dir.exists():
@@ -68,13 +68,13 @@ def _repair_fastembed_bm25_cache_if_needed() -> None:
         f"Da co lap sang {quarantine_dir} de tai lai sach."
     )
 
-
+# Kiểm tra port trên máy
 def _is_port_listening(host: str, port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(0.5)
         return sock.connect_ex((host, port)) == 0
 
-
+# Kiểm tra các port cần dùng có bị chiếm hay không
 def _ensure_ports_available() -> None:
     conflicts = [
         f"{server['name']}:{server['ui_port']}"
@@ -90,8 +90,6 @@ def _ensure_ports_available() -> None:
 
 # Tạo biến môi trường dùng chung để mỗi process biết port của cả 3 tab giao diện.
 def _build_child_env(ui_port: int) -> dict[str, str]:
-    """Tạo bộ biến môi trường con cho từng backend RAG."""
-
     child_env = os.environ.copy()
     child_env["PYTHONIOENCODING"] = "utf-8"
     child_env["RAG_UI_HOST"] = UI_HOST
@@ -106,8 +104,6 @@ def _build_child_env(ui_port: int) -> dict[str, str]:
 
 # In log của từng process kèm prefix để dễ phân biệt trên một terminal.
 def _stream_output(name: str, stream) -> None:
-    """Đọc stdout của process con và gắn prefix theo tên hệ RAG."""
-
     try:
         for line in stream:
             print(f"[{name}] {line.rstrip()}")
@@ -117,8 +113,6 @@ def _stream_output(name: str, stream) -> None:
 
 # Khởi động một RAG backend bằng Python hiện tại và nối stdout vào bộ đọc log.
 def _start_process(server: dict[str, object]) -> tuple[subprocess.Popen[str], threading.Thread]:
-    """Khởi động một backend RAG và tạo thread đọc log của backend đó."""
-
     popen_kwargs: dict[str, object] = {}
     if os.name == "nt":
         # Tách process group để Ctrl+C ở launcher không đẩy KeyboardInterrupt xuống backend.
@@ -147,8 +141,6 @@ def _start_process(server: dict[str, object]) -> tuple[subprocess.Popen[str], th
 
 # Dừng một process con theo cách mềm trước, rồi mới ép kill nếu cần.
 def _stop_process(process: subprocess.Popen[str]) -> None:
-    """Dừng process con theo thứ tự terminate rồi kill nếu process không thoát."""
-
     if process.poll() is not None:
         return
 
@@ -165,8 +157,6 @@ def _stop_process(process: subprocess.Popen[str]) -> None:
 
 # Kiểm tra nhanh xem có process nào tắt sớm không để dừng cả cụm nếu có lỗi khởi động.
 def _check_early_exit(processes: list[tuple[dict[str, object], subprocess.Popen[str]]]) -> str | None:
-    """Phát hiện backend nào thoát sớm để launcher dừng toàn bộ cụm."""
-
     for server, process in processes:
         if process.poll() is not None:
             return str(server["name"])
@@ -179,8 +169,6 @@ def _check_early_exit(processes: list[tuple[dict[str, object], subprocess.Popen[
 # 3) Giữ process cha sống cho đến khi user nhấn Ctrl+C hoặc một backend bị lỗi.
 # 4) Khi dừng thì tắt toàn bộ process con một cách gọn gàng.
 def main() -> None:
-    """Khởi động đồng thời Baseline, Hybrid và Graph RAG trong một terminal."""
-
     # Bước 1: ép stdout/stderr sang UTF-8 để log tiếng Việt không bị lỗi mã hóa.
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")

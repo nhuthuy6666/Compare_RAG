@@ -86,7 +86,7 @@ def _get_bool_env(name: str, default: bool) -> bool:
         return False
     raise ValueError(f"Environment variable {name} must be a boolean, got: {raw!r}")
 
-
+# Đọc một biến môi trường và chuyển nó thành số nguyên
 def _get_int_env(name: str, default: int) -> int:
     raw = os.getenv(name)
     if raw is None:

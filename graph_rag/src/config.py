@@ -25,9 +25,9 @@ DEFAULT_CHUNK_DIR = DEFAULT_PROCESSED_DIR / "chunks"
 DEFAULT_FACTS_PATH = DEFAULT_PROCESSED_DIR / "graph_facts.jsonl"
 
 
+# Gói toàn bộ cấu hình runtime cho GraphRAG Neo4j.
 @dataclass(frozen=True)
 class AppConfig:
-    """Gói toàn bộ cấu hình runtime cho GraphRAG Neo4j."""
 
     project_root: Path
     baseline_config_path: Path
@@ -74,7 +74,6 @@ class AppConfig:
 
 # Đọc biến môi trường kiểu số nguyên với fallback rõ ràng.
 def _get_int_env(name: str, default: int) -> int:
-    """Đọc biến môi trường số nguyên và báo lỗi nếu giá trị không hợp lệ."""
 
     raw = os.getenv(name)
     if raw is None:
@@ -87,7 +86,6 @@ def _get_int_env(name: str, default: int) -> int:
 
 # Đọc biến môi trường kiểu số thực với fallback rõ ràng.
 def _get_float_env(name: str, default: float) -> float:
-    """Đọc biến môi trường số thực và báo lỗi nếu giá trị không hợp lệ."""
 
     raw = os.getenv(name)
     if raw is None:
@@ -100,7 +98,6 @@ def _get_float_env(name: str, default: float) -> float:
 
 # Quy đổi đường dẫn tương đối thành đường dẫn tuyệt đối theo thư mục gốc được chỉ định.
 def _resolve_project_path(path_like: str | Path, *, base_dir: Path) -> Path:
-    """Chuẩn hóa đường dẫn config để dùng ổn định ở mọi thư mục chạy lệnh."""
 
     path = Path(path_like)
     return path if path.is_absolute() else base_dir / path
@@ -108,7 +105,6 @@ def _resolve_project_path(path_like: str | Path, *, base_dir: Path) -> Path:
 
 # Đọc biến môi trường boolean theo các alias thông dụng như true/false, on/off.
 def _get_bool_env(name: str, default: bool) -> bool:
-    """Đọc biến môi trường boolean và hỗ trợ nhiều cách ghi phổ biến."""
 
     raw = os.getenv(name)
     if raw is None:
@@ -123,7 +119,6 @@ def _get_bool_env(name: str, default: bool) -> bool:
 
 # Đọc file baseline JSON để kế thừa cấu hình chung của toàn project.
 def _load_baseline_config(path: Path) -> dict:
-    """Đọc cấu hình baseline JSON và trả về dict rỗng nếu file không tồn tại."""
 
     if not path.exists():
         return {}
@@ -135,7 +130,6 @@ def _load_baseline_config(path: Path) -> dict:
 
 # Gộp baseline config, biến môi trường và benchmark override thành một cấu hình thống nhất.
 def load_config(overrides: dict | None = None) -> AppConfig:
-    """Tạo AppConfig hoàn chỉnh cho GraphRAG Neo4j từ mọi nguồn cấu hình."""
 
     load_dotenv()
     baseline_config_path = Path(os.getenv("BASELINE_CONFIG_PATH", DEFAULT_BASELINE_CONFIG))
@@ -217,7 +211,6 @@ def load_config(overrides: dict | None = None) -> AppConfig:
 
 # Kiểm tra các giá trị bắt buộc trước khi cấu hình model.
 def _require(values: dict[str, str | None]) -> None:
-    """Đảm bảo các biến cấu hình bắt buộc đã có giá trị."""
 
     missing = [name for name, value in values.items() if not value]
     if missing:
@@ -226,7 +219,6 @@ def _require(values: dict[str, str | None]) -> None:
 
 # Áp cấu hình LLM và embedding vào Settings để toàn bộ pipeline Neo4j dùng chung.
 def configure_models(config: AppConfig) -> None:
-    """Khởi tạo LLM và embedding model tương thích OpenAI cho GraphRAG."""
 
     _require(
         {
@@ -258,7 +250,6 @@ def configure_models(config: AppConfig) -> None:
 
 # Tạo Neo4j driver dùng chung cho ingest và query.
 def build_neo4j_driver(config: AppConfig):
-    """Khởi tạo Neo4j driver theo URI và thông tin xác thực hiện tại."""
 
     return GraphDatabase.driver(
         config.neo4j_uri,
@@ -268,7 +259,6 @@ def build_neo4j_driver(config: AppConfig):
 
 # Kiểm tra kết nối Neo4j sớm để báo lỗi rõ ràng trước khi ingest hoặc serve request.
 def verify_neo4j_connection(config: AppConfig) -> None:
-    """Kiểm tra Neo4j đã sẵn sàng trước khi dùng trong pipeline."""
 
     driver = build_neo4j_driver(config)
     try:

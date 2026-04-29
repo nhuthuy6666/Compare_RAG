@@ -13,18 +13,20 @@ from llamaindex_shared.prompts import build_prompt_templates
 from neo4j_store import RetrievedFact, entity_guided_search, graph_ready, neighbor_search, vector_search
 
 
-QUERY_FUSION_PROMPT = """Bạn là trợ lý tạo truy vấn tìm kiếm cho hệ thống GraphRAG tư vấn tuyển sinh.
-Hãy tạo {num_queries} cách diễn đạt khác nhau cho cùng một câu hỏi, giữ nguyên ý định và ưu tiên từ khóa bám sát dữ liệu tuyển sinh NTU.
-Mỗi dòng dùng một truy vấn, không đánh số, không giải thích.
+QUERY_FUSION_PROMPT = (
+                      'Bạn là trợ lý tạo truy vấn tìm kiếm cho hệ thống GraphRAG tư vấn tuyển sinh.\n'
+                      'Hãy tạo {num_queries} cách diễn đạt khác nhau cho cùng một câu hỏi, giữ nguyên ý định và ưu tiên từ khóa bám sát dữ liệu tuyển sinh NTU.\n'
+                      'Mỗi dòng dùng một truy vấn, không đánh số, không giải thích.\n'
+                      '\n'
+                      'Câu hỏi gốc: {query}\n'
+                      'Danh sách truy vấn:\n'
+                      '\n'
+                      )
 
-Câu hỏi gốc: {query}
-Danh sách truy vấn:
-"""
 
-
+# Fact nguồn đã rút gọn để trả về UI và benchmark.
 @dataclass(frozen=True)
 class SourceFact:
-    """Fact nguồn đã rút gọn để trả về UI và benchmark."""
 
     content: str
     relative_path: str
@@ -32,18 +34,18 @@ class SourceFact:
     score: float | None
 
 
+# Kết quả cuối cùng của một lượt hỏi GraphRAG.
 @dataclass(frozen=True)
 class ChatAnswer:
-    """Kết quả cuối cùng của một lượt hỏi GraphRAG."""
 
     question: str
     answer: str
     facts: list[SourceFact]
 
 
+# Biểu diễn một truy vấn con khi bật query fusion.
 @dataclass(frozen=True)
 class SearchPlan:
-    """Biểu diễn một truy vấn con khi bật query fusion."""
 
     query: str
     rank: int
@@ -51,7 +53,6 @@ class SearchPlan:
 
 # Chuẩn hóa tên mode query fusion và chặn mode không được hỗ trợ.
 def _resolve_query_fusion_mode(mode: str) -> str:
-    """Kiểm tra mode query fusion có nằm trong danh sách hỗ trợ hay không."""
 
     normalized = mode.strip().lower()
     supported = {
@@ -70,21 +71,18 @@ def _resolve_query_fusion_mode(mode: str) -> str:
 
 # Khi fusion bật, score sau hợp nhất không còn cùng thang nên không áp ngưỡng như truy vấn đơn.
 def _should_apply_similarity_threshold(config) -> bool:
-    """Quyết định có nên dùng similarity threshold hay không."""
 
     return not (config.query_fusion_enabled and config.query_fusion_num_queries > 1)
 
 
 # Chuẩn hóa text về lowercase một dòng để tăng độ ổn định cho xử lý truy vấn.
 def _normalize_text(value: str) -> str:
-    """Rút gọn khoảng trắng và đưa text về lowercase."""
 
     return re.sub(r"\s+", " ", value).strip().lower()
 
 
 # Loại bớt ký tự đặc biệt để tạo truy vấn fulltext an toàn hơn cho Neo4j.
 def _sanitize_fulltext_term(value: str) -> str:
-    """Làm sạch chuỗi trước khi đưa vào fulltext query của Neo4j."""
 
     sanitized = re.sub(r"[^\wÀ-ỹ]+", " ", value, flags=re.UNICODE)
     return re.sub(r"\s+", " ", sanitized).strip()
@@ -92,7 +90,6 @@ def _sanitize_fulltext_term(value: str) -> str:
 
 # Tạo câu truy vấn fulltext cho entity search từ câu hỏi người dùng.
 def _build_entity_fulltext_query(query: str) -> str:
-    """Tạo truy vấn fulltext theo cụm từ và token quan trọng trong câu hỏi."""
 
     tokens = [token for token in _sanitize_fulltext_term(query).split() if len(token) >= 3]
     if not tokens:
@@ -107,7 +104,6 @@ def _build_entity_fulltext_query(query: str) -> str:
 
 # Tạo danh sách truy vấn con khi bật query fusion; nếu tắt thì chỉ giữ câu hỏi gốc.
 def _generate_query_variants(question: str, config) -> list[SearchPlan]:
-    """Sinh các truy vấn con phục vụ query fusion từ câu hỏi gốc."""
 
     if not config.query_fusion_enabled or config.query_fusion_num_queries <= 1:
         return [SearchPlan(query=question, rank=1)]
@@ -138,7 +134,6 @@ def _combine_variant_results(
     mode: str,
     limit: int,
 ) -> list[RetrievedFact]:
-    """Hợp nhất kết quả của query fusion theo mode đã cấu hình."""
 
     combined: dict[str, dict[str, Any]] = {}
     for plan, results in variant_results:
@@ -195,7 +190,6 @@ def _combine_variant_results(
 
 # Khử trùng fact trùng ID giữa nhiều nguồn retrieve và giữ lại bản có score cao nhất.
 def _dedupe_results(results: list[RetrievedFact], *, limit: int) -> list[RetrievedFact]:
-    """Gộp fact trùng nhau và giữ lại bản có score cao nhất."""
 
     merged: dict[str, RetrievedFact] = {}
     for item in results:
@@ -207,7 +201,6 @@ def _dedupe_results(results: list[RetrievedFact], *, limit: int) -> list[Retriev
 
 # Chạy một truy vấn duy nhất trên Neo4j bằng vector search, entity search và graph expansion.
 def _run_single_query(plan: SearchPlan, config) -> list[RetrievedFact]:
-    """Thực hiện một lượt retrieve đơn trên Neo4j với ba nhánh tìm kiếm."""
 
     driver = build_neo4j_driver(config)
     try:
@@ -278,7 +271,6 @@ def _run_single_query(plan: SearchPlan, config) -> list[RetrievedFact]:
 
 # Chuẩn hóa score theo ranking hiện tại để trộn nhiều nhánh retrieve vào cùng một thang tương đối.
 def _normalize_rank_score(score: float, ranked_items: list[RetrievedFact]) -> float:
-    """Chuẩn hóa score tương đối trong một danh sách retrieve."""
 
     if not ranked_items:
         return 0.0
@@ -288,7 +280,6 @@ def _normalize_rank_score(score: float, ranked_items: list[RetrievedFact]) -> fl
 
 # Chạy retrieval trên Neo4j bằng vector index và mở rộng neighborhood theo entity.
 def retrieve_facts(question: str, config) -> list[RetrievedFact]:
-    """Retrieve các fact tốt nhất cho một câu hỏi theo cấu hình hiện tại."""
 
     plans = _generate_query_variants(question, config)
     variant_results = [(plan, _run_single_query(plan, config)) for plan in plans]
@@ -304,7 +295,6 @@ def retrieve_facts(question: str, config) -> list[RetrievedFact]:
 
 # Định dạng danh sách fact thành context string để đưa vào prompt trả lời.
 def _format_context(facts: list[RetrievedFact]) -> str:
-    """Biến danh sách fact retrieve thành chuỗi context cho LLM."""
 
     lines = []
     for index, fact in enumerate(facts, start=1):
@@ -321,7 +311,6 @@ def _format_context(facts: list[RetrievedFact]) -> str:
 
 # Gọi LLM để tổng hợp câu trả lời cuối cùng từ context GraphRAG.
 def _generate_answer(question: str, facts: list[RetrievedFact], config) -> str:
-    """Sinh câu trả lời cuối cùng từ context fact đã retrieve."""
 
     qa_template, _ = build_prompt_templates(
         shared_prompt=config.shared_prompt,
@@ -337,7 +326,6 @@ def _generate_answer(question: str, facts: list[RetrievedFact], config) -> str:
 
 # Đảm bảo graph đã có dữ liệu trước khi nhận request chat.
 def _ensure_graph_ready(config) -> None:
-    """Báo lỗi sớm nếu Neo4j chưa có fact nào để phục vụ hỏi đáp."""
 
     driver = build_neo4j_driver(config)
     try:
@@ -359,8 +347,8 @@ def _graph_is_ready(config) -> bool:
 
 # Cache bước warm-up để web server không phải kiểm tra Neo4j và model lặp lại quá nhiều.
 @lru_cache(maxsize=8)
+# Warm-up GraphRAG và cache kết quả kiểm tra readiness.
 def warm_up_graph(overrides_key: str = "{}") -> dict[str, Any]:
-    """Warm-up GraphRAG và cache kết quả kiểm tra readiness."""
 
     overrides = json.loads(overrides_key)
     config = load_config(overrides=overrides)
@@ -375,7 +363,6 @@ def warm_up_graph(overrides_key: str = "{}") -> dict[str, Any]:
 
 # Truy vấn GraphRAG mới: Neo4j vector search + graph expansion + LLM synthesis.
 def answer_question(question: str, top_k: int | None = None, runtime_overrides: dict | None = None) -> ChatAnswer:
-    """Trả lời một câu hỏi bằng pipeline GraphRAG Neo4j hiện tại."""
 
     config = load_config(overrides=runtime_overrides)
     if top_k is not None and top_k > 0:
@@ -412,7 +399,6 @@ def answer_question(question: str, top_k: int | None = None, runtime_overrides: 
 
 # Rút gọn RetrievedFact thành SourceFact trước khi trả về UI hoặc benchmark.
 def _to_source_fact(fact: RetrievedFact) -> SourceFact:
-    """Chuyển RetrievedFact sang payload nhẹ hơn để trả về phía client."""
 
     return SourceFact(
         content=fact.text,
