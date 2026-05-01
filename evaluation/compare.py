@@ -15,8 +15,6 @@ from evaluation.common import load_structured_config, resolve_path  # noqa: E402
 
 # Khai báo và parse tham số CLI cho script dựng lại báo cáo Markdown.
 def parse_args() -> argparse.Namespace:
-    """Khai báo và parse tham số cho script dựng lại báo cáo Markdown."""
-
     parser = argparse.ArgumentParser(description="Render markdown comparison table from evaluation results.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     return parser.parse_args()
@@ -24,16 +22,12 @@ def parse_args() -> argparse.Namespace:
 
 # Đọc summary CSV thành list dict để các hàm render dùng chung.
 def load_rows(path: Path) -> list[dict[str, str]]:
-    """Đọc CSV thành danh sách dict để các hàm render dùng chung."""
-
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
 # Parse một cột số trong CSV về float an toàn.
 def to_float(row: dict[str, str], key: str) -> float:
-    """Parse số an toàn từ một cột trong CSV."""
-
     try:
         return float(row.get(key, "0") or 0)
     except ValueError:
@@ -42,8 +36,6 @@ def to_float(row: dict[str, str], key: str) -> float:
 
 # Render phần metadata đầu báo cáo như mode, split, budget và seed.
 def render_metadata(rows: list[dict[str, str]]) -> list[str]:
-    """Render phần metadata đầu báo cáo như mode, split, budget và seed."""
-
     if not rows:
         return ["# So sánh 3 RAG", "", "Chưa có dữ liệu để hiển thị."]
 
@@ -64,8 +56,6 @@ def render_metadata(rows: list[dict[str, str]]) -> list[str]:
 
 # Render bảng xếp hạng tổng quan của các hệ từ summary rows.
 def render_summary_table(rows: list[dict[str, str]]) -> list[str]:
-    """Render bảng xếp hạng tổng quan của các hệ."""
-
     lines = [
         "| Hạng | Hệ thống | Profile | Overall | Answer | Retrieval | Faithfulness | MRR | Semantic | Latency (ms) | Budget Violation | Errors |",
         "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
@@ -92,8 +82,6 @@ def render_summary_table(rows: list[dict[str, str]]) -> list[str]:
 
 # Render breakdown theo từng strength bucket nếu có dữ liệu bucket.
 def render_strength_tables(rows: list[dict[str, str]]) -> list[str]:
-    """Render breakdown theo từng nhóm câu hỏi nếu có dữ liệu bucket."""
-
     if not rows:
         return []
 
@@ -139,8 +127,6 @@ def render_strength_tables(rows: list[dict[str, str]]) -> list[str]:
 
 # Ghép toàn bộ các phần của báo cáo thành nội dung cuối cùng của `comparison.md`.
 def build_comparison_report(rows: list[dict[str, str]], strength_rows: list[dict[str, str]] | None = None) -> str:
-    """Ghép toàn bộ các phần thành nội dung cuối của `comparison.md`."""
-
     sorted_rows = sorted(rows, key=lambda row: to_float(row, "overall_score"), reverse=True)
     lines = render_metadata(sorted_rows)
     lines.extend(render_summary_table(sorted_rows))
@@ -154,15 +140,6 @@ def build_comparison_report(rows: list[dict[str, str]], strength_rows: list[dict
 # 3. Nếu có artifact, render lại `comparison.md` từ CSV.
 # 4. Nếu chỉ còn `comparison.md`, in trạng thái hiện tại và hướng dẫn ngắn.
 def main() -> None:
-    """Điểm vào chính của script render báo cáo.
-
-    Các bước:
-    1. Đọc config để xác định thư mục kết quả hiện tại.
-    2. Kiểm tra xem `comparison.csv` và `strength_breakdown.csv` có tồn tại hay không.
-    3. Nếu có dữ liệu, dựng lại `comparison.md` từ CSV.
-    4. Nếu không có artifact nhưng đã có `comparison.md`, chỉ in hướng dẫn trạng thái hiện tại.
-    """
-
     args = parse_args()
     config = load_structured_config(args.config)
     comparison_path = resolve_path(Path(config["results_dir"]) / "comparison.csv")

@@ -41,8 +41,6 @@ RUNNERS: dict[str, tuple[Callable, Callable]] = {
 
 # Khai báo và parse tham số CLI cho một lần benchmark V1.
 def parse_args() -> argparse.Namespace:
-    """Khai báo và parse tham số dòng lệnh cho lần chạy benchmark V1."""
-
     parser = argparse.ArgumentParser(description="Evaluate 3 RAG systems via HTTP with V1 scoring.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     parser.add_argument(
@@ -75,8 +73,6 @@ def parse_args() -> argparse.Namespace:
 
 # Tính trung bình và làm tròn 4 chữ số để thống nhất cách ghi báo cáo.
 def mean(values: list[float]) -> float:
-    """Tính trung bình và làm tròn 4 chữ số để thống nhất cách ghi báo cáo."""
-
     return round(statistics.fmean(values), 4) if values else 0.0
 
 
@@ -131,8 +127,6 @@ DETAIL_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
 
 # Gộp toàn bộ metric row của một hệ thành một summary row để ghi report.
 def aggregate_metrics(system: str, rows: list[dict], *, metadata: dict[str, object], budget: dict[str, object]) -> dict:
-    """Gộp metric theo hệ để tạo summary row cho báo cáo tổng hợp."""
-
     numeric_fields = [
         "refusal_correct",
         "exact_match",
@@ -183,8 +177,6 @@ def aggregate_metrics(system: str, rows: list[dict], *, metadata: dict[str, obje
 
 # Gộp metric theo từng strength bucket để xem hệ mạnh/yếu ở nhóm câu hỏi nào.
 def aggregate_strength_buckets(system: str, rows: list[dict], *, metadata: dict[str, object], budget: dict[str, object]) -> list[dict]:
-    """Gộp metric theo từng bucket độ mạnh câu hỏi như dense, graph và neutral."""
-
     grouped: dict[str, list[dict]] = {}
     for row in rows:
         bucket = str(row.get("strength_bucket") or "neutral")
@@ -200,8 +192,6 @@ def aggregate_strength_buckets(system: str, rows: list[dict], *, metadata: dict[
 
 # In bảng metric chi tiết của một hệ ra terminal sau mỗi lượt evaluate.
 def print_detailed_summary(system_name: str, summary: dict, metric_rows: list[dict]) -> None:
-    """In tóm tắt metric chi tiết của một hệ ra terminal để theo dõi khi chạy."""
-
     topic_scores: dict[str, list[float]] = {}
     for row in metric_rows:
         topic_scores.setdefault(str(row["topic"]), []).append(float(row["overall_score"]))
@@ -246,7 +236,6 @@ def run_system(
     metadata: dict[str, object],
     budget: dict[str, object],
 ) -> dict:
-    """Chạy một hệ trên toàn bộ tập câu hỏi, chấm điểm và trả summary đã gộp."""
 
     healthcheck, runner = RUNNERS[system_name]
     healthcheck(system_config, timeout)
@@ -285,16 +274,6 @@ def run_system(
 # 4. Gộp summary và render `comparison.md`.
 # 5. In kết quả tóm tắt cuối cùng để theo dõi nhanh trên terminal.
 def main() -> None:
-    """Điểm vào chính của benchmark V1.
-
-    Các bước:
-    1. Đọc tham số, config, policy và xác định mode, split, budget sẽ dùng.
-    2. Nạp tập câu hỏi benchmark và chuẩn bị thư mục đầu ra.
-    3. Khởi tạo semantic scorer nếu config bật semantic metric.
-    4. Lần lượt chạy từng hệ, resolve profile tương ứng và chấm điểm toàn bộ câu hỏi.
-    5. Gộp kết quả và render `comparison.md`.
-    """
-
     args = parse_args()
     config = load_structured_config(args.config)
     policy = load_benchmark_policy(config)

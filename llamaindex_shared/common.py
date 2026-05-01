@@ -236,7 +236,6 @@ def build_vector_store(config: SharedRagConfig, *, enable_hybrid: bool) -> Qdran
         kwargs["fastembed_sparse_model"] = "Qdrant/bm25"
     return QdrantVectorStore(**kwargs)
 
-
 # Tạo collection nếu chưa tồn tại, đồng thời bật sparse vectors khi hybrid được sử dụng.
 def _ensure_collection(
     client: QdrantClient,

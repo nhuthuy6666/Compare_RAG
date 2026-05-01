@@ -15,8 +15,6 @@ from evaluation.common import load_structured_config, resolve_path  # noqa: E402
 
 # Khai báo và parse tham số CLI cho script dựng bản xem ASCII.
 def parse_args() -> argparse.Namespace:
-    """Khai báo và parse tham số cho script render bản xem ASCII."""
-
     parser = argparse.ArgumentParser(description="Render ASCII visualization from evaluation results.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     return parser.parse_args()
@@ -24,16 +22,12 @@ def parse_args() -> argparse.Namespace:
 
 # Đọc summary CSV để render bản xem ASCII.
 def load_rows(path: Path) -> list[dict[str, str]]:
-    """Đọc summary CSV để render bản xem ASCII."""
-
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
 # Biến một giá trị 0-1 thành thanh ASCII để quan sát nhanh.
 def bar(value: float, width: int = 24) -> str:
-    """Biến một giá trị 0-1 thành thanh ASCII để quan sát nhanh."""
-
     value = max(0.0, min(1.0, value))
     filled = round(value * width)
     return "#" * filled + "." * (width - filled)
@@ -41,8 +35,6 @@ def bar(value: float, width: int = 24) -> str:
 
 # Parse số an toàn từ CSV.
 def to_float(row: dict[str, str], key: str) -> float:
-    """Parse số an toàn từ CSV."""
-
     try:
         return float(row.get(key, "0") or 0)
     except ValueError:
@@ -55,15 +47,6 @@ def to_float(row: dict[str, str], key: str) -> float:
 # 3. Render thanh ASCII cho các metric chính.
 # 4. Ghi `comparison_ascii.txt` để xem nhanh không cần Markdown renderer.
 def main() -> None:
-    """Điểm vào chính của script dựng biểu diễn ASCII.
-
-    Các bước:
-    1. Đọc `comparison.csv` trong thư mục kết quả hiện tại.
-    2. Sắp xếp các hệ theo `overall_score`.
-    3. Render các thanh ASCII cho một số metric chính.
-    4. Ghi file `comparison_ascii.txt` để mở nhanh không cần Markdown renderer.
-    """
-
     args = parse_args()
     config = load_structured_config(args.config)
     comparison_path = resolve_path(Path(config["results_dir"]) / "comparison.csv")

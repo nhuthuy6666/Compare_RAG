@@ -19,8 +19,6 @@ from evaluation.policy import load_benchmark_policy  # noqa: E402
 
 # Khai báo và parse tham số CLI cho workflow human judgment.
 def parse_args() -> argparse.Namespace:
-    """Khai báo và parse tham số cho workflow human judgment."""
-
     parser = argparse.ArgumentParser(description="Prepare or report human judgment workflow.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     parser.add_argument("command", choices=("prepare", "report"), help="Action to perform.")
@@ -29,16 +27,12 @@ def parse_args() -> argparse.Namespace:
 
 # Resolve thư mục annotation từ policy và đảm bảo nó tồn tại.
 def _annotation_dir(policy: dict) -> Path:
-    """Resolve thư mục annotation từ policy và đảm bảo nó tồn tại."""
-
     human = policy.get("human_judgment") or {}
     return ensure_dir(resolve_path(human.get("annotation_dir") or "evaluation/annotations/human_v1"))
 
 
 # Nạp outputs JSON của một hệ và index prediction theo `example_id`.
 def _load_output_predictions(path: Path) -> dict[str, dict]:
-    """Nạp file outputs JSON và index prediction theo `example_id`."""
-
     payload = json.loads(path.read_text(encoding="utf-8"))
     predictions = payload.get("predictions") or []
     return {str(item["example_id"]): item for item in predictions}
@@ -46,8 +40,6 @@ def _load_output_predictions(path: Path) -> dict[str, dict]:
 
 # Tạo preview ngắn của tối đa 3 nguồn đầu để annotator đọc nhanh.
 def _source_preview(prediction: dict) -> str:
-    """Tạo preview ngắn của tối đa 3 nguồn đầu để người chấm đọc nhanh."""
-
     sources = prediction.get("sources") or []
     previews: list[str] = []
     for index, source in enumerate(sources[:3], start=1):
@@ -58,8 +50,6 @@ def _source_preview(prediction: dict) -> str:
 
 # Chuẩn bị packet CSV và template CSV cho hai annotator.
 def prepare_packets(config: dict, policy: dict) -> None:
-    """Chuẩn bị packet CSV và template CSV cho hai annotator."""
-
     annotation_dir = _annotation_dir(policy)
     examples = load_examples(config["dataset_path"], split="held_out_test")
     example_map = {example.id: example for example in examples}
@@ -118,8 +108,6 @@ def prepare_packets(config: dict, policy: dict) -> None:
 
 # Đọc file annotation và index theo cặp `(example_id, system)`.
 def _load_annotations(path: Path) -> dict[tuple[str, str], dict[str, str]]:
-    """Đọc file annotation và index theo cặp `(example_id, system)`."""
-
     if not path.exists():
         return {}
     with path.open("r", encoding="utf-8", newline="") as handle:
@@ -129,8 +117,6 @@ def _load_annotations(path: Path) -> dict[tuple[str, str], dict[str, str]]:
 
 # Tính Cohen's kappa cho hai danh sách nhãn có cùng độ dài.
 def _cohen_kappa(labels_a: list[str], labels_b: list[str]) -> float:
-    """Tính Cohen's kappa cho hai danh sách nhãn có cùng độ dài."""
-
     if not labels_a or not labels_b or len(labels_a) != len(labels_b):
         return 0.0
     observed = sum(1 for left, right in zip(labels_a, labels_b) if left == right) / len(labels_a)
@@ -147,8 +133,6 @@ def _cohen_kappa(labels_a: list[str], labels_b: list[str]) -> float:
 
 # In console an toàn kể cả khi terminal không hỗ trợ Unicode đầy đủ.
 def _emit_console(text: str) -> None:
-    """In console an toàn kể cả khi terminal không hỗ trợ Unicode đầy đủ."""
-
     try:
         print(text)
     except UnicodeEncodeError:
@@ -157,8 +141,6 @@ def _emit_console(text: str) -> None:
 
 # Tổng hợp annotation của hai annotator và xuất báo cáo agreement.
 def report_judgments(config: dict, policy: dict) -> None:
-    """Tổng hợp annotation của hai người chấm và xuất báo cáo agreement."""
-
     annotation_dir = _annotation_dir(policy)
     annotator_a = _load_annotations(annotation_dir / "annotator_a.csv")
     annotator_b = _load_annotations(annotation_dir / "annotator_b.csv")
@@ -223,14 +205,6 @@ def report_judgments(config: dict, policy: dict) -> None:
 # 2. Nếu chạy `prepare`, sinh packet và template cho annotator.
 # 3. Nếu chạy `report`, đọc annotation hiện có rồi tính agreement/kappa.
 def main() -> None:
-    """Điểm vào chính của workflow human judgment.
-
-    Các bước:
-    1. Đọc config và policy để xác định thư mục annotation.
-    2. Nếu chọn `prepare`, sinh packet và template cho annotator.
-    3. Nếu chọn `report`, đọc annotation hiện có và tính agreement.
-    """
-
     args = parse_args()
     config = load_structured_config(args.config)
     policy = load_benchmark_policy(config)

@@ -18,8 +18,6 @@ from evaluation.policy import load_benchmark_policy, load_locked_profiles, load_
 
 # Khai báo và parse tham số CLI cho quy trình tuning khóa profile trên dev.
 def parse_args() -> argparse.Namespace:
-    """Khai báo và parse tham số cho quy trình tuning khóa profile trên dev."""
-
     parser = argparse.ArgumentParser(description="Run the locked tuning protocol on dev split only.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     parser.add_argument("--mode", choices=("best_tuned",), default="best_tuned", help="Profile set to evaluate on dev.")
@@ -30,15 +28,11 @@ def parse_args() -> argparse.Namespace:
 
 # Trả về đường dẫn file summary JSON của một run candidate.
 def _comparison_path(results_dir: Path) -> Path:
-    """Trả về đường dẫn file summary JSON của một run candidate."""
-
     return results_dir / "comparison.json"
 
 
 # Lấy danh sách tên candidate profile của một hệ trong mode best_tuned.
 def _candidate_names(profile_candidates: dict, system_name: str) -> list[str]:
-    """Lấy danh sách tên candidate profile của một hệ trong mode best_tuned."""
-
     systems = ((((profile_candidates.get("best_tuned") or {}).get("systems")) or {}))
     candidates = (((systems.get(system_name) or {}).get("candidates")) or {})
     return list(candidates.keys())
@@ -46,8 +40,6 @@ def _candidate_names(profile_candidates: dict, system_name: str) -> list[str]:
 
 # Nạp summary JSON của một run candidate và chuẩn hóa về dict.
 def _load_summary(path: Path) -> dict:
-    """Nạp summary JSON của một run candidate và chuẩn hóa về dict."""
-
     payload = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(payload, list) and payload:
         return dict(payload[0])
@@ -60,15 +52,6 @@ def _load_summary(path: Path) -> dict:
 # 3. Tính điểm trung bình, chọn candidate tốt nhất và khóa lại nếu được yêu cầu.
 # 4. Ghi báo cáo tóm tắt toàn bộ quy trình tuning.
 def main() -> None:
-    """Điểm vào chính của tuning protocol.
-
-    Các bước:
-    1. Đọc config, policy và kiểm tra ràng buộc tuning chỉ được chạy trên dev.
-    2. Lần lượt chạy các candidate profile cho từng hệ với nhiều seed.
-    3. Tính điểm trung bình, chọn candidate tốt nhất và cập nhật manifest locked nếu được yêu cầu.
-    4. Ghi báo cáo tóm tắt toàn bộ quy trình tuning.
-    """
-
     args = parse_args()
     config = load_structured_config(args.config)
     policy = load_benchmark_policy(config)

@@ -23,8 +23,6 @@ RNG = random.Random(42)
 
 # Khai báo và parse tham số CLI cho báo cáo reliability.
 def parse_args() -> argparse.Namespace:
-    """Khai báo và parse tham số cho báo cáo reliability."""
-
     parser = argparse.ArgumentParser(description="Compute bootstrap reliability reports from evaluation results.")
     parser.add_argument("--config", default="evaluation/config_v1.yaml", help="Path to config file.")
     parser.add_argument(
@@ -38,16 +36,12 @@ def parse_args() -> argparse.Namespace:
 
 # Đọc một file CSV thành list dict để các bước bootstrap dùng chung.
 def load_csv_rows(path: Path) -> list[dict[str, str]]:
-    """Đọc CSV thành danh sách dict để xử lý thống nhất."""
-
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
 
 
 # Liệt kê các file metric CSV còn thiếu trước khi bắt đầu bootstrap.
 def find_missing_metric_files(results_dir: Path, systems: list[str]) -> list[Path]:
-    """Liệt kê các file metric CSV còn thiếu cho từng hệ."""
-
     missing: list[Path] = []
     for system in systems:
         metric_path = results_dir / f"{system}_metrics.csv"
@@ -58,8 +52,6 @@ def find_missing_metric_files(results_dir: Path, systems: list[str]) -> list[Pat
 
 # Resolve split dùng cho reliability; `auto` sẽ cố suy ra từ `comparison.json`.
 def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
-    """Tự suy ra split cần dùng khi người dùng chọn `auto`."""
-
     if requested_split != "auto":
         return requested_split
 
@@ -83,8 +75,6 @@ def resolve_reliability_split(results_dir: Path, requested_split: str) -> str:
 
 # Căn metric rows theo thứ tự example chuẩn để so sánh pairwise không lệch mẫu.
 def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids: list[str]) -> list[dict[str, str]]:
-    """Căn metric row theo đúng thứ tự example để bootstrap pairwise không lệch mẫu."""
-
     indexed_rows: dict[str, dict[str, str]] = {}
     duplicate_ids: list[str] = []
     for row in rows:
@@ -118,8 +108,6 @@ def align_rows_to_examples(system: str, rows: list[dict[str, str]], example_ids:
 
 # Parse một giá trị số lấy từ CSV về float an toàn.
 def to_float(value: str | float | int | None) -> float:
-    """Parse số an toàn cho dữ liệu đọc từ CSV."""
-
     try:
         return float(value or 0)
     except ValueError:
@@ -128,8 +116,6 @@ def to_float(value: str | float | int | None) -> float:
 
 # Tính mean và khoảng tin cậy 95% bằng bootstrap cho một dãy điểm.
 def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float, float]:
-    """Ước lượng mean và khoảng tin cậy 95% cho một metric."""
-
     if not values:
         return 0.0, 0.0, 0.0
     means: list[float] = []
@@ -145,8 +131,6 @@ def bootstrap_ci(values: list[float], rounds: int = 2000) -> tuple[float, float,
 
 # Tính khoảng tin cậy bootstrap cho chênh lệch giữa hai hệ đã align theo example.
 def bootstrap_diff_ci(left: list[float], right: list[float], rounds: int = 2000) -> tuple[float, float, float]:
-    """Ước lượng khoảng tin cậy cho chênh lệch trung bình giữa hai hệ."""
-
     if not left or not right or len(left) != len(right):
         return 0.0, 0.0, 0.0
     diffs: list[float] = []
@@ -163,8 +147,6 @@ def bootstrap_diff_ci(left: list[float], right: list[float], rounds: int = 2000)
 
 # Gắn nhãn ổn định khi khoảng tin cậy của chênh lệch không cắt qua 0.
 def confidence_label(low: float, high: float) -> str:
-    """Gán nhãn ổn định nếu khoảng tin cậy không cắt qua 0."""
-
     if low > 0 or high < 0:
         return "stable"
     return "overlap_zero"
@@ -176,15 +158,6 @@ def confidence_label(low: float, high: float) -> str:
 # 3. Căn metric row của từng hệ theo example rồi tính bootstrap CI và pairwise diff.
 # 4. Ghi CSV/report Markdown để phục vụ phân tích độ tin cậy.
 def main() -> None:
-    """Điểm vào chính của script reliability.
-
-    Các bước:
-    1. Đọc config, xác định split và nạp metric CSV của từng hệ.
-    2. Căn metric row theo thứ tự câu hỏi để tránh lệch mẫu khi bootstrap.
-    3. Tính CI cho metric tổng quan, breakdown theo topic và pairwise difference.
-    4. Ghi các bảng CSV và report Markdown để phục vụ phân tích độ tin cậy.
-    """
-
     args = parse_args()
     config = load_structured_config(args.config)
     results_dir = resolve_path(config["results_dir"])

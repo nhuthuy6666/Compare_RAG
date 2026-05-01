@@ -9,12 +9,11 @@ from requests import RequestException
 from evaluation.common import normalize_text
 
 
+# Semantic scorer with cached embedding lookups.
 class SemanticScorer:
-    """Bọc logic gọi embedding service và tính semantic similarity có cache."""
 
     # Khởi tạo semantic scorer với endpoint, model và timeout tương ứng.
     def __init__(self, base_url: str, model: str, timeout: tuple[int, int]):
-        """Khởi tạo semantic scorer với endpoint, model và timeout tương ứng."""
 
         self.base_url = base_url.rstrip("/")
         self.model = model
@@ -24,7 +23,6 @@ class SemanticScorer:
 
     # Lấy embedding cho một đoạn text, có normalize và cache trước khi gọi API.
     def embed(self, text: str) -> list[float]:
-        """Lấy embedding cho một đoạn text, có normalize và cache trước khi gọi API."""
 
         normalized = normalize_text(text)
         if not normalized:
@@ -38,7 +36,6 @@ class SemanticScorer:
 
     # Thử nhiều độ dài input và nhiều endpoint để tăng khả năng tương thích.
     def _embed_with_fallback(self, text: str) -> list[float]:
-        """Thử nhiều độ dài input và nhiều endpoint để tăng khả năng tương thích."""
 
         candidates = [text[:2500], text[:1200], text[:600]]
         for candidate in candidates:
@@ -61,14 +58,12 @@ class SemanticScorer:
 
     # Tính cosine similarity trực tiếp trên embedding của hai đoạn text.
     def cosine_text(self, left: str, right: str) -> float:
-        """Tính cosine similarity trực tiếp trên embedding của hai đoạn text."""
 
         return cosine_similarity(self.embed(left), self.embed(right))
 
 
 # Tính cosine similarity an toàn, trả 0 nếu vector rỗng hoặc lệch chiều.
 def cosine_similarity(left: list[float], right: list[float]) -> float:
-    """Tính cosine similarity an toàn, trả 0 nếu vector rỗng hoặc lệch chiều."""
 
     if not left or not right or len(left) != len(right):
         return 0.0
@@ -83,7 +78,6 @@ def cosine_similarity(left: list[float], right: list[float]) -> float:
 
 # Rút vector embedding từ nhiều dạng payload response phổ biến.
 def _extract_vector(payload: dict[str, Any]) -> list[float]:
-    """Rút vector embedding từ nhiều dạng payload response phổ biến."""
 
     if "data" in payload:
         return list(payload["data"][0]["embedding"])

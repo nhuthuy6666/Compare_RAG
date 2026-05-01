@@ -13,9 +13,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVALUATION_ROOT = PROJECT_ROOT / "evaluation"
 
 
+# Benchmark example with question, answer, and expected evidence.
 @dataclass(frozen=True)
 class EvalExample:
-    """Biểu diễn một câu hỏi benchmark cùng ground-truth phục vụ chấm điểm."""
 
     id: str
     question: str
@@ -30,18 +30,18 @@ class EvalExample:
     split: str = "all"
 
 
+# Normalized source record returned by a RAG system.
 @dataclass(frozen=True)
 class SourceRecord:
-    """Chuẩn hóa một nguồn mà hệ RAG trả về để metric xử lý thống nhất."""
 
     label: str
     content: str
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+# Prediction package for one benchmark example.
 @dataclass(frozen=True)
 class EvalPrediction:
-    """Gói kết quả dự đoán của một hệ cho một câu hỏi benchmark."""
 
     system: str
     example_id: str
@@ -54,7 +54,6 @@ class EvalPrediction:
 
 # Resolve đường dẫn tuyệt đối từ path cấu hình tương đối hoặc tuyệt đối.
 def resolve_path(path_like: str | Path) -> Path:
-    """Resolve đường dẫn tuyệt đối từ path cấu hình tương đối hoặc tuyệt đối."""
 
     path = Path(path_like)
     return path if path.is_absolute() else PROJECT_ROOT / path
@@ -62,7 +61,6 @@ def resolve_path(path_like: str | Path) -> Path:
 
 # Đọc file text UTF-8 sau khi đã resolve đường dẫn.
 def load_text(path_like: str | Path) -> str:
-    """Đọc file text UTF-8 sau khi đã resolve đường dẫn."""
 
     path = resolve_path(path_like)
     return path.read_text(encoding="utf-8")
@@ -70,7 +68,6 @@ def load_text(path_like: str | Path) -> str:
 
 # Nạp config/manifest JSON hoặc YAML về dict Python dùng chung.
 def load_structured_config(path_like: str | Path) -> dict[str, Any]:
-    """Nạp config hoặc manifest ở dạng JSON hay YAML về dict Python."""
 
     raw = load_text(path_like).strip()
     if not raw:
@@ -92,7 +89,6 @@ def load_structured_config(path_like: str | Path) -> dict[str, Any]:
 
 # Đọc file `.env` đơn giản theo format `KEY=VALUE`.
 def load_env_file(path_like: str | Path) -> dict[str, str]:
-    """Đọc file `.env` đơn giản theo format `KEY=VALUE`."""
 
     env: dict[str, str] = {}
     path = resolve_path(path_like)
@@ -110,7 +106,6 @@ def load_env_file(path_like: str | Path) -> dict[str, str]:
 
 # Bỏ dấu tiếng Việt để việc so khớp text bền hơn trước biến thể nhập liệu.
 def strip_accents(text: str) -> str:
-    """Bỏ dấu tiếng Việt để việc so khớp text bền hơn trước biến thể nhập liệu."""
 
     text = text.replace("đ", "d").replace("Đ", "D")
     normalized = unicodedata.normalize("NFD", text)
@@ -119,7 +114,6 @@ def strip_accents(text: str) -> str:
 
 # Chuẩn hóa text về dạng lower-case, bỏ dấu câu và rút gọn khoảng trắng.
 def normalize_text(text: str) -> str:
-    """Chuẩn hóa text về dạng lower-case, bỏ dấu câu và rút gọn khoảng trắng."""
 
     lowered = strip_accents(text).lower().strip()
     lowered = re.sub(r"[^\w\s]", " ", lowered)
@@ -129,21 +123,18 @@ def normalize_text(text: str) -> str:
 
 # Tách token đơn giản từ text đã normalize.
 def tokenize(text: str) -> list[str]:
-    """Tách token đơn giản từ text đã normalize."""
 
     return [token for token in normalize_text(text).split() if token]
 
 
 # Rút các chuỗi số để kiểm tra claim định lượng trong câu trả lời.
 def extract_numbers(text: str) -> list[str]:
-    """Rút các chuỗi số để kiểm tra claim định lượng trong câu trả lời."""
 
     return re.findall(r"\d+(?:[.,]\d+)?", text)
 
 
 # Nối toàn bộ source thành một chuỗi lớn để dò keyword hoặc source hint.
 def flatten_sources_text(sources: list[SourceRecord]) -> str:
-    """Nối toàn bộ nguồn thành một chuỗi lớn để dò keyword hoặc source hint."""
 
     parts: list[str] = []
     for source in sources:
@@ -156,7 +147,6 @@ def flatten_sources_text(sources: list[SourceRecord]) -> str:
 
 # Phát hiện các mẫu câu từ chối hoặc thiếu thông tin trong câu trả lời.
 def refusal_detected(answer: str) -> bool:
-    """Phát hiện các mẫu câu từ chối hoặc thiếu thông tin trong câu trả lời."""
 
     answer_norm = normalize_text(answer)
     signals = (
@@ -173,7 +163,6 @@ def refusal_detected(answer: str) -> bool:
 
 # Tạo thư mục đầu ra nếu chưa tồn tại và trả lại đường dẫn đã resolve.
 def ensure_dir(path_like: str | Path) -> Path:
-    """Tạo thư mục đầu ra nếu chưa tồn tại và trả lại đường dẫn đã resolve."""
 
     path = resolve_path(path_like)
     path.mkdir(parents=True, exist_ok=True)
@@ -182,7 +171,6 @@ def ensure_dir(path_like: str | Path) -> Path:
 
 # Ghi payload ra file JSON đẹp để dễ đọc và diff.
 def write_json(path_like: str | Path, payload: Any) -> Path:
-    """Ghi payload ra file JSON đẹp để dễ đọc và diff."""
 
     path = resolve_path(path_like)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,7 +180,6 @@ def write_json(path_like: str | Path, payload: Any) -> Path:
 
 # Ghi danh sách row ra CSV với header là hợp của toàn bộ khóa xuất hiện.
 def write_csv(path_like: str | Path, rows: list[dict[str, Any]]) -> Path:
-    """Ghi danh sách row ra CSV với header là hợp của toàn bộ khóa xuất hiện."""
 
     path = resolve_path(path_like)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -211,7 +198,6 @@ def write_csv(path_like: str | Path, rows: list[dict[str, Any]]) -> Path:
 
 # Đệ quy chuyển dataclass/list/dict về kiểu thuần Python để dump JSON.
 def dataclass_to_dict(obj: Any) -> Any:
-    """Đệ quy chuyển dataclass, list và dict về kiểu thuần Python để dump JSON."""
 
     if isinstance(obj, list):
         return [dataclass_to_dict(item) for item in obj]
