@@ -102,7 +102,6 @@ def resolve_profile_payload(
         "selection_note": str(candidate_payload.get("description") or "").strip(),
     }
 
-
 # Trả về tên profile đang khóa cho một hệ trong một mode.
 def profile_name_for_system(locked_profiles: dict, mode: str, system_name: str) -> str:
     systems = (((locked_profiles.get(mode) or {}).get("systems")) or {})

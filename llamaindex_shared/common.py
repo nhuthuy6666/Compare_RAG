@@ -421,7 +421,6 @@ def build_query_engine(
         refine_template=refine_template,
     )
 
-
 # Chuyển `source_nodes` của LlamaIndex thành schema JSON gọn cho UI và benchmark.
 def collect_sources(response, *, limit: int) -> list[dict[str, Any]]:
     sources: list[dict[str, Any]] = []
