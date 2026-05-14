@@ -1,1 +1,1 @@
-# Package gom toàn bộ script benchmark và phân tích cho bộ evaluation.
+# Package gom benchmark, reporting, analysis va metric cho bo evaluation.

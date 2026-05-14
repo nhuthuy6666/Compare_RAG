@@ -9,10 +9,10 @@ from pathlib import Path
 DEFAULT_CONFIG = "evaluation/config_v1.yaml"
 DEFAULT_WITH_FUSION_MODE = "controlled_with_fusion"
 DEFAULT_NO_FUSION_MODE = "controlled_no_fusion"
-DEFAULT_WITH_FUSION_RESULTS = "evaluation/results_shared/with_fusion"
-DEFAULT_NO_FUSION_RESULTS = "evaluation/results_shared/no_fusion"
-DEFAULT_WITH_FUSION_OUTPUTS = "evaluation/outputs_shared/with_fusion"
-DEFAULT_NO_FUSION_OUTPUTS = "evaluation/outputs_shared/no_fusion"
+DEFAULT_WITH_FUSION_RESULTS = "evaluation/results/3_rag_with_fusion"
+DEFAULT_NO_FUSION_RESULTS = "evaluation/results/3_rag_no_fusion"
+DEFAULT_WITH_FUSION_OUTPUTS = "evaluation/outputs/3_rag_with_fusion"
+DEFAULT_NO_FUSION_OUTPUTS = "evaluation/outputs/3_rag_no_fusion"
 
 
 # Khai báo và parse tham số CLI cho script chạy 2 báo cáo shared profile.
@@ -119,7 +119,23 @@ def main() -> None:
 
     if not args.dry_run:
         print(f"\nSaved: {project_root / args.with_fusion_results_dir / 'comparison.md'}", flush=True)
+        print(
+            f"Saved: {project_root / args.with_fusion_results_dir / 'retrieval_answer_quality_evaluation.md'}",
+            flush=True,
+        )
+        print(
+            f"Saved: {project_root / args.with_fusion_results_dir / 'system_performance_evaluation.md'}",
+            flush=True,
+        )
         print(f"Saved: {project_root / args.no_fusion_results_dir / 'comparison.md'}", flush=True)
+        print(
+            f"Saved: {project_root / args.no_fusion_results_dir / 'retrieval_answer_quality_evaluation.md'}",
+            flush=True,
+        )
+        print(
+            f"Saved: {project_root / args.no_fusion_results_dir / 'system_performance_evaluation.md'}",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

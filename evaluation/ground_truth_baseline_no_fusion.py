@@ -27,7 +27,7 @@ from llamaindex_shared.common import (  # noqa: E402
 )
 
 
-DEFAULT_RESULTS_DIR = "evaluation/results_ground_truth_baseline_no_fusion"
+DEFAULT_RESULTS_DIR = "evaluation/results/ground_truth_baseline_no_fusion"
 
 BASELINE_NO_FUSION_OVERRIDES = {
     "retrieval_top_n": 6,

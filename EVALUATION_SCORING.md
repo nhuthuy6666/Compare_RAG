@@ -1,10 +1,71 @@
-# Evaluation Scoring Note
+# Evaluation Scoring And Run Guide
 
-File này tóm tắt cách project hiện tính điểm evaluation trong `evaluation/`.
+File này tóm tắt:
 
-## 1. Công thức `overall_score`
+- cách project tính điểm evaluation
+- 2 phương pháp đọc kết quả
+- cây thư mục kết quả mới
+- câu lệnh để tự chạy từng đánh giá, kể cả ground truth
 
-Ở mức từng câu hỏi, `overall_score` được tính theo công thức V1:
+## 1. Cây thư mục kết quả mới
+
+Từ bây giờ kết quả mặc định được ghi vào `evaluation/results/`:
+
+- `evaluation/results/3_rag_no_fusion/`
+- `evaluation/results/3_rag_with_fusion/`
+- `evaluation/results/3_rag_best_tuned/`
+- `evaluation/results/ground_truth_baseline_no_fusion/`
+
+Mỗi lần chạy `evaluate-v1.py` cho 3 RAG sẽ sinh:
+
+- `comparison.md`
+- `retrieval_answer_quality_evaluation.md`
+- `system_performance_evaluation.md`
+
+Ground-truth baseline sinh:
+
+- `report.md`
+
+## 2. Hai phương pháp đọc kết quả
+
+### 2.1. Retrieval + Answer Quality Evaluation
+
+Phương pháp này tập trung vào chất lượng truy hồi và chất lượng câu trả lời.
+
+Các cột chính nên đọc:
+
+- `Overall`
+- `Answer`
+- `Retrieval`
+- `Faithfulness`
+- `MRR`
+- `Semantic`
+
+File tương ứng:
+
+- `evaluation/results/3_rag_no_fusion/retrieval_answer_quality_evaluation.md`
+- `evaluation/results/3_rag_with_fusion/retrieval_answer_quality_evaluation.md`
+- `evaluation/results/3_rag_best_tuned/retrieval_answer_quality_evaluation.md`
+
+### 2.2. System Performance Evaluation
+
+Phương pháp này tập trung vào hiệu năng hệ thống.
+
+Các cột chính nên đọc:
+
+- `Latency (ms)`
+- `Budget Violation`
+- `Errors`
+
+File tương ứng:
+
+- `evaluation/results/3_rag_no_fusion/system_performance_evaluation.md`
+- `evaluation/results/3_rag_with_fusion/system_performance_evaluation.md`
+- `evaluation/results/3_rag_best_tuned/system_performance_evaluation.md`
+
+## 3. Công thức `overall_score`
+
+Ở mức từng câu hỏi, `overall_score` được tính như sau:
 
 ```text
 Overall = 0.25 * Recall@k
@@ -13,15 +74,15 @@ Overall = 0.25 * Recall@k
         + 0.15 * Context_Precision
 ```
 
-Trong code hiện tại:
+Trong project hiện tại:
 
+- `k = 3`
 - `Recall@k = Recall@3`
 - `Context_Precision = Precision@3`
 
+## 4. 4 thành phần đi trực tiếp vào `overall`
 
-## 2. 4 tiêu chí đi trực tiếp vào `overall`
-
-### 2.1. `Recall@k`
+### 4.1. `Recall@k`
 
 ```text
 Recall@k = min(1.0, sum(relevance_score(top_k)) / total_relevant)
@@ -30,9 +91,8 @@ Recall@k = min(1.0, sum(relevance_score(top_k)) / total_relevant)
 Ý nghĩa:
 
 - đo lượng evidence liên quan mà hệ retrieve được trong top-`k`
-- ở project này đang dùng `k = 3`
 
-### 2.2. `Faithfulness`
+### 4.2. `Faithfulness`
 
 ```text
 Faithfulness = supported_claims / total_claims
@@ -40,11 +100,9 @@ Faithfulness = supported_claims / total_claims
 
 Ý nghĩa:
 
-- tách câu trả lời thành các claim nhỏ
-- kiểm tra mỗi claim có được source hỗ trợ hay không
-- claim có số liệu mà source không chứa số tương ứng sẽ bị xem là không được support
+- đo mức độ các claim trong câu trả lời có được source hỗ trợ hay không
 
-### 2.3. `Answer_Relevancy`
+### 4.3. `Answer_Relevancy`
 
 ```text
 Answer_Relevance
@@ -55,10 +113,9 @@ Answer_Relevance
 
 Ý nghĩa:
 
-- đo câu trả lời có bám đúng câu hỏi và đáp án mong đợi không
-- không phạt quá nặng chỉ vì khác wording
+- đo câu trả lời có bám câu hỏi và đáp án mong đợi hay không
 
-### 2.4. `Context_Precision`
+### 4.4. `Context_Precision`
 
 ```text
 Context_Precision = Precision@k = mean(relevance_score(top_k))
@@ -67,11 +124,10 @@ Context_Precision = Precision@k = mean(relevance_score(top_k))
 Ý nghĩa:
 
 - đo độ liên quan trung bình của các source trong top-`k`
-- ở project này đang dùng `Precision@3`
 
-## 3. `relevance_score` của từng source được tính thế nào
+## 5. `relevance_score` của từng source
 
-Project không chấm retrieval chỉ bằng tên file hay `source_hint`, mà chấm theo nội dung source.
+Project chấm retrieval theo nội dung source, không dựa chủ yếu vào tên file hay `source_hint`.
 
 Nếu bài có số liệu kỳ vọng:
 
@@ -94,69 +150,18 @@ relevance_score
 + 0.15 * answer_coverage
 ```
 
-Ý nghĩa ngắn gọn:
+## 6. Metric phụ vẫn được ghi ra
 
-- `semantic_reference`: source gần nghĩa với đáp án chuẩn đến đâu
-- `semantic_question`: source gần nghĩa với câu hỏi đến đâu
-- `context_coverage`: source phủ được các keyword ngữ cảnh đến đâu
-- `answer_coverage`: source phủ được các keyword đáp án đến đâu
-- `numeric_coverage`: source có chứa đúng số liệu kỳ vọng không
+Ngoài `overall_score`, evaluator vẫn ghi lại:
 
-## 4. Các tiêu chí vẫn được ghi ra báo cáo
+- Generation: `answer_quality`, `exact_match`, `token_f1`, `char_similarity`, `semantic_similarity`, `keyword_coverage`
+- RAG: `answer_relevance`, `context_relevance`, `faithfulness`, `hallucination_rate`
+- Retrieval: `precision@1/3/5`, `recall@1/3/5`, `f1@1/3/5`, `hit@3`, `mrr`, `map`, `ndcg@3/5`
+- System: `latency_ms`, `error`, `source_count`
 
-Ngoài `overall_score`, hệ vẫn log nhiều metric khác để phân tích:
+## 7. `answer_quality` và `retrieval_quality`
 
-- Generation:
-  - `answer_quality`
-  - `exact_match`
-  - `token_f1`
-  - `char_similarity`
-  - `semantic_similarity`
-  - `keyword_coverage`
-- RAG:
-  - `answer_relevance`
-  - `context_relevance`
-  - `faithfulness`
-  - `hallucination_rate`
-- Retrieval:
-  - `precision@1/3/5`
-  - `recall@1/3/5`
-  - `f1@1/3/5`
-  - `hit@3`
-  - `mrr`
-  - `map`
-  - `ndcg@3/5`
-- System:
-  - `latency_ms`
-  - `error`
-  - `source_count`
-
-## 5. Lưu ý quan trọng khi đọc `comparison.md`
-
-Trong bảng tổng hợp, thường thấy các cột:
-
-- `Overall`
-- `Answer`
-- `Retrieval`
-- `Faithfulness`
-- `MRR`
-- `Semantic`
-
-Nhưng:
-
-- `Overall` không được tính trực tiếp từ toàn bộ các cột đang hiển thị
-- `Overall` chỉ dùng 4 thành phần:
-  - `Recall@3`
-  - `Faithfulness`
-  - `Answer_Relevance`
-  - `Precision@3`
-- các cột như `answer_quality`, `retrieval_quality`, `mrr`, `semantic_similarity` là metric phụ để phân tích và so sánh, không đi thẳng vào công thức `overall`
-
-## 6. `answer_quality` và `retrieval_quality` là gì
-
-Hai metric này vẫn xuất hiện trong báo cáo, nhưng không phải công thức `overall`.
-
-### 6.1. `answer_quality`
+### 7.1. `answer_quality`
 
 Với câu hỏi thường:
 
@@ -170,15 +175,15 @@ answer_quality
 + 0.15 * answer_relevance
 ```
 
-Nếu hệ trả lời từ chối sai lúc không nên từ chối, điểm này còn bị nhân `0.25`.
+Nếu hệ từ chối sai khi không nên từ chối, điểm này còn bị nhân `0.25`.
 
-Với câu hỏi mà ground truth mong đợi từ chối:
+Với câu hỏi mong đợi từ chối:
 
 ```text
 answer_quality = 0.6 * refusal_correct + 0.4 * answer_relevance
 ```
 
-### 6.2. `retrieval_quality`
+### 7.2. `retrieval_quality`
 
 Với câu hỏi thường:
 
@@ -200,15 +205,71 @@ Với câu hỏi mong đợi từ chối:
 retrieval_quality = hit@3
 ```
 
-## 7. Điểm tổng của từng hệ được lấy như thế nào
+## 8. Câu lệnh chạy từng đánh giá
 
-Ở mức hệ thống:
+Chạy từ root project.
 
-- mỗi câu hỏi được chấm ra một `overall_score`
-- sau đó report lấy trung bình cộng của `overall_score` trên toàn bộ mẫu
+### 8.1. 3 RAG no fusion
 
-Nói ngắn gọn:
+```powershell
+python evaluation/evaluate-v1.py --system all --mode controlled_no_fusion --split all
+```
 
-```text
-System Overall = mean(per-example overall_score)
+Kết quả mặc định:
+
+- `evaluation/results/3_rag_no_fusion/comparison.md`
+- `evaluation/results/3_rag_no_fusion/retrieval_answer_quality_evaluation.md`
+- `evaluation/results/3_rag_no_fusion/system_performance_evaluation.md`
+
+### 8.2. 3 RAG with fusion
+
+```powershell
+python evaluation/evaluate-v1.py --system all --mode controlled_with_fusion --split all
+```
+
+Kết quả mặc định:
+
+- `evaluation/results/3_rag_with_fusion/comparison.md`
+- `evaluation/results/3_rag_with_fusion/retrieval_answer_quality_evaluation.md`
+- `evaluation/results/3_rag_with_fusion/system_performance_evaluation.md`
+
+### 8.3. 3 RAG best tuned
+
+```powershell
+python evaluation/evaluate-v1.py --system all --mode best_tuned --split all
+```
+
+Kết quả mặc định:
+
+- `evaluation/results/3_rag_best_tuned/comparison.md`
+- `evaluation/results/3_rag_best_tuned/retrieval_answer_quality_evaluation.md`
+- `evaluation/results/3_rag_best_tuned/system_performance_evaluation.md`
+
+### 8.4. Chạy nhanh cả 2 shared profile: with fusion và no fusion
+
+```powershell
+python evaluation/scripts/run_shared_profile_comparisons.py --split all
+```
+
+Kết quả mặc định:
+
+- `evaluation/results/3_rag_with_fusion/`
+- `evaluation/results/3_rag_no_fusion/`
+
+### 8.5. Ground-truth baseline no fusion
+
+```powershell
+python evaluation/ground_truth_baseline_no_fusion.py --split all
+```
+
+Kết quả mặc định:
+
+- `evaluation/results/ground_truth_baseline_no_fusion/report.md`
+
+## 9. Nếu muốn đổi thư mục kết quả
+
+Bạn vẫn có thể override bằng `--results-dir`, ví dụ:
+
+```powershell
+python evaluation/evaluate-v1.py --system all --mode best_tuned --split dev --results-dir evaluation/results/tmp_best_tuned_dev
 ```

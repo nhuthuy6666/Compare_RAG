@@ -16,7 +16,11 @@ from evaluation.common import (  # noqa: E402
     ensure_dir,
     load_structured_config,
 )
-from evaluation.compare import build_comparison_report  # noqa: E402
+from evaluation.compare import (  # noqa: E402
+    build_comparison_report,
+    build_retrieval_answer_quality_report,
+    build_system_performance_report,
+)
 from evaluation.dataset.loader import load_examples  # noqa: E402
 from evaluation.metrics.rag_metrics_v1 import evaluate_prediction_v1  # noqa: E402
 from evaluation.policy import (  # noqa: E402
@@ -36,6 +40,13 @@ RUNNERS: dict[str, tuple[Callable, Callable]] = {
     "baseline": (run_baseline.healthcheck, run_baseline.run_example),
     "hybrid": (run_hybrid.healthcheck, run_hybrid.run_example),
     "graphrag": (run_graphrag.healthcheck, run_graphrag.run_example),
+}
+
+DEFAULT_RESULTS_DIR_BY_MODE: dict[str, str] = {
+    "controlled": "evaluation/results/3_rag_controlled",
+    "controlled_with_fusion": "evaluation/results/3_rag_with_fusion",
+    "controlled_no_fusion": "evaluation/results/3_rag_no_fusion",
+    "best_tuned": "evaluation/results/3_rag_best_tuned",
 }
 
 
@@ -74,6 +85,11 @@ def parse_args() -> argparse.Namespace:
 # Tính trung bình và làm tròn 4 chữ số để thống nhất cách ghi báo cáo.
 def mean(values: list[float]) -> float:
     return round(statistics.fmean(values), 4) if values else 0.0
+
+
+# Chọn thư mục kết quả mặc định theo mode để mỗi kiểu đánh giá ghi ra đúng folder riêng.
+def default_results_dir_for_mode(mode: str, configured_results_dir: str) -> str:
+    return DEFAULT_RESULTS_DIR_BY_MODE.get(mode, configured_results_dir)
 
 
 DETAIL_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
@@ -267,6 +283,20 @@ def run_system(
     }
 
 
+# Ghi bộ báo cáo Markdown chuẩn hóa cho một lần chạy: tổng hợp, retrieval/answer và system performance.
+def write_reports(results_dir: Path, report_rows: list[dict[str, str]], report_strength_rows: list[dict[str, str]]) -> None:
+    comparison_md = results_dir / "comparison.md"
+    retrieval_md = results_dir / "retrieval_answer_quality_evaluation.md"
+    system_md = results_dir / "system_performance_evaluation.md"
+
+    comparison_md.write_text(build_comparison_report(report_rows, report_strength_rows), encoding="utf-8")
+    retrieval_md.write_text(
+        build_retrieval_answer_quality_report(report_rows, report_strength_rows),
+        encoding="utf-8",
+    )
+    system_md.write_text(build_system_performance_report(report_rows), encoding="utf-8")
+
+
 # Entry point benchmark V1.
 # 1. Đọc CLI, config, policy và resolve mode/split/budget.
 # 2. Nạp dataset, chuẩn bị outputs/results dir và semantic scorer nếu được bật.
@@ -287,7 +317,11 @@ def main() -> None:
     if args.limit:
         examples = examples[: args.limit]
 
-    results_dir = ensure_dir(args.results_dir or config["results_dir"])
+    resolved_results_dir = args.results_dir or default_results_dir_for_mode(
+        resolved_mode,
+        str(config["results_dir"]),
+    )
+    results_dir = ensure_dir(resolved_results_dir)
     timeout = (
         int(budget.get("connect_timeout_seconds") or config.get("connect_timeout_seconds", 10)),
         int(budget.get("request_timeout_seconds") or config.get("request_timeout_seconds", 180)),
@@ -344,8 +378,8 @@ def main() -> None:
 
     report_rows = [{key: str(value) for key, value in row.items()} for row in summaries]
     report_strength_rows = [{key: str(value) for key, value in row.items()} for row in strength_rows]
+    write_reports(results_dir, report_rows, report_strength_rows)
     comparison_md = results_dir / "comparison.md"
-    comparison_md.write_text(build_comparison_report(report_rows, report_strength_rows), encoding="utf-8")
     if args.keep_artifacts:
         comparison_json = results_dir / "comparison.json"
         comparison_json.write_text(json.dumps(summaries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -365,6 +399,8 @@ def main() -> None:
             flush=True,
         )
     print(f"\nSaved: {comparison_md}", flush=True)
+    print(f"Saved: {results_dir / 'retrieval_answer_quality_evaluation.md'}", flush=True)
+    print(f"Saved: {results_dir / 'system_performance_evaluation.md'}", flush=True)
 
 
 if __name__ == "__main__":
