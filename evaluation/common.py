@@ -8,6 +8,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+import requests
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 EVALUATION_ROOT = PROJECT_ROOT / "evaluation"
@@ -91,8 +93,10 @@ def load_structured_config(path_like: str | Path) -> dict[str, Any]:
 def load_env_file(path_like: str | Path) -> dict[str, str]:
 
     env: dict[str, str] = {}
+    if not str(path_like or "").strip():
+        return env
     path = resolve_path(path_like)
-    if not path.exists():
+    if not path.exists() or path.is_dir():
         return env
 
     for raw in path.read_text(encoding="utf-8").splitlines():
@@ -102,6 +106,91 @@ def load_env_file(path_like: str | Path) -> dict[str, str]:
         key, value = line.split("=", 1)
         env[key.strip().lstrip("\ufeff")] = value.strip()
     return env
+
+
+# Tái sử dụng một HTTP session theo từng hệ để giữ cookie đăng nhập khi benchmark nhiều câu hỏi.
+def get_http_session(system_config: dict[str, Any]) -> requests.Session:
+
+    existing = system_config.get("__http_session")
+    if isinstance(existing, requests.Session):
+        return existing
+    session = requests.Session()
+    system_config["__http_session"] = session
+    return session
+
+
+# Đọc credential đánh giá từ config hoặc env, mặc định dùng tài khoản user của cụm local.
+def get_eval_credentials(system_config: dict[str, Any]) -> tuple[str, str]:
+
+    env = load_env_file(system_config.get("env_file", ""))
+    username = str(
+        system_config.get("auth_username")
+        or env.get("NTU_EVAL_USERNAME")
+        or env.get("NTU_USER_USERNAME")
+        or env.get("NTU_ADMIN_USERNAME")
+        or "user"
+    ).strip()
+    password = str(
+        system_config.get("auth_password")
+        or env.get("NTU_EVAL_PASSWORD")
+        or env.get("NTU_USER_PASSWORD")
+        or env.get("NTU_ADMIN_PASSWORD")
+        or "user123"
+    )
+    return username, password
+
+
+# Trích thông điệp lỗi dễ đọc từ response JSON/text để log benchmark không bị mơ hồ.
+def response_error_message(response: requests.Response) -> str:
+
+    try:
+        payload = response.json()
+    except Exception:
+        payload = None
+    if isinstance(payload, dict):
+        error = str(payload.get("error") or "").strip()
+        if error:
+            return error
+    text = response.text.strip()
+    if text:
+        return text
+    return f"HTTP {response.status_code}"
+
+
+# Đăng nhập một lần cho session benchmark nếu app hiện tại yêu cầu auth cookie.
+def ensure_authenticated_session(system_config: dict[str, Any], timeout: tuple[int, int]) -> requests.Session:
+
+    session = get_http_session(system_config)
+    if system_config.get("workspace_slug"):
+        return session
+
+    auth_mode = str(system_config.get("auth_mode") or "session").strip().lower()
+    if auth_mode in {"none", "off", "disabled"}:
+        system_config["__auth_ready"] = True
+        return session
+    if system_config.get("__auth_ready"):
+        return session
+
+    base_url = str(system_config["base_url"]).rstrip("/")
+    login_endpoint = str(system_config.get("login_endpoint") or "/api/auth/login").strip() or "/api/auth/login"
+    username, password = get_eval_credentials(system_config)
+    response = session.post(
+        f"{base_url}{login_endpoint}",
+        json={"username": username, "password": password},
+        timeout=timeout,
+    )
+
+    # Một số endpoint cũ không có auth; khi đó cứ dùng session trần để giữ tương thích ngược.
+    if response.status_code == 404:
+        system_config["__auth_ready"] = True
+        return session
+
+    if response.status_code >= 400:
+        detail = response_error_message(response)
+        raise RuntimeError(f"Không đăng nhập được cho evaluator tại {base_url}: HTTP {response.status_code} - {detail}")
+
+    system_config["__auth_ready"] = True
+    return session
 
 
 # Bỏ dấu tiếng Việt để việc so khớp text bền hơn trước biến thể nhập liệu.

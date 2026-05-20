@@ -340,6 +340,7 @@ def pick_main_containers(soup) -> list:
         ".content",
     )
 
+    # Kiểm tra node hiện tại có nằm bên trong một ancestor đã biết hay không.
     def is_descendant(node, ancestor) -> bool:
         parent = getattr(node, "parent", None)
         while parent is not None:
@@ -348,6 +349,7 @@ def pick_main_containers(soup) -> list:
             parent = getattr(parent, "parent", None)
         return False
 
+    # Đánh giá nhanh container có đủ "giàu nội dung" để ưu tiên làm vùng parse chính hay không.
     def is_rich_container(node) -> bool:
         text = normalize_line(node.get_text(" ", strip=True))
         structured_blocks = len(node.find_all(CONTENT_TAGS, recursive=True))
@@ -382,6 +384,7 @@ def extract_table_rows(table) -> list[list[str]]:
     active_spans: dict[int, tuple[int, str]] = {}
     rows: list[list[str]] = []
 
+    # Bơm các ô đang còn rowspan từ hàng trước vào đúng vị trí của hàng hiện tại.
     def consume_spans(row: list[str], start_col: int) -> int:
         col_idx = start_col
         while col_idx in active_spans:

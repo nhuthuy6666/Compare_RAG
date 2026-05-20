@@ -29,6 +29,7 @@ Trả lời bằng tiếng Việt."""
 PURE_RAG_QUERY_REFUSAL = "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có."
 
 
+## Khai báo và parse toàn bộ tham số CLI cho pipeline build corpus end-to-end.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build corpus cho demo AnythingLLM: lam sach output, chunk, ingest va ap cau hinh model."
@@ -401,6 +402,7 @@ def apply_anythingllm_settings(args: argparse.Namespace) -> list[str]:
     return notes
 
 
+## Điều phối toàn bộ pipeline build corpus, sync output và đẩy cấu hình/ingest khi cần.
 def main() -> None:
     # 1) Parse tham số dòng lệnh (CLI).
     args = parse_args()

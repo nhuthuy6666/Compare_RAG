@@ -49,11 +49,15 @@ class Section:
     lines: list[str]
     is_table: bool = False
 
+    # Helper cho `heading_path` trong module nay.
     @property
+    # Trả về chuỗi heading cha theo thứ tự từ gốc tới lá của section hiện tại.
     def heading_path(self) -> list[str]:
         return [text for _, text in self.headings]
 
+    # Helper cho `document_title` trong module nay.
     @property
+    # Lấy heading gốc của section làm tiêu đề tài liệu nếu có.
     def document_title(self) -> str:
         return self.heading_path[0] if self.heading_path else ""
 
@@ -68,7 +72,9 @@ class Section:
             parts.extend(self.lines)
         return "\n".join(parts).strip()
 
+    # Helper cho `text` trong module nay.
     @property
+    # Render toàn bộ phần body đã ghép heading context của section thành text hoàn chỉnh.
     def text(self) -> str:
         return self.render_body()
 
@@ -535,6 +541,7 @@ def split_sections(text: str) -> list[Section]:
     current_lines: list[str] = []
     current_is_table = False
 
+    # Đẩy section đang gom ra danh sách kết quả rồi reset bộ đệm hiện tại.
     def flush_current() -> None:
         nonlocal current_lines, current_is_table
         trimmed = trim_blank_edges(current_lines)
@@ -543,6 +550,7 @@ def split_sections(text: str) -> list[Section]:
         current_lines = []
         current_is_table = False
 
+    # Chuyển heading kiểu `key: value` đứng một mình thành một section fact ngắn.
     def materialize_heading_only_fact() -> None:
         if current_lines or current_is_table or len(heading_stack) < 2:
             return

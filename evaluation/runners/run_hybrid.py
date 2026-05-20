@@ -5,13 +5,19 @@ from typing import Any
 
 import requests
 
-from evaluation.common import EvalExample, EvalPrediction, SourceRecord
+from evaluation.common import (
+    EvalExample,
+    EvalPrediction,
+    SourceRecord,
+    ensure_authenticated_session,
+)
 
 
 # Kiểm tra app Hybrid RAG sẵn sàng nhận request hay chưa.
 def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None:
     # Kiểm tra app Hybrid RAG sẵn sàng nhận request hay chưa.
-    response = requests.get(
+    session = ensure_authenticated_session(system_config, timeout)
+    response = session.get(
         f"{system_config['base_url'].rstrip('/')}{system_config['health_endpoint']}",
         timeout=timeout,
     )
@@ -23,9 +29,10 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
     # Gọi endpoint chat của Hybrid RAG cho một câu hỏi benchmark.
     started = time.perf_counter()
     url = f"{system_config['base_url'].rstrip('/')}{system_config['chat_endpoint']}"
+    session = ensure_authenticated_session(system_config, timeout)
 
     try:
-        response = requests.post(
+        response = session.post(
             url,
             json={
                 "query": example.question,

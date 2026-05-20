@@ -5,7 +5,13 @@ from typing import Any
 
 import requests
 
-from evaluation.common import EvalExample, EvalPrediction, SourceRecord, load_env_file
+from evaluation.common import (
+    EvalExample,
+    EvalPrediction,
+    SourceRecord,
+    ensure_authenticated_session,
+    load_env_file,
+)
 
 
 # Ghép API key từ config hoặc file `.env` để gọi AnythingLLM/baseline cũ.
@@ -25,7 +31,8 @@ def _headers(system_config: dict[str, Any]) -> dict[str, str]:
 def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None:
     # Hỗ trợ cả baseline AnythingLLM cũ lẫn baseline local qua HTTP.
     headers = _headers(system_config) if system_config.get("workspace_slug") else None
-    response = requests.get(
+    session = ensure_authenticated_session(system_config, timeout)
+    response = session.get(
         f"{system_config['base_url'].rstrip('/')}{system_config['health_endpoint']}",
         headers=headers,
         timeout=timeout,
@@ -39,6 +46,7 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
     started = time.perf_counter()
     is_anythingllm = bool(system_config.get("workspace_slug"))
     headers = _headers(system_config) if is_anythingllm else None
+    session = ensure_authenticated_session(system_config, timeout)
     endpoint = system_config["chat_endpoint"]
     if is_anythingllm:
         endpoint = endpoint.format(workspace_slug=system_config["workspace_slug"])
@@ -56,7 +64,7 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
     )
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        response = session.post(url, headers=headers, json=payload, timeout=timeout)
         response.raise_for_status()
         data = response.json()
         if is_anythingllm:

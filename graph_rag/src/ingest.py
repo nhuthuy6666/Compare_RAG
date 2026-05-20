@@ -105,6 +105,7 @@ def _load_records(args: argparse.Namespace, config, *, verbose: bool = True) -> 
     )
 
 
+## Đổi đường dẫn chunk JSONL về đường dẫn TXT gốc tương ứng để đồng bộ graph delta.
 def _chunk_relative_to_txt_relative(relative_path: str) -> str:
     normalized = str(relative_path).replace("\\", "/").strip()
     if normalized.startswith("data_chunks/"):
@@ -115,6 +116,7 @@ def _chunk_relative_to_txt_relative(relative_path: str) -> str:
     return path.as_posix()
 
 
+## Đổi đường dẫn TXT gốc sang đường dẫn chunk JSONL tương ứng trong shared corpus.
 def _txt_relative_to_chunk_relative(relative_path: str) -> str:
     normalized = str(relative_path).replace("\\", "/").strip()
     if normalized.startswith("data_txt/"):
@@ -125,6 +127,7 @@ def _txt_relative_to_chunk_relative(relative_path: str) -> str:
     return path.as_posix()
 
 
+## Chuẩn hóa danh sách relative path để so sánh/xử lý delta ổn định hơn.
 def _normalize_relative_paths(relative_paths: list[str] | None) -> list[str]:
     normalized_values: set[str] = set()
     for path in relative_paths or []:
@@ -135,6 +138,7 @@ def _normalize_relative_paths(relative_paths: list[str] | None) -> list[str]:
     return sorted(normalized_values)
 
 
+## Nạp lại đúng các chunk record vừa thay đổi thay vì reload toàn bộ corpus graph.
 def _load_records_for_chunk_relative_paths(*, chunk_relative_paths: list[str], config) -> list[dict]:
     records: list[dict] = []
     for chunk_relative_path in _normalize_relative_paths(chunk_relative_paths):
@@ -520,6 +524,7 @@ def _run_ingest_pipeline(
     }
 
 
+## Ghi lại file audit fact sau khi thay thế một phần dữ liệu theo danh sách path ảnh hưởng.
 def _rewrite_fact_audit(*, config, replace_relative_paths: list[str], new_fact_records: list[dict[str, Any]]) -> None:
     kept_records: list[dict[str, Any]] = []
     normalized_paths = set(_normalize_relative_paths(replace_relative_paths))
@@ -539,6 +544,7 @@ def _rewrite_fact_audit(*, config, replace_relative_paths: list[str], new_fact_r
     write_fact_records([*kept_records, *new_fact_records], config.facts_path)
 
 
+## Xóa các file chunk audit GraphRAG tương ứng với những tài liệu TXT vừa bị xóa.
 def _remove_chunk_audit_files(*, config, txt_relative_paths: list[str]) -> None:
     for txt_relative_path in _normalize_relative_paths(txt_relative_paths):
         jsonl_path = config.chunk_dir / Path(_txt_relative_to_chunk_relative(txt_relative_path))
@@ -546,6 +552,7 @@ def _remove_chunk_audit_files(*, config, txt_relative_paths: list[str]) -> None:
             jsonl_path.unlink()
 
 
+## Đồng bộ phần delta từ shared chunks sang Neo4j thay vì phải rebuild graph toàn bộ.
 def sync_shared_chunk_changes(
     *,
     config,

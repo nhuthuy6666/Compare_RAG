@@ -10,28 +10,48 @@ from pathlib import Path
 from threading import Lock, Thread
 from urllib.parse import urlparse
 
+from qdrant_client import QdrantClient
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from llamaindex_shared import (  
+from llamaindex_shared import (
+    AdminUiConfig,
     ChatUiConfig,
-    add_corpus_documents,
+    authenticate_user,
+    build_admin_ui_url,
     build_chat_ui_tabs,
     build_cluster_server_urls,
+    build_logout_cookie,
+    build_runtime_config_payload,
+    build_session_cookie,
     build_query_engine,
+    collect_cluster_status,
     collect_sources,
+    compare_cluster_answers,
     configure_models,
     create_job,
     delete_corpus_documents,
     ensure_vector_index,
+    get_default_accounts_hint,
     get_job,
+    has_role,
+    has_sufficient_query_grounding,
+    is_internal_cluster_request,
     list_corpus_documents,
+    list_jobs,
+    load_document_ids_from_payload,
     load_shared_config,
     post_json,
+    read_session_from_cookie,
+    render_admin_ui,
     render_chat_ui,
+    set_job_progress,
     should_apply_similarity_threshold,
+    update_runtime_scope,
     wait_for_job,
+    add_corpus_documents,
 )
 from llamaindex_shared.benchmark_runtime import parse_benchmark_profile_payload, runtime_overrides_signature  # noqa: E402
 
@@ -41,12 +61,13 @@ STATE_PATH = BASE_DIR / ".qdrant_state.json"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8001
 CURRENT_RAG_ID = "baseline"
+COLLECTION_NAME = "ntu_rag"
 RAG_LOCK = Lock()
 ADMIN_LOCK = Lock()
 
 
+# Nap `ui html` cho luong xu ly hien tai.
 @lru_cache(maxsize=1)
-# Tạo HTML giao diện dùng chung cho tab Baseline RAG.
 def load_ui_html() -> str:
     return render_chat_ui(
         ChatUiConfig(
@@ -55,73 +76,98 @@ def load_ui_html() -> str:
             brand_badge="NTU Admissions",
             brand_title="NTU Bot",
             brand_description=(
-                "Baseline RAG dùng dense retrieval thuần để làm mốc so sánh. "
-                "Giao diện này được dùng chung với Hybrid và Graph RAG."
+                "Giao diện người dùng tập trung vào hỏi đáp, lịch sử hội thoại và chuyển tab giữa Baseline, Hybrid và GraphRAG."
             ),
             header_badge="Baseline RAG",
             header_subtitle="Dense retrieval | Qdrant | LlamaIndex",
             assistant_label="Baseline NTU Bot",
             empty_title="Baseline RAG sẵn sàng",
-            empty_description=(
-                "Bạn có thể đặt cùng một câu hỏi và chuyển tab để so sánh kết quả "
-                "giữa Baseline, Hybrid và Graph RAG."
-            ),
-            placeholder="Hỏi về điểm chuẩn, học phí, mã trường, phương thức tuyển sinh...",
+            empty_description="Đặt cùng một câu hỏi ở 3 tab để so sánh chất lượng trả lời và nguồn tham chiếu.",
+            placeholder="Hỏi về điểm chuẩn, học phí, phương thức tuyển sinh, mã trường...",
             composer_hint="Enter để gửi | Shift + Enter để xuống dòng",
             loading_message="Đang truy xuất dense index trong Qdrant...",
             ready_message="Đã hoàn tất.",
             storage_key="ntu_fusion_baseline_sessions",
-            new_chat_label="Cuộc trò chuyện mới",
-            manage_data_label="Thêm dữ liệu",
-            send_button_label="Gửi",
-            initial_title="Cuộc trò chuyện mới",
-            history_label="Lịch sử",
-            empty_history_text="Chưa có tin nhắn",
-            continue_history_text="Tiếp tục hội thoại",
-            sending_error_prefix="Không thể xử lý câu hỏi.",
-            data_modal_title="Quản lý dữ liệu",
+            admin_href=build_admin_ui_url(),
             suggestions=[
                 "Mã trường Đại học Nha Trang là gì?",
-                "Điện thoại tuyển sinh là số nào?",
                 "Ngành CNTT năm 2025 lấy bao nhiêu chỉ tiêu?",
+                "Điện thoại tuyển sinh là số nào?",
             ],
             tabs=build_chat_ui_tabs(),
         )
     )
 
 
-@lru_cache(maxsize=16)
-# Tải config, model và query engine rồi cache lại theo cấu hình runtime.
-def get_resources(profile_name: str = "default", overrides_key: str = "{}"):
-    config = load_shared_config(collection_name="ntu_rag", overrides=json.loads(overrides_key))
-    configure_models(config)
-    index = ensure_vector_index(
-        config,
-        state_path=STATE_PATH,
-        enable_hybrid=False,
+# Nap `admin html` cho luong xu ly hien tai.
+@lru_cache(maxsize=1)
+def load_admin_html() -> str:
+    return render_admin_ui(
+        AdminUiConfig(
+            current_rag_id=CURRENT_RAG_ID,
+            page_title="NTU Shared Admin",
+            brand_badge="NTU Admin",
+            brand_title="Bảng điều khiển quản trị",
+            brand_description="Giao diện quản trị dùng chung cho nhập liệu, theo dõi tác vụ, so sánh 3 RAG và cấu hình runtime.",
+            tabs=build_chat_ui_tabs(),
+            canonical_admin_href=build_admin_ui_url(),
+        )
     )
+
+
+def build_current_runtime_config_payload() -> dict:
+    config = load_shared_config(rag_id=CURRENT_RAG_ID, collection_name=COLLECTION_NAME, overrides={})
+    return build_runtime_config_payload(
+        current_values={
+            "llm_base_url": config.llm_base_url,
+            "llm_model": config.llm_model,
+            "embed_model": config.embed_model,
+            "llm_timeout": config.llm_timeout,
+            "embed_timeout": config.embed_timeout,
+            "retrieval_top_n": config.retrieval_top_n,
+            "retrieval_similarity_threshold": config.retrieval_similarity_threshold,
+            "query_fusion_enabled": config.query_fusion_enabled,
+            "query_fusion_num_queries": config.query_fusion_num_queries,
+            "query_fusion_mode": config.query_fusion_mode,
+            "generation_temperature": config.generation_temperature,
+            "generation_top_p": config.generation_top_p,
+            "max_output_tokens": config.max_output_tokens,
+            "llm_seed": config.llm_seed,
+            "prompt": config.prompt,
+            "query_refusal_response": config.query_refusal_response,
+            "graph_vector_candidates": int(os.getenv("GRAPH_VECTOR_CANDIDATES", "18")),
+            "graph_neighbor_hops": int(os.getenv("GRAPH_NEIGHBOR_HOPS", "1")),
+            "graph_neighbor_facts_limit": int(os.getenv("GRAPH_NEIGHBOR_FACTS_LIMIT", "12")),
+        }
+    )
+
+
+# Lay `resources` cho luong xu ly hien tai.
+@lru_cache(maxsize=16)
+def get_resources(profile_name: str = "default", overrides_key: str = "{}"):
+    config = load_shared_config(
+        rag_id=CURRENT_RAG_ID,
+        collection_name=COLLECTION_NAME,
+        overrides=json.loads(overrides_key),
+    )
+    configure_models(config)
+    index = ensure_vector_index(config, state_path=STATE_PATH, enable_hybrid=False)
     query_engine = build_query_engine(index, config, enable_hybrid=False)
     return config, query_engine
 
 
-# Trả lời một câu hỏi bằng Baseline RAG và gom danh sách nguồn liên quan.
+# Xu ly `query` cho luong xu ly hien tai.
 def answer_query(query: str, *, profile_name: str = "default", runtime_overrides: dict | None = None) -> dict:
     config, query_engine = get_resources(profile_name, runtime_overrides_signature(runtime_overrides))
     response = query_engine.query(query)
     sources = collect_sources(response, limit=config.retrieval_top_n)
-
-    if not sources:
-        answer = config.query_refusal_response
-    else:
-        scores = [float(item["score"]) for item in sources if item.get("score") is not None]
-        is_low_confidence = (
-            should_apply_similarity_threshold(config)
-            and bool(scores)
-            and config.retrieval_similarity_threshold > 0
-            and max(scores) < config.retrieval_similarity_threshold
-        )
-        answer = config.query_refusal_response if is_low_confidence else str(response).strip()
-
+    is_grounded = has_sufficient_query_grounding(
+        query,
+        sources,
+        similarity_threshold=config.retrieval_similarity_threshold,
+        enforce_similarity_threshold=should_apply_similarity_threshold(config),
+    )
+    answer = str(response).strip() if is_grounded else config.query_refusal_response
     return {
         "answer": answer,
         "rewritten_query": query,
@@ -130,7 +176,7 @@ def answer_query(query: str, *, profile_name: str = "default", runtime_overrides
     }
 
 
-# Xóa cache tài nguyên cũ rồi nạp lại collection cục bộ của Baseline.
+# Reload `local resources` cho luong xu ly hien tai.
 def reload_local_resources() -> dict[str, str]:
     get_resources.cache_clear()
     config, _ = get_resources()
@@ -141,12 +187,11 @@ def reload_local_resources() -> dict[str, str]:
     }
 
 
-# Chuẩn hóa danh sách chunk mới/xóa để gửi delta sync sang Graph RAG.
+# Dung `graph sync payload` cho luong xu ly hien tai.
 def _build_graph_sync_payload(summary: dict | None) -> dict[str, list[str] | bool]:
     summary = summary or {}
     chunk_relative_paths: list[str] = []
     deleted_relative_paths: list[str] = []
-
     for item in list((summary.get("added") or {}).get("web") or []):
         chunk_relative_path = str(item.get("chunk_relative_path") or "").strip()
         if chunk_relative_path:
@@ -159,7 +204,6 @@ def _build_graph_sync_payload(summary: dict | None) -> dict[str, list[str] | boo
         txt_relative_path = str(item.get("txt_relative_path") or "").strip()
         if txt_relative_path:
             deleted_relative_paths.append(txt_relative_path.replace("data_txt/", "", 1))
-
     return {
         "full_reload": False,
         "chunk_relative_paths": chunk_relative_paths,
@@ -167,14 +211,20 @@ def _build_graph_sync_payload(summary: dict | None) -> dict[str, list[str] | boo
     }
 
 
-# Reload Baseline cục bộ rồi yêu cầu các backend còn lại đồng bộ theo job.
+# Reload `cluster resources` cho luong xu ly hien tai.
 def reload_cluster_resources(graph_sync_payload: dict | None = None) -> dict[str, dict[str, str]]:
     results: dict[str, dict[str, str]] = {}
+    remote_targets = [rag_id for rag_id in build_cluster_server_urls() if rag_id != CURRENT_RAG_ID]
+    set_job_progress(stage="local_reload", progress=20, detail="Đang reload Baseline cục bộ.")
     local_summary = run_reload_job()
     results[CURRENT_RAG_ID] = {"status": "ok", "message": local_summary["message"]}
-    for rag_id, base_url in build_cluster_server_urls().items():
+    if not remote_targets:
+      return results
+    for index, (rag_id, base_url) in enumerate(build_cluster_server_urls().items(), start=1):
         if rag_id == CURRENT_RAG_ID:
             continue
+        progress = 35 + int((index / max(1, len(remote_targets) + 1)) * 45)
+        set_job_progress(stage="cluster_reload", progress=progress, detail=f"Đang đồng bộ backend {rag_id}.")
         try:
             request_payload = {"async_mode": True}
             if rag_id == "graph" and graph_sync_payload:
@@ -182,29 +232,23 @@ def reload_cluster_resources(graph_sync_payload: dict | None = None) -> dict[str
             job = post_json(f"{base_url}/api/admin/reload", request_payload)
             job_id = str(job.get("job_id") or "").strip()
             if not job_id:
-                raise RuntimeError("Backend khong tra ve job_id reload.")
+                raise RuntimeError("Backend không trả về job_id reload.")
             payload = wait_for_job(f"{base_url}/api/admin/jobs/{job_id}")
             result = payload.get("result") or {}
-            results[rag_id] = {"status": "ok", "message": str(result.get("message") or "Da reload.")}
+            results[rag_id] = {"status": "ok", "message": str(result.get("message") or "Đã reload.")}
         except Exception as exc:
             results[rag_id] = {"status": "error", "message": str(exc)}
+    set_job_progress(stage="cluster_reload", progress=90, detail="Đã gửi reload tới các backend còn lại.")
     return results
 
 
-# Kiểm tra kết quả reload cụm và báo lỗi nếu còn backend nào thất bại.
+# Dam bao `reload success` cho luong xu ly hien tai.
 def ensure_reload_success(reloads: dict[str, dict[str, str]], *, action_label: str) -> None:
     failed = {}
     for rag_id, result in reloads.items():
         status = result.get("status")
         message = str(result.get("message") or "")
-        if (
-            status != "ok"
-            and not (
-                rag_id == "graph"
-                and "Graph Neo4j" in message
-                and "reset-graph" in message
-            )
-        ):
+        if status != "ok" and not (rag_id == "graph" and "Graph Neo4j" in message and "reset-graph" in message):
             failed[rag_id] = result
     if not failed:
         return
@@ -212,15 +256,16 @@ def ensure_reload_success(reloads: dict[str, dict[str, str]], *, action_label: s
     raise RuntimeError(f"Đã {action_label} dữ liệu thô nhưng chưa reload xong toàn bộ hệ thống. {details}")
 
 
-# Tạo job nền để đồng bộ lại cụm sau khi có thay đổi dữ liệu.
+# Helper cho `start_cluster_reload_job` trong module nay.
 def start_cluster_reload_job(*, graph_sync_payload: dict | None, action_label: str) -> dict:
     return create_job(
         action="cluster_reload",
         runner=lambda: _run_cluster_reload_job(graph_sync_payload=graph_sync_payload, action_label=action_label),
+        metadata={"rag_id": CURRENT_RAG_ID, "action_label": action_label},
     )
 
 
-# Thực thi job reload cụm và trả về thông tin tổng hợp cho UI.
+# Chay `cluster reload job` cho luong xu ly hien tai.
 def _run_cluster_reload_job(*, graph_sync_payload: dict | None, action_label: str) -> dict:
     reloads = reload_cluster_resources(graph_sync_payload)
     ensure_reload_success(reloads, action_label=action_label)
@@ -230,7 +275,7 @@ def _run_cluster_reload_job(*, graph_sync_payload: dict | None, action_label: st
     }
 
 
-# Warm-up index trong nền để server có thể mở cổng sớm hơn.
+# Warm-up `resources in background` cho luong xu ly hien tai.
 def warm_resources_in_background() -> None:
     try:
         config, _ = get_resources()
@@ -239,13 +284,14 @@ def warm_resources_in_background() -> None:
         print(f"[baseline] Warm-up lỗi: {exc}")
 
 
-# Reload riêng tài nguyên Baseline dưới lock truy vấn.
+# Chay `reload job` cho luong xu ly hien tai.
 def run_reload_job() -> dict[str, str]:
     with RAG_LOCK:
+        set_job_progress(stage="reindex", progress=55, detail="Đang làm mới cache và tài nguyên Baseline.")
         return reload_local_resources()
 
 
-# Chuyển job thêm dữ liệu sang trạng thái lỗi nếu mọi PDF mới đều bị hoàn tác.
+# Helper cho `raise_if_add_failed` trong module nay.
 def _raise_if_add_failed(summary: dict[str, object]) -> None:
     if summary.get("changed"):
         return
@@ -253,8 +299,9 @@ def _raise_if_add_failed(summary: dict[str, object]) -> None:
         raise RuntimeError(str(summary.get("message") or "Không thể nạp dữ liệu PDF."))
 
 
-# Thêm dữ liệu thô mới, build chunk và xếp job reload nền cho toàn cụm.
+# Chay `add data job` cho luong xu ly hien tai.
 def run_add_data_job(*, links_text: str, pdf_files: list[dict] | None = None, display_name: str = "") -> dict:
+    set_job_progress(stage="ingest_prepare", progress=15, detail="Đang chuẩn bị nạp tài liệu.")
     with ADMIN_LOCK:
         summary = add_corpus_documents(
             links_text=links_text,
@@ -262,6 +309,7 @@ def run_add_data_job(*, links_text: str, pdf_files: list[dict] | None = None, di
             display_name=display_name,
         )
     _raise_if_add_failed(summary)
+    set_job_progress(stage="ingest_done", progress=60, detail=str(summary.get("message") or "Đã nạp dữ liệu thô."))
     reload_job = start_cluster_reload_job(
         graph_sync_payload=_build_graph_sync_payload(summary),
         action_label="nạp",
@@ -273,10 +321,12 @@ def run_add_data_job(*, links_text: str, pdf_files: list[dict] | None = None, di
     }
 
 
-# Xóa tài liệu khỏi corpus dùng chung rồi xếp job reload nền cho toàn cụm.
+# Chay `delete data job` cho luong xu ly hien tai.
 def run_delete_data_job(document_ids: list[str]) -> dict:
+    set_job_progress(stage="delete_prepare", progress=15, detail="Đang chuẩn bị xóa tài liệu.")
     with ADMIN_LOCK:
         summary = delete_corpus_documents(document_ids)
+    set_job_progress(stage="delete_done", progress=60, detail=str(summary.get("message") or "Đã xóa dữ liệu thô."))
     reload_job = start_cluster_reload_job(
         graph_sync_payload=_build_graph_sync_payload(summary),
         action_label="xóa",
@@ -288,24 +338,75 @@ def run_delete_data_job(document_ids: list[str]) -> dict:
     }
 
 
-# Xử lý toàn bộ API HTTP cho giao diện chat và quản trị dữ liệu của Baseline.
-class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
-    server_version = "NTURagHTTP/3.0"
+# Dung `local status` cho luong xu ly hien tai.
+def build_local_status() -> dict[str, object]:
+    config = load_shared_config(rag_id=CURRENT_RAG_ID, collection_name=COLLECTION_NAME, overrides={})
+    client = QdrantClient(url=config.qdrant_url, api_key=config.qdrant_api_key)
+    try:
+        collection_exists = client.collection_exists(config.qdrant_collection)
+        point_count = int(client.count(collection_name=config.qdrant_collection, exact=True).count) if collection_exists else 0
+    finally:
+        client.close()
+    return {
+        "rag_id": CURRENT_RAG_ID,
+        "port": resolve_server_port(),
+        "backend_url": f"http://{DEFAULT_HOST}:{resolve_server_port()}",
+        "health": "ok",
+        "collection": config.qdrant_collection,
+        "point_count": point_count,
+        "graph_ready": None,
+        "fact_count": None,
+        "message": "Vector store sẵn sàng." if collection_exists else "Collection chưa tồn tại.",
+    }
 
-    # Điều phối các route GET như UI, health, danh sách tài liệu và trạng thái job.
+
+class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
+    server_version = "NTURagHTTP/4.0"
+
+    # Dieu phoi cac route GET cua HTTP handler nay.
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/":
             self._send_html(load_ui_html())
             return
+        if parsed.path == "/admin":
+            self._redirect(build_admin_ui_url())
+            return
         if parsed.path == "/health":
-            self._send_json({"status": "ok"})
+            self._send_json({"status": "ok", "rag_id": CURRENT_RAG_ID})
+            return
+        if parsed.path == "/api/auth/session":
+            self._handle_auth_session_request()
             return
         if parsed.path == "/api/admin/documents":
+            if not self._require_role("admin"):
+                return
             self._send_json(list_corpus_documents())
             return
+        if parsed.path == "/api/admin/jobs":
+            if not self._require_role("admin"):
+                return
+            self._send_json({"jobs": list_jobs()})
+            return
         if parsed.path.startswith("/api/admin/jobs/"):
+            if not self._require_role("admin"):
+                return
             self._handle_admin_job_request(parsed.path)
+            return
+        if parsed.path == "/api/admin/status":
+            if not self._require_role("admin"):
+                return
+            self._handle_local_status_request()
+            return
+        if parsed.path == "/api/admin/system":
+            if not self._require_role("admin"):
+                return
+            self._handle_system_status_request()
+            return
+        if parsed.path == "/api/admin/runtime-config":
+            if not self._require_role("admin"):
+                return
+            self._send_json(build_current_runtime_config_payload())
             return
         if parsed.path == "/favicon.ico":
             self.send_response(HTTPStatus.NO_CONTENT)
@@ -313,34 +414,85 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
-    # Điều phối các route POST như chat, add/delete dữ liệu và reload.
+    # Dieu phoi cac route POST cua HTTP handler nay.
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/auth/login":
+            self._handle_login_request()
+            return
+        if parsed.path == "/api/auth/logout":
+            self._handle_logout_request()
+            return
         if parsed.path == "/api/chat":
+            if not self._require_role("user"):
+                return
             self._handle_chat_request()
             return
         if parsed.path == "/api/admin/add":
+            if not self._require_role("admin"):
+                return
             self._handle_add_data_request()
             return
         if parsed.path == "/api/admin/delete":
+            if not self._require_role("admin"):
+                return
             self._handle_delete_data_request()
             return
         if parsed.path == "/api/admin/reload":
+            if not self._require_role("admin"):
+                return
             self._handle_reload_request()
+            return
+        if parsed.path == "/api/admin/compare":
+            if not self._require_role("admin"):
+                return
+            self._handle_compare_request()
+            return
+        if parsed.path == "/api/admin/runtime-config":
+            if not self._require_role("admin"):
+                return
+            self._handle_runtime_config_update_request()
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
 
-    # Xử lý request chat và gọi Baseline RAG để sinh câu trả lời.
+    # Helper cho `handle_auth_session_request` trong module nay.
+    def _handle_auth_session_request(self) -> None:
+      session = self._get_session()
+      self._send_json(
+          {
+              "authenticated": session is not None,
+              "session": session,
+              "accounts_hint": get_default_accounts_hint(),
+          }
+      )
+
+    # Helper cho `handle_login_request` trong module nay.
+    def _handle_login_request(self) -> None:
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+        account = authenticate_user(str(payload.get("username") or ""), str(payload.get("password") or ""))
+        if account is None:
+            self._send_json({"error": "Sai tên đăng nhập hoặc mật khẩu."}, status=HTTPStatus.UNAUTHORIZED)
+            return
+        self._send_json(
+            {"authenticated": True, "session": account},
+            headers={"Set-Cookie": build_session_cookie(account)},
+        )
+
+    # Helper cho `handle_logout_request` trong module nay.
+    def _handle_logout_request(self) -> None:
+        self._send_json({"authenticated": False}, headers={"Set-Cookie": build_logout_cookie()})
+
+    # Helper cho `handle_chat_request` trong module nay.
     def _handle_chat_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
             return
-
         query = str(payload.get("query") or payload.get("question") or "").strip()
         if not query:
             self._send_json({"error": "Vui lòng nhập câu hỏi."}, status=HTTPStatus.BAD_REQUEST)
             return
-
         profile_name, runtime_overrides = parse_benchmark_profile_payload(payload)
         try:
             with RAG_LOCK:
@@ -351,9 +503,9 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
             return
-        self._send_json(response, status=HTTPStatus.OK)
+        self._send_json(response)
 
-    # Xử lý request thêm dữ liệu và hỗ trợ chế độ async bằng job.
+    # Helper cho `handle_add_data_request` trong module nay.
     def _handle_add_data_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
@@ -365,6 +517,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             job = create_job(
                 action="add_data",
                 runner=lambda: run_add_data_job(links_text=links_text, pdf_files=pdf_files, display_name=display_name),
+                metadata={"rag_id": CURRENT_RAG_ID, "display_name": display_name},
             )
             self._send_json(job, status=HTTPStatus.ACCEPTED)
             return
@@ -376,23 +529,22 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
             return
-        self._send_json(summary, status=HTTPStatus.OK)
+        self._send_json(summary)
 
-    # Xử lý request xóa tài liệu và hỗ trợ chế độ async bằng job.
+    # Helper cho `handle_delete_data_request` trong module nay.
     def _handle_delete_data_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
             return
-        raw_documents = payload.get("documents") or payload.get("document_ids") or []
-        if not isinstance(raw_documents, list) or not raw_documents:
+        document_ids = load_document_ids_from_payload(payload)
+        if not document_ids:
             self._send_json({"error": "Vui lòng chọn tài liệu cần xóa."}, status=HTTPStatus.BAD_REQUEST)
             return
-
-        document_ids = [str(item.get("id") if isinstance(item, dict) else item).strip() for item in raw_documents]
         if payload.get("async_mode"):
             job = create_job(
                 action="delete_data",
                 runner=lambda: run_delete_data_job(document_ids),
+                metadata={"rag_id": CURRENT_RAG_ID, "document_count": len(document_ids)},
             )
             self._send_json(job, status=HTTPStatus.ACCEPTED)
             return
@@ -404,28 +556,75 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
             return
-        self._send_json(summary, status=HTTPStatus.OK)
+        self._send_json(summary)
 
-    # Xử lý request reload riêng Baseline hoặc tạo job reload async.
+    # Helper cho `handle_reload_request` trong module nay.
     def _handle_reload_request(self) -> None:
         payload = self._read_json_payload()
         if payload is None:
             return
+        internal_request = is_internal_cluster_request(self.headers)
         if payload.get("async_mode"):
-            job = create_job(action="reload", runner=run_reload_job)
+            job = (
+                create_job(
+                    action="reload",
+                    runner=run_reload_job,
+                    metadata={"rag_id": CURRENT_RAG_ID, "full_reload": bool(payload.get("full_reload"))},
+                )
+                if internal_request
+                else start_cluster_reload_job(graph_sync_payload=None, action_label="reload")
+            )
             self._send_json(job, status=HTTPStatus.ACCEPTED)
             return
         try:
-            summary = run_reload_job()
+            summary = run_reload_job() if internal_request else _run_cluster_reload_job(graph_sync_payload=None, action_label="reload")
         except Exception as exc:
             self._send_json(
                 {"error": f"Không thể reload Baseline RAG. Chi tiết: {exc}"},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
             return
-        self._send_json(summary, status=HTTPStatus.OK)
+        self._send_json(summary)
 
-    # Trả về trạng thái hiện tại của một job quản trị theo job_id.
+    # Helper cho `handle_compare_request` trong module nay.
+    def _handle_compare_request(self) -> None:
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+        question = str(payload.get("question") or payload.get("query") or "").strip()
+        if not question:
+            self._send_json({"error": "Vui lòng nhập câu hỏi để so sánh."}, status=HTTPStatus.BAD_REQUEST)
+            return
+        try:
+            result = compare_cluster_answers(
+                question=question,
+                current_rag_id=CURRENT_RAG_ID,
+                local_answer_builder=lambda value: answer_query(value),
+            )
+        except Exception as exc:
+            self._send_json({"error": f"Không so sánh được 3 RAG. Chi tiết: {exc}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
+        self._send_json(result)
+
+    # Helper cho `handle_runtime_config_update_request` trong module nay.
+    def _handle_runtime_config_update_request(self) -> None:
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+        scope = str(payload.get("scope") or "").strip()
+        values = payload.get("values") or {}
+        if not scope or not isinstance(values, dict):
+            self._send_json({"error": "Payload cấu hình không hợp lệ."}, status=HTTPStatus.BAD_REQUEST)
+            return
+        try:
+            update_runtime_scope(scope, values)
+            get_resources.cache_clear()
+        except Exception as exc:
+            self._send_json({"error": f"Không lưu được runtime config. Chi tiết: {exc}"}, status=HTTPStatus.BAD_REQUEST)
+            return
+        self._send_json(build_current_runtime_config_payload())
+
+    # Helper cho `handle_admin_job_request` trong module nay.
     def _handle_admin_job_request(self, path: str) -> None:
         job_id = path.rsplit("/", 1)[-1].strip()
         if not job_id:
@@ -435,9 +634,56 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         if job is None:
             self._send_json({"error": "Không tìm thấy job."}, status=HTTPStatus.NOT_FOUND)
             return
-        self._send_json(job, status=HTTPStatus.OK)
+        self._send_json(job)
 
-    # Đọc và parse JSON body từ request hiện tại.
+    # Helper cho `handle_local_status_request` trong module nay.
+    def _handle_local_status_request(self) -> None:
+        try:
+            self._send_json(build_local_status())
+        except Exception as exc:
+            self._send_json(
+                {
+                    "rag_id": CURRENT_RAG_ID,
+                    "port": resolve_server_port(),
+                    "backend_url": f"http://{DEFAULT_HOST}:{resolve_server_port()}",
+                    "health": "error",
+                    "error": str(exc),
+                },
+                status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
+
+    # Helper cho `handle_system_status_request` trong module nay.
+    def _handle_system_status_request(self) -> None:
+        try:
+            payload = collect_cluster_status(current_rag_id=CURRENT_RAG_ID, local_status_builder=build_local_status)
+        except Exception as exc:
+            self._send_json({"error": f"Không tải được trạng thái hệ thống. Chi tiết: {exc}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
+        self._send_json(payload)
+
+    # Lay `session` cho luong xu ly hien tai.
+    def _get_session(self) -> dict[str, str] | None:
+        return read_session_from_cookie(self.headers.get("Cookie"))
+
+    # Helper cho `require_role` trong module nay.
+    def _require_role(self, role: str) -> bool:
+        if is_internal_cluster_request(self.headers):
+            return True
+        session = self._get_session()
+        if has_role(session, role):
+            return True
+        status = HTTPStatus.UNAUTHORIZED if session is None else HTTPStatus.FORBIDDEN
+        self._send_json(
+            {
+                "error": "Bạn chưa đăng nhập." if session is None else "Bạn không có quyền truy cập tài nguyên này.",
+                "authenticated": session is not None,
+                "session": session,
+            },
+            status=status,
+        )
+        return False
+
+    # Doc `json payload` cho luong xu ly hien tai.
     def _read_json_payload(self) -> dict | None:
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
@@ -447,38 +693,54 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": "Payload JSON không hợp lệ."}, status=HTTPStatus.BAD_REQUEST)
             return None
 
-    # Tắt log mặc định của BaseHTTPRequestHandler để terminal gọn hơn.
+    # Tat log mac dinh cua BaseHTTPRequestHandler de terminal gon hon.
     def log_message(self, format: str, *args) -> None:
         return
 
-    # Gửi phản hồi HTML UTF-8 cho giao diện chat.
-    def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK) -> None:
-        body = html.encode("utf-8")
-        self._send_response_body(body, "text/html; charset=utf-8", status=status)
+    # Helper cho `send_html` trong module nay.
+    def _send_html(self, html: str, status: HTTPStatus = HTTPStatus.OK, headers: dict[str, str] | None = None) -> None:
+        self._send_response_body(html.encode("utf-8"), "text/html; charset=utf-8", status=status, headers=headers)
 
-    # Gửi phản hồi JSON UTF-8 cho API.
-    def _send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        self._send_response_body(body, "application/json; charset=utf-8", status=status)
+    # Helper cho `redirect` trong module nay.
+    def _redirect(self, location: str, status: HTTPStatus = HTTPStatus.FOUND) -> None:
+        self._send_response_body(b"", "text/plain; charset=utf-8", status=status, headers={"Location": location})
 
+    # Helper cho `send_json` trong module nay.
+    def _send_json(
+        self,
+        payload: dict,
+        status: HTTPStatus = HTTPStatus.OK,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        self._send_response_body(
+            json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            "application/json; charset=utf-8",
+            status=status,
+            headers=headers,
+        )
+
+    # Helper cho `send_response_body` trong module nay.
     def _send_response_body(
         self,
         body: bytes,
         content_type: str,
         *,
         status: HTTPStatus = HTTPStatus.OK,
+        headers: dict[str, str] | None = None,
     ) -> None:
         try:
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
+            for header_name, header_value in (headers or {}).items():
+                self.send_header(header_name, header_value)
             self.end_headers()
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             self.close_connection = True
 
 
-# Chạy Baseline RAG ở chế độ CLI đơn giản để hỏi đáp trong terminal.
+# Chay `cli` cho luong xu ly hien tai.
 def run_cli() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -493,12 +755,12 @@ def run_cli() -> None:
         print(result["answer"])
 
 
-# Lấy cổng server từ biến môi trường hoặc dùng mặc định của Baseline.
+# Resolve `server port` cho luong xu ly hien tai.
 def resolve_server_port() -> int:
     return int(os.getenv("UI_PORT", str(DEFAULT_PORT)))
 
 
-# Khởi động HTTP server, warm-up tài nguyên nền và giữ vòng lặp phục vụ request.
+# Chay `server` cho luong xu ly hien tai.
 def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
     resolved_port = port if port is not None else resolve_server_port()
     sys.stdout.reconfigure(encoding="utf-8")
@@ -507,7 +769,7 @@ def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
     Thread(target=warm_resources_in_background, daemon=True).start()
     print("Đang khởi tạo Baseline RAG...")
     print(f"Baseline RAG đang chạy tại http://{host}:{resolved_port}")
-    print("Warm-up index đang chạy nền; giao diện và /health sẽ sẵn sàng ngay.")
+    print("Client UI: / | Admin UI: /admin | /health sẵn sàng ngay.")
     print("Nhấn Ctrl+C để dừng server.")
     try:
         server.serve_forever()
@@ -517,13 +779,13 @@ def run_server(host: str = DEFAULT_HOST, port: int | None = None) -> None:
         server.server_close()
 
 
-# Chọn chế độ chạy phù hợp cho app Baseline.
+# Entry point chinh cua module nay.
 def main() -> None:
+    # Bước 1: nếu có cờ `--cli` thì chạy chế độ hỏi đáp trực tiếp trong terminal.
     if "--cli" in sys.argv:
-        # Bước 1: nếu người dùng yêu cầu CLI thì chuyển sang chế độ hỏi đáp trong terminal.
         run_cli()
         return
-    # Bước 2: nếu không có cờ CLI thì khởi động server HTTP cho giao diện web.
+    # Bước 2: nếu không chạy CLI thì khởi động HTTP server cho client/admin UI.
     run_server()
 
 

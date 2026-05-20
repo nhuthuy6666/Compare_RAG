@@ -5,12 +5,18 @@ from typing import Any
 
 import requests
 
-from evaluation.common import EvalExample, EvalPrediction, SourceRecord
+from evaluation.common import (
+    EvalExample,
+    EvalPrediction,
+    SourceRecord,
+    ensure_authenticated_session,
+)
 
 
 # Kiểm tra app GraphRAG sẵn sàng nhận request hay chưa.
 def healthcheck(system_config: dict[str, Any], timeout: tuple[int, int]) -> None:
-    response = requests.get(
+    session = ensure_authenticated_session(system_config, timeout)
+    response = session.get(
         f"{system_config['base_url'].rstrip('/')}{system_config['health_endpoint']}",
         timeout=timeout,
     )
@@ -64,10 +70,11 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
     started = time.perf_counter()
     base_url = system_config["base_url"].rstrip("/")
     stateless_endpoint = system_config.get("chat_endpoint")
+    session = ensure_authenticated_session(system_config, timeout)
 
     if stateless_endpoint:
         try:
-            response = requests.post(
+            response = session.post(
                 f"{base_url}{stateless_endpoint}",
                 json={
                     "query": example.question,
@@ -99,12 +106,12 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
     create_url = f"{base_url}{system_config['create_chat_endpoint']}"
     session_id = ""
     try:
-        created = requests.post(create_url, timeout=timeout)
+        created = session.post(create_url, timeout=timeout)
         created.raise_for_status()
         session_id = str(created.json()["session"]["id"])
 
         send_url = f"{base_url}{system_config['send_message_endpoint'].format(session_id=session_id)}"
-        response = requests.post(send_url, json={"question": example.question}, timeout=timeout)
+        response = session.post(send_url, json={"question": example.question}, timeout=timeout)
         response.raise_for_status()
         answer, sources = _extract_session_answer_and_sources(response.json())
         return EvalPrediction(
@@ -130,7 +137,7 @@ def run_example(example: EvalExample, system_config: dict[str, Any], timeout: tu
             delete_endpoint = system_config.get("delete_chat_endpoint")
             if delete_endpoint:
                 try:
-                    requests.delete(
+                    session.delete(
                         f"{base_url}{delete_endpoint.format(session_id=session_id)}",
                         timeout=timeout,
                     )

@@ -9,6 +9,7 @@ from typing import Any
 from llama_index.core import Settings
 
 from config import build_neo4j_driver, configure_models, load_config
+from llamaindex_shared import has_sufficient_query_grounding
 from llamaindex_shared.prompts import build_prompt_templates
 from neo4j_store import RetrievedFact, entity_guided_search, graph_ready, neighbor_search, vector_search
 
@@ -324,19 +325,7 @@ def _generate_answer(question: str, facts: list[RetrievedFact], config) -> str:
     return str(response.text or "").strip()
 
 
-# Đảm bảo graph đã có dữ liệu trước khi nhận request chat.
-def _ensure_graph_ready(config) -> None:
-
-    driver = build_neo4j_driver(config)
-    try:
-        if not graph_ready(driver, config):
-            raise RuntimeError(
-                "Graph Neo4j đang rỗng. Hãy chạy `python graph_rag/src/ingest.py --reset-graph` trước."
-            )
-    finally:
-        driver.close()
-
-
+## Kiểm tra nhanh graph hiện tại đã có dữ liệu để sẵn sàng phục vụ chat hay chưa.
 def _graph_is_ready(config) -> bool:
     driver = build_neo4j_driver(config)
     try:
@@ -380,11 +369,27 @@ def answer_question(question: str, top_k: int | None = None, runtime_overrides: 
     threshold = config.retrieval_similarity_threshold if _should_apply_similarity_threshold(config) else 0.0
     if not facts:
         return ChatAnswer(question=question, answer=config.query_refusal_response, facts=[])
-    if threshold > 0 and max(float(fact.score) for fact in facts) < threshold:
+    source_facts = [_to_source_fact(fact) for fact in facts]
+    is_grounded = has_sufficient_query_grounding(
+        question,
+        [
+            {
+                "source": fact.relative_path or fact.heading_path or "graph_fact",
+                "relative_path": fact.relative_path,
+                "heading_path": fact.heading_path,
+                "content": fact.content,
+                "score": fact.score,
+            }
+            for fact in source_facts
+        ],
+        similarity_threshold=threshold,
+        enforce_similarity_threshold=_should_apply_similarity_threshold(config),
+    )
+    if not is_grounded:
         return ChatAnswer(
             question=question,
             answer=config.query_refusal_response,
-            facts=[_to_source_fact(fact) for fact in facts],
+            facts=source_facts,
         )
 
     answer = _generate_answer(question, facts, config)
@@ -393,7 +398,7 @@ def answer_question(question: str, top_k: int | None = None, runtime_overrides: 
     return ChatAnswer(
         question=question,
         answer=answer,
-        facts=[_to_source_fact(fact) for fact in facts],
+        facts=source_facts,
     )
 
 

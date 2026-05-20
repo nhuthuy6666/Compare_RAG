@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 import uuid
 from dataclasses import dataclass, replace
@@ -24,8 +25,95 @@ from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
 from llamaindex_shared.corpus_utils import load_chunk_record_groups, records_to_nodes
 from llamaindex_shared.openai_compatible import OpenAICompatibleEmbedding, OpenAICompatibleLLM
 from llamaindex_shared.prompts import build_prompt_templates
+from llamaindex_shared.runtime_config import get_runtime_overrides_for_rag
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+GROUNDING_TOKEN_PATTERN = re.compile(r"[0-9A-Za-zÀ-ỹ]+", flags=re.UNICODE)
+GROUNDING_STOPWORDS = {
+    "a",
+    "an",
+    "anh",
+    "bao",
+    "bay",
+    "bi",
+    "bị",
+    "biet",
+    "biết",
+    "cho",
+    "co",
+    "có",
+    "con",
+    "cua",
+    "của",
+    "da",
+    "dang",
+    "đã",
+    "đang",
+    "day",
+    "đây",
+    "de",
+    "để",
+    "den",
+    "đến",
+    "duoc",
+    "được",
+    "gi",
+    "gì",
+    "gom",
+    "gồm",
+    "hay",
+    "hoi",
+    "hỏi",
+    "khi",
+    "khong",
+    "không",
+    "la",
+    "là",
+    "lam",
+    "làm",
+    "loi",
+    "minh",
+    "mot",
+    "một",
+    "neu",
+    "nếu",
+    "nhieu",
+    "nhiêu",
+    "nho",
+    "nhu",
+    "như",
+    "nhung",
+    "những",
+    "nua",
+    "oi",
+    "o",
+    "ở",
+    "roi",
+    "rồi",
+    "sao",
+    "the",
+    "thế",
+    "thi",
+    "thì",
+    "toi",
+    "tôi",
+    "tren",
+    "trên",
+    "trong",
+    "tu",
+    "từ",
+    "ve",
+    "về",
+    "vay",
+    "vậy",
+    "va",
+    "và",
+    "voi",
+    "với",
+    "vui",
+    "xin",
+    "y",
+}
 
 
 DEFAULT_BASELINE_CONFIG = PROJECT_ROOT / "extract_md" / "rag_baseline.json"
@@ -36,6 +124,7 @@ Mỗi dòng dùng một truy vấn, không đánh số, không giải thích.
 Câu hỏi gốc: {query}
 Danh sách truy vấn:
 """
+DEFAULT_LLM_SEED = 17
 
 
 @dataclass(frozen=True)
@@ -121,6 +210,63 @@ def _resolve_query_fusion_mode(mode: str) -> FUSION_MODES:
 def should_apply_similarity_threshold(config: SharedRagConfig) -> bool:
     return not (config.query_fusion_enabled and config.query_fusion_num_queries > 1)
 
+
+# Tách từ khóa đủ nghĩa từ câu hỏi/ngữ cảnh để kiểm tra xem retrieval có thật sự bám nội dung hay không.
+def _tokenize_grounding_text(value: str) -> list[str]:
+    tokens: list[str] = []
+    for token in GROUNDING_TOKEN_PATTERN.findall((value or "").casefold()):
+        if len(token) < 2 or token.isdigit() or token in GROUNDING_STOPWORDS:
+            continue
+        tokens.append(token)
+    return tokens
+
+
+# Kiểm tra ngữ cảnh retrieve có đủ bám câu hỏi để cho phép sinh câu trả lời hay phải từ chối.
+def has_sufficient_query_grounding(
+    query: str,
+    sources: list[dict[str, Any]],
+    *,
+    similarity_threshold: float = 0.0,
+    enforce_similarity_threshold: bool = True,
+) -> bool:
+    if not sources:
+        return False
+
+    scores = [float(item["score"]) for item in sources if item.get("score") is not None]
+    if (
+        enforce_similarity_threshold
+        and similarity_threshold > 0
+        and scores
+        and max(scores) < similarity_threshold
+    ):
+        return False
+
+    query_tokens = list(dict.fromkeys(_tokenize_grounding_text(query)))
+    if not query_tokens:
+        return True
+
+    source_tokens: set[str] = set()
+    for item in sources:
+        source_tokens.update(_tokenize_grounding_text(str(item.get("source") or "")))
+        source_tokens.update(_tokenize_grounding_text(str(item.get("relative_path") or "")))
+        source_tokens.update(_tokenize_grounding_text(str(item.get("heading_path") or "")))
+        source_tokens.update(_tokenize_grounding_text(str(item.get("content") or "")))
+
+    matched_tokens = [token for token in query_tokens if token in source_tokens]
+    strong_matches = [token for token in matched_tokens if len(token) >= 3]
+    coverage = len(set(matched_tokens)) / max(1, len(query_tokens))
+    top_score = max(scores) if scores else 0.0
+
+    if len(set(strong_matches)) >= 2:
+        return True
+    if coverage >= 0.6:
+        return True
+    if len(query_tokens) <= 2 and strong_matches:
+        return True
+    if top_score >= max(similarity_threshold, 0.55) and strong_matches:
+        return True
+    return False
+
 # Chuẩn hóa đường dẫn: nếu là absolute path thì giữ nguyên, nếu là relative thì ghép với PROJECT_ROOT
 def _resolve_repo_path(path_like: str | Path) -> Path:
     """Resolve path tương đối theo root của repo hiện tại."""
@@ -132,6 +278,7 @@ def _resolve_repo_path(path_like: str | Path) -> Path:
 # Hợp nhất config từ baseline JSON và biến môi trường thành một object dùng chung.
 def load_shared_config(
     *,
+    rag_id: str,
     collection_name: str,
     baseline_config_path: Path | None = None,
     overrides: dict[str, Any] | None = None,
@@ -145,6 +292,7 @@ def load_shared_config(
     generation = baseline.get("generation") or {}
 
     seed_env = os.getenv("LLM_SEED")
+    resolved_seed = int(seed_env) if seed_env is not None and seed_env.strip() else DEFAULT_LLM_SEED
     config = SharedRagConfig(
         baseline_config_path=baseline_path,
         source_chunk_root=_resolve_repo_path(
@@ -178,13 +326,22 @@ def load_shared_config(
         ),
         generation_top_p=float(os.getenv("GENERATION_TOP_P", str(generation.get("top_p") or 1.0))),
         max_output_tokens=int(os.getenv("MAX_OUTPUT_TOKENS", str(generation.get("max_tokens") or 1024))),
-        llm_seed=int(seed_env) if seed_env is not None and seed_env.strip() else None,
+        llm_seed=resolved_seed,
         prompt=str(baseline.get("prompt") or "").strip(),
         query_refusal_response=str(
             baseline.get("query_refusal_response")
             or "Tôi chưa đủ căn cứ để trả lời câu hỏi này từ dữ liệu hiện có."
         ).strip(),
     )
+    runtime_defaults = get_runtime_overrides_for_rag(rag_id)
+    if runtime_defaults:
+        supported_runtime_defaults = {
+            key: value
+            for key, value in runtime_defaults.items()
+            if key in config.__dataclass_fields__
+        }
+        if supported_runtime_defaults:
+            config = replace(config, **supported_runtime_defaults)
     runtime_overrides = normalize_runtime_overrides(overrides)
     if not runtime_overrides:
         return config

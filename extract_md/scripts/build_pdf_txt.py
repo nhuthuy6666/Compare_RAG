@@ -61,6 +61,7 @@ def normalize_block_lines(text: str) -> list[str]:
     return lines
 
 
+## Gom các block text theo vị trí X để suy ra các cột nội dung trên trang PDF.
 def cluster_blocks_by_x(blocks: list[dict], tolerance: float) -> list[list[dict]]:
     # Gom các block text theo vị trí X (ước lượng cột trong PDF).
     bands: list[list[dict]] = []
@@ -77,6 +78,7 @@ def cluster_blocks_by_x(blocks: list[dict], tolerance: float) -> list[list[dict]
     return [sorted(band, key=lambda item: (item["y0"], item["x0"])) for band in bands]
 
 
+## Sắp lại thứ tự block text theo luồng đọc tự nhiên cho PDF một hoặc hai cột.
 def reorder_text_blocks(blocks: list[tuple], page_width: float) -> list[dict]:
     # Sắp lại thứ tự block text theo “luồng đọc” (hữu ích cho PDF 2 cột).
     prepared: list[dict] = []
@@ -136,11 +138,13 @@ def reorder_text_blocks(blocks: list[tuple], page_width: float) -> list[dict]:
     return flattened
 
 
+## Kiểm tra môi trường hiện tại có OCR backend khả dụng để fallback hay không.
 def _ocr_backend_available() -> bool:
     # Kiểm tra có backend OCR khả dụng (tesseract hoặc RapidOCR + numpy).
     return any(shutil.which(marker) for marker in OCR_MARKERS) or (RapidOCR is not None and np is not None)
 
 
+## Khởi tạo lazy singleton cho RapidOCR để tái sử dụng giữa nhiều trang PDF.
 def _get_rapidocr_engine():
     # Khởi tạo/lấy singleton RapidOCR engine (nếu dependency có sẵn).
     global _RAPIDOCR_ENGINE
@@ -151,6 +155,7 @@ def _get_rapidocr_engine():
     return _RAPIDOCR_ENGINE
 
 
+## OCR một trang PDF thành danh sách dòng text khi trang thiếu text layer chuẩn.
 def _ocr_page_lines(page) -> list[str]:
     # OCR 1 trang: ưu tiên tesseract (nếu có), fallback RapidOCR.
     tesseract_bin = shutil.which("tesseract")
@@ -197,6 +202,7 @@ def _ocr_page_lines(page) -> list[str]:
     return lines
 
 
+## Trích text và bảng từ một trang, rồi fallback OCR nếu text layer rỗng hoàn toàn.
 def _extract_page_lines(page) -> tuple[list[str], bool]:
     # Trích lines + tables cho 1 trang; nếu không có text layer thì thử OCR.
     table_boxes: list[tuple[float, float, float, float]] = []
@@ -234,6 +240,7 @@ def _extract_page_lines(page) -> tuple[list[str], bool]:
     return [{"lines": lines, "tables": tables}], used_ocr
 
 
+## Quét nhanh một PDF để quyết định file đó có đủ điều kiện build TXT hay không.
 def analyze_pdf_extractability(pdf_path: Path) -> dict:
     # Quick scan để biết PDF có trích được text/bảng không (để quyết định có build TXT hay skip).
     summary = {
@@ -279,6 +286,7 @@ def analyze_pdf_extractability(pdf_path: Path) -> dict:
         document.close()
 
 
+## Trích toàn bộ các trang PDF thành payload trung gian gồm text lines và tables.
 def extract_pdf_pages(pdf_path: Path) -> tuple[list[dict], dict]:
     # Trích toàn bộ trang thành payload: {"lines": [...], "tables": [...]} + thống kê chẩn đoán.
     pages: list[dict] = []
@@ -307,6 +315,7 @@ def extract_pdf_pages(pdf_path: Path) -> tuple[list[dict], dict]:
     return pages, diagnostics
 
 
+## Chuyển payload các trang PDF thành danh sách dòng markdown-lite có cấu trúc.
 def pdf_pages_to_lines(pages: list[dict]) -> list[str]:
     # Chuyển danh sách pages -> các dòng “markdown-lite”: heading/bullets/bảng.
     page_lines = filter_noise_lines([page["lines"] for page in pages])
@@ -320,6 +329,7 @@ def pdf_pages_to_lines(pages: list[dict]) -> list[str]:
     preface_buffer: list[str] = []
     preface_chars = 0
 
+    # Day `preface` cho luong xu ly hien tai.
     def flush_preface() -> None:
         nonlocal preface_buffer, preface_chars, content_started
         if not preface_buffer:
@@ -396,6 +406,7 @@ def pdf_pages_to_lines(pages: list[dict]) -> list[str]:
     return output
 
 
+## Build một file TXT chuẩn hóa từ một PDF; file không trích được sẽ bị skip.
 def build_pdf_txt(pdf_path: Path, out_root: Path) -> Path | None:
     # 1) Resolve năm + tiêu đề + đường dẫn output (data_txt/<năm>/<slug>.txt).
     year = guess_year(pdf_path)
@@ -440,6 +451,7 @@ def build_pdf_txt(pdf_path: Path, out_root: Path) -> Path | None:
     return out_path
 
 
+## Duyệt toàn bộ PDF trong thư mục đầu vào và build TXT cho từng file hợp lệ.
 def process_pdfs(pdf_root: Path, out_root: Path) -> tuple[int, int]:
     # Duyệt tất cả PDF dưới pdf_root và build TXT; PDF lỗi thì skip.
     pdf_files = sorted(pdf_root.rglob("*.pdf"))
@@ -457,6 +469,7 @@ def process_pdfs(pdf_root: Path, out_root: Path) -> tuple[int, int]:
     return len(pdf_files), written
 
 
+## Điều phối pipeline PDF -> TXT cho toàn bộ thư mục đầu vào.
 def main() -> None:
     # 1) Khai báo tham số CLI.
     parser = argparse.ArgumentParser(description="Convert PDF files directly to TXT markdown-lite files.")

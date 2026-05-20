@@ -16,6 +16,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from llamaindex_shared.benchmark_runtime import normalize_runtime_overrides
+from llamaindex_shared.runtime_config import get_runtime_overrides_for_rag
 from openai_compatible import OpenAICompatibleEmbedding, OpenAICompatibleLLM
 
 
@@ -23,6 +24,7 @@ DEFAULT_BASELINE_CONFIG = PROJECT_ROOT.parent / "extract_md" / "rag_baseline.jso
 DEFAULT_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 DEFAULT_CHUNK_DIR = DEFAULT_PROCESSED_DIR / "chunks"
 DEFAULT_FACTS_PATH = DEFAULT_PROCESSED_DIR / "graph_facts.jsonl"
+DEFAULT_LLM_SEED = 17
 
 
 # Gói toàn bộ cấu hình runtime cho GraphRAG Neo4j.
@@ -141,6 +143,7 @@ def load_config(overrides: dict | None = None) -> AppConfig:
     generation = baseline.get("generation") or {}
 
     seed_env = os.getenv("LLM_SEED")
+    resolved_seed = int(seed_env) if seed_env is not None and seed_env.strip() else DEFAULT_LLM_SEED
     config = AppConfig(
         project_root=PROJECT_ROOT,
         baseline_config_path=baseline_config_path,
@@ -194,7 +197,7 @@ def load_config(overrides: dict | None = None) -> AppConfig:
         ),
         generation_top_p=_get_float_env("GENERATION_TOP_P", float(generation.get("top_p") or 1.0)),
         max_output_tokens=_get_int_env("MAX_OUTPUT_TOKENS", int(generation.get("max_tokens") or 1024)),
-        llm_seed=int(seed_env) if seed_env is not None and seed_env.strip() else None,
+        llm_seed=resolved_seed,
         shared_prompt=os.getenv("SHARED_PROMPT", str(baseline.get("prompt") or "").strip()),
         query_refusal_response=os.getenv(
             "QUERY_REFUSAL_RESPONSE",
@@ -202,6 +205,18 @@ def load_config(overrides: dict | None = None) -> AppConfig:
         ),
         graph_progress_every=_get_int_env("GRAPH_PROGRESS_EVERY", 0),
     )
+    runtime_defaults = get_runtime_overrides_for_rag("graph")
+    if runtime_defaults:
+        graph_runtime_defaults = dict(runtime_defaults)
+        if "prompt" in graph_runtime_defaults and "shared_prompt" not in graph_runtime_defaults:
+            graph_runtime_defaults["shared_prompt"] = graph_runtime_defaults.pop("prompt")
+        supported_runtime_defaults = {
+            key: value
+            for key, value in graph_runtime_defaults.items()
+            if key in config.__dataclass_fields__
+        }
+        if supported_runtime_defaults:
+            config = replace(config, **supported_runtime_defaults)
     runtime_overrides = normalize_runtime_overrides(overrides)
     if not runtime_overrides:
         return config

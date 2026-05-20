@@ -187,7 +187,11 @@ def main() -> None:
         # Bước 3: in URL truy cập để người dùng mở 3 giao diện song song.
         print("Đã khởi động launcher cho 3 RAG:")
         for server, _ in processes:
-            print(f"- {server['name']}: http://{UI_HOST}:{server['ui_port']}/")
+            print(f"- {server['name']} client: http://{UI_HOST}:{server['ui_port']}/")
+        print(f"- admin chung: http://{UI_HOST}:8000/admin")
+        print("Tài khoản mặc định:")
+        print("- user / user123")
+        print("- admin / admin123")
         print("Nhấn Ctrl+C để dừng tất cả.")
 
         # Bước 4: giữ launcher chạy nền và theo dõi backend nào thoát sớm để báo lỗi ngay.

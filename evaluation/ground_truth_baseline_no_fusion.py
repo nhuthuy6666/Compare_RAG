@@ -108,6 +108,7 @@ def emit_console(text: str) -> None:
 # Dựng baseline RAG no-fusion trong bộ nhớ để tránh phụ thuộc Qdrant/HTTP server.
 def build_baseline_query_engine() -> object:
     config = load_shared_config(
+        rag_id="baseline",
         collection_name="ntu_ground_truth_baseline_no_fusion",
         overrides=BASELINE_NO_FUSION_OVERRIDES,
     )

@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTU Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --surface-2: #f8f9fb;
+      --surface-3: #eef0f4;
+      --border: #e4e7ed;
+      --border-hover: #c8cdd8;
+      --text: #0f1623;
+      --text-2: #5e6b7d;
+      --text-3: #9aa5b4;
+      --accent: #1a56db;
+      --accent-light: #eff4ff;
+      --accent-border: #c3d0f5;
+      --danger: #c92a2a;
+      --danger-light: #fff5f5;
+      --danger-border: #ffc9c9;
+      --ok: #1c7e3c;
+      --ok-light: #ebfbee;
+      --ok-border: #b2f2bb;
+      --warn: #9a5c00;
+      --warn-light: #fff9db;
+      --warn-border: #ffe066;
+      --r: 10px;
+      --r-lg: 14px;
+      --shadow: 0 1px 3px rgba(15,22,35,0.07), 0 4px 12px rgba(15,22,35,0.04);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    button, input, textarea, select { font: inherit; }
+    a { color: inherit; text-decoration: none; }
+    .hidden { display: none !important; }
+
+    .shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 24px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow);
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .topbar h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .topbar p {
+      font-size: 13px;
+      color: var(--text-2);
+    }
+
+    .cluster-note {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      color: var(--text-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { background: var(--surface-2); color: var(--text); border-color: var(--border-hover); }
+    .btn:active { background: var(--surface-3); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover { background: #1447be; border-color: #1447be; color: #fff; }
+
+    .session-badge {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--text-2);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .panel-header::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-2);
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.12s;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .panel-body { padding: 24px; }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      margin-bottom: 4px;
+    }
+
+    .section-lead {
+      font-size: 13px;
+      color: var(--text-2);
+      margin-bottom: 20px;
+    }
+
+    /* ── Grid ── */
+    .grid-2col { display: grid; grid-template-columns: 380px 1fr; gap: 16px; }
+    .grid-3col { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    /* ── Form ── */
+    .form-stack { display: flex; flex-direction: column; gap: 12px; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      letter-spacing: 0.01em;
+    }
+
+    .field input, .field textarea, .field select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+    }
+
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-3); }
+    .field textarea { min-height: 90px; resize: vertical; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .toolbar.spread { justify-content: space-between; }
+
+    .toolbar input[type="text"] {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .toolbar input[type="text"]:focus { border-color: var(--accent); }
+    .toolbar input[type="text"]::placeholder { color: var(--text-3); }
+
+    .meta-text {
+      font-size: 12px;
+      color: var(--text-3);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* ── Table ── */
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th {
+      background: var(--surface-2);
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 11px 14px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface-2); }
+
+    .doc-name { font-weight: 500; font-size: 13px; margin-bottom: 2px; }
+    .doc-path { font-size: 11px; color: var(--text-3); font-family: 'IBM Plex Mono', monospace; }
+
+    /* ── Pills ── */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      border: 1px solid transparent;
+    }
+
+    .pill::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .ready { color: var(--ok); background: var(--ok-light); border-color: var(--ok-border); }
+    .partial { color: var(--warn); background: var(--warn-light); border-color: var(--warn-border); }
+    .pending { color: var(--warn); background: var(--warn-light); border-color: var(--warn-border); }
+    .missing, .failed, .offline, .error { color: var(--danger); background: var(--danger-light); border-color: var(--danger-border); }
+    .running, .queued { color: var(--accent); background: var(--accent-light); border-color: var(--accent-border); }
+
+    /* ── Jobs ── */
+    .job-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .job-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+      transition: border-color 0.12s;
+    }
+
+    .job-item:hover { border-color: var(--border-hover); }
+
+    .job-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .job-action {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .job-id {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: 'IBM Plex Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .job-detail {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 4px;
+    }
+
+    .job-time {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .progress-bar {
+      margin-top: 10px;
+      height: 4px;
+      background: var(--surface-3);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #6ea8fe);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    /* ── System ── */
+    .system-list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+    .system-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px;
+    }
+
+    .system-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .system-name { font-size: 14px; font-weight: 600; }
+    .system-port { font-size: 11px; color: var(--text-3); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+
+    .system-detail {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    /* ── Compare ── */
+    .compare-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 18px;
+    }
+
+    .compare-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .compare-rag { font-size: 14px; font-weight: 600; }
+
+    .compare-latency {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: 'IBM Plex Mono', monospace;
+      margin-bottom: 10px;
+    }
+
+    .compare-answer {
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .source-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .source-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 10px;
+    }
+
+    .source-item strong { font-size: 12px; display: block; margin-bottom: 2px; }
+    .source-item div { font-size: 11px; color: var(--text-3); font-family: 'IBM Plex Mono', monospace; }
+    .pagination { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Config ── */
+    .config-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+    /* ── Login ── */
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-card h2 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .login-card p {
+      font-size: 13px;
+      color: var(--text-2);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 12px;
+      background: var(--danger-light);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--r);
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .status-msg {
+      font-size: 12px;
+      color: var(--text-2);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    @media (max-width: 1100px) {
+      .grid-2col { grid-template-columns: 1fr; }
+      .grid-3col { grid-template-columns: 1fr; }
+      .config-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .shell { padding: 12px; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="shell hidden">
+    <div class="topbar">
+      <div>
+        <div id="brandBadge" class="brand-chip"></div>
+        <h1 id="brandTitle"></h1>
+        <p id="brandDescription"></p>
+        <p class="cluster-note">Admin dùng chung cho toàn cụm Baseline, Hybrid và GraphRAG.</p>
+      </div>
+      <div class="topbar-actions">
+        <a id="clientLink" class="btn" href="/">Giao diện người dùng</a>
+        <span id="sessionLabel" class="session-badge"></span>
+        <button id="logoutBtn" class="btn" type="button">Đăng xuất</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <button type="button" class="tab-btn active" data-section="documents">Tài liệu</button>
+        <button type="button" class="tab-btn" data-section="jobs">Tác vụ</button>
+        <button type="button" class="tab-btn" data-section="system">Hệ thống</button>
+        <button type="button" class="tab-btn" data-section="compare">So sánh</button>
+        <button type="button" class="tab-btn" data-section="config">Cấu hình runtime</button>
+      </div>
+
+      <div class="panel-body">
+
+        <div id="section-documents" class="section active">
+          <h2 class="section-title">Quản lý tài liệu</h2>
+          <p class="section-lead">Thêm/xóa tài liệu, xem trạng thái ingest, thời điểm cập nhật và kích hoạt reload toàn cụm.</p>
+          <div class="grid-2col">
+            <div class="card">
+              <div class="card-title">Thêm tài liệu</div>
+              <div class="form-stack">
+                <div class="field">
+                  <label for="displayName">Tên hiển thị</label>
+                  <input id="displayName" type="text" placeholder="Ví dụ: Quy chế tuyển sinh 2026">
+                </div>
+                <div class="field">
+                  <label for="linkInput">URL tài liệu web</label>
+                  <textarea id="linkInput" placeholder="Dán 1 URL hoặc markdown chứa URL"></textarea>
+                </div>
+                <div class="field">
+                  <label for="pdfInput">Hoặc chọn PDF</label>
+                  <input id="pdfInput" type="file" accept="application/pdf">
+                </div>
+                <div class="action-row">
+                  <button id="addDocBtn" class="btn btn-primary" type="button">Thêm tài liệu</button>
+                  <button id="reloadBtn" class="btn" type="button">Reload toàn cụm</button>
+                </div>
+                <p id="documentsStatus" class="status-msg"></p>
+              </div>
+            </div>
+
+            <div>
+              <div class="toolbar">
+                <input id="documentSearch" type="text" placeholder="Tìm tài liệu..." style="flex:1; min-width:200px;">
+                <button id="refreshDocumentsBtn" class="btn" type="button">Làm mới</button>
+                <span id="documentCounts" class="meta-text"></span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Tài liệu</th>
+                      <th>Loại</th>
+                      <th>Trạng thái</th>
+                      <th>Cập nhật</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="documentsTableBody"></tbody>
+                </table>
+              </div>
+              <div class="toolbar spread" style="margin-top:12px; margin-bottom:0;">
+                <span id="documentPaginationSummary" class="meta-text"></span>
+                <div class="pagination">
+                  <button id="documentsPrevBtn" class="btn" type="button">Trang trước</button>
+                  <span id="documentsPageLabel" class="meta-text"></span>
+                  <button id="documentsNextBtn" class="btn" type="button">Trang sau</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="section-jobs" class="section">
+          <h2 class="section-title">Theo dõi tác vụ</h2>
+          <p class="section-lead">Theo dõi trạng thái, stage, progress và kết quả của add/delete/reload.</p>
+          <div class="toolbar">
+            <button id="refreshJobsBtn" class="btn" type="button">Làm mới</button>
+          </div>
+          <div id="jobList" class="job-list"></div>
+        </div>
+
+        <div id="section-system" class="section">
+          <h2 class="section-title">Trạng thái hệ thống</h2>
+          <p class="section-lead">Theo dõi port, health, collection Qdrant, Neo4j graph ready và kết nối backend.</p>
+          <div class="toolbar">
+            <button id="refreshSystemBtn" class="btn" type="button">Làm mới</button>
+          </div>
+          <div id="systemList" class="system-list"></div>
+        </div>
+
+        <div id="section-compare" class="section">
+          <h2 class="section-title">So sánh 3 RAG</h2>
+          <p class="section-lead">Gửi cùng một câu hỏi tới Baseline, Hybrid và GraphRAG rồi xem kết quả theo bảng.</p>
+          <div class="toolbar">
+            <input id="compareQuestion" type="text" placeholder="Nhập câu hỏi so sánh..." style="flex:1; min-width:280px;">
+            <button id="runCompareBtn" class="btn btn-primary" type="button">So sánh</button>
+          </div>
+          <p id="compareStatus" class="status-msg" style="margin-bottom:14px;"></p>
+          <div id="compareGrid" class="grid-3col"></div>
+        </div>
+
+        <div id="section-config" class="section">
+          <h2 class="section-title">Cấu hình runtime</h2>
+          <p class="section-lead">Quản lý prompt/model/retrieval ở runtime qua file cấu hình dùng chung.</p>
+          <div class="toolbar">
+            <span class="meta-text">Áp dụng chung cho Baseline, Hybrid và GraphRAG</span>
+            <button id="refreshConfigBtn" class="btn" type="button">Làm mới</button>
+            <button id="saveConfigBtn" class="btn btn-primary" type="button">Lưu config</button>
+          </div>
+          <p id="configStatus" class="status-msg" style="margin-bottom:16px;"></p>
+          <div id="configForm" class="config-grid"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="loginRoot" class="login-wrap hidden"></div>
+
+  <script>
+    const APP_CONFIG = __ADMIN_UI_CONFIG__;
+    const appEl = document.getElementById("app");
+    const loginRoot = document.getElementById("loginRoot");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const sessionLabel = document.getElementById("sessionLabel");
+    const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+    const sections = {
+      documents: document.getElementById("section-documents"),
+      jobs: document.getElementById("section-jobs"),
+      system: document.getElementById("section-system"),
+      compare: document.getElementById("section-compare"),
+      config: document.getElementById("section-config")
+    };
+    let sessionInfo = null;
+    let currentDocuments = [];
+    let currentDocumentPage = 1;
+    let runtimeConfigPayload = null;
+    const COMPARE_STORAGE_KEY = `ntu_admin_compare_snapshot_${APP_CONFIG.current_rag_id || "shared"}`;
+    const DOCUMENTS_PAGE_SIZE = 5;
+
+    init();
+
+    function init() {
+      document.title = APP_CONFIG.page_title;
+      document.getElementById("brandBadge").textContent = APP_CONFIG.brand_badge;
+      document.getElementById("brandTitle").textContent = APP_CONFIG.brand_title;
+      document.getElementById("brandDescription").textContent = APP_CONFIG.brand_description;
+      document.getElementById("clientLink").href = APP_CONFIG.client_href;
+      bindEvents();
+      window.setInterval(() => { if (sessionInfo?.role === "admin") { loadJobs().catch(() => {}); } }, 5000);
+      window.setInterval(() => { if (sessionInfo?.role === "admin") { loadSystem().catch(() => {}); } }, 15000);
+      checkSession();
+    }
+
+    function bindEvents() {
+      logoutBtn.addEventListener("click", logout);
+      tabButtons.forEach((btn) => { btn.addEventListener("click", () => showSection(btn.dataset.section)); });
+      document.getElementById("refreshDocumentsBtn").addEventListener("click", loadDocuments);
+      document.getElementById("documentSearch").addEventListener("input", () => {
+        currentDocumentPage = 1;
+        renderDocuments();
+      });
+      document.getElementById("documentsPrevBtn").addEventListener("click", () => {
+        currentDocumentPage = Math.max(1, currentDocumentPage - 1);
+        renderDocuments();
+      });
+      document.getElementById("documentsNextBtn").addEventListener("click", () => {
+        currentDocumentPage = Math.min(getDocumentTotalPages(), currentDocumentPage + 1);
+        renderDocuments();
+      });
+      document.getElementById("addDocBtn").addEventListener("click", addDocument);
+      document.getElementById("reloadBtn").addEventListener("click", triggerReload);
+      document.getElementById("refreshJobsBtn").addEventListener("click", loadJobs);
+      document.getElementById("refreshSystemBtn").addEventListener("click", loadSystem);
+      document.getElementById("runCompareBtn").addEventListener("click", runCompare);
+      document.getElementById("refreshConfigBtn").addEventListener("click", loadRuntimeConfig);
+      document.getElementById("saveConfigBtn").addEventListener("click", saveRuntimeConfig);
+    }
+
+    async function checkSession() {
+      try {
+        const response = await fetch(APP_CONFIG.api_session_url, { credentials: "same-origin" });
+        const payload = await response.json();
+        if (!response.ok || !payload.authenticated) { renderLogin(); return; }
+        sessionInfo = payload.session;
+        if (sessionInfo.role !== "admin") { renderForbidden(); return; }
+        appEl.classList.remove("hidden");
+        loginRoot.classList.add("hidden");
+        sessionLabel.textContent = `${sessionInfo.display_name} · ${sessionInfo.role}`;
+        await Promise.all([loadDocuments(), loadJobs(), loadSystem(), loadRuntimeConfig()]);
+        restoreCompareSnapshot();
+        if (!document.getElementById("compareGrid").children.length) {
+          seedCompareSnapshot().catch(() => {});
+        }
+      } catch (error) {
+        renderLogin("Không kiểm tra được phiên đăng nhập.");
+      }
+    }
+
+    function renderLogin(message = "") {
+      appEl.classList.add("hidden");
+      loginRoot.classList.remove("hidden");
+      loginRoot.innerHTML = `
+        <div class="login-card">
+          <h2>Đăng nhập admin</h2>
+          <p>Giao diện quản trị dành riêng cho tài khoản quản trị. Người dùng thông thường chỉ nên dùng giao diện người dùng.</p>
+          ${message ? `<div class="error">${escapeHtml(message)}</div>` : ""}
+          <form id="loginForm" class="form-stack">
+            <div class="field">
+              <label>Tên đăng nhập</label>
+              <input id="loginUsername" type="text" autocomplete="username">
+            </div>
+            <div class="field">
+              <label>Mật khẩu</label>
+              <input id="loginPassword" type="password" autocomplete="current-password">
+            </div>
+            <button class="btn btn-primary" type="submit" style="margin-top:4px;">Đăng nhập</button>
+          </form>
+        </div>`;
+      document.getElementById("loginForm").addEventListener("submit", handleLogin);
+    }
+
+    function renderForbidden() {
+      appEl.classList.add("hidden");
+      loginRoot.classList.remove("hidden");
+      loginRoot.innerHTML = `
+        <div class="login-card">
+          <h2>Không đủ quyền</h2>
+          <p>Tài khoản hiện tại chỉ có quyền user. Hãy đăng xuất và đăng nhập bằng tài khoản admin để dùng trang quản trị.</p>
+          <button id="logoutOnlyBtn" class="btn btn-primary" type="button">Đăng xuất</button>
+        </div>`;
+      document.getElementById("logoutOnlyBtn").addEventListener("click", logout);
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const username = document.getElementById("loginUsername").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      try {
+        const response = await fetch(APP_CONFIG.api_login_url, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+        const payload = await response.json();
+        if (!response.ok) { throw new Error(payload.error || "Đăng nhập thất bại."); }
+        sessionInfo = payload.session;
+        if (sessionInfo.role !== "admin") { renderForbidden(); return; }
+        await checkSession();
+      } catch (error) {
+        renderLogin(error.message || "Đăng nhập thất bại.");
+      }
+    }
+
+    async function logout() {
+      await fetch(APP_CONFIG.api_logout_url, { method: "POST", credentials: "same-origin" }).catch(() => {});
+      sessionInfo = null;
+      renderLogin("Đã đăng xuất.");
+    }
+
+    function showSection(name) {
+      Object.entries(sections).forEach(([k, el]) => { el.classList.toggle("active", k === name); });
+      tabButtons.forEach((btn) => { btn.classList.toggle("active", btn.dataset.section === name); });
+    }
+
+    async function loadDocuments() {
+      setText("documentsStatus", "Đang tải danh sách tài liệu...");
+      const response = await fetch(APP_CONFIG.api_documents_url, { credentials: "same-origin" });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không tải được tài liệu."); }
+      currentDocuments = payload.documents || [];
+      currentDocumentPage = 1;
+      const counts = payload.counts || {};
+      setText("documentCounts", `Tổng ${counts.total || 0} · Web ${counts.web || 0} · PDF ${counts.pdf || 0}`);
+      setText("documentsStatus", "Đã cập nhật danh sách tài liệu.");
+      renderDocuments();
+    }
+
+    function renderDocuments() {
+      const keyword = document.getElementById("documentSearch").value.trim().toLowerCase();
+      const body = document.getElementById("documentsTableBody");
+      const rows = currentDocuments.filter((item) => {
+        if (!keyword) { return true; }
+        return [item.label, item.source_label, item.raw_relative_path, item.chunk_relative_path].join(" ").toLowerCase().includes(keyword);
+      });
+      body.innerHTML = rows.map((item) => `
+        <tr>
+          <td>
+            <div class="doc-name">${escapeHtml(item.label || "")}</div>
+            <div class="doc-path">${escapeHtml(item.source_label || item.raw_relative_path || "")}</div>
+            ${item.chunk_relative_path ? `<div class="doc-path">${escapeHtml(item.chunk_relative_path)}</div>` : ""}
+          </td>
+          <td style="font-size:12px; color:var(--text-2);">${escapeHtml(item.kind || "")}</td>
+          <td><span class="pill ${escapeHtml(item.ingest_status || "missing")}">${escapeHtml(item.ingest_status || "missing")}</span></td>
+          <td style="font-size:12px; color:var(--text-2); white-space:nowrap;">${formatTime(item.updated_at)}</td>
+          <td><button class="btn" type="button" style="font-size:12px; padding:5px 10px;" data-delete-id="${escapeHtml(item.id || "")}">Xóa</button></td>
+        </tr>`).join("");
+      body.querySelectorAll("[data-delete-id]").forEach((btn) => {
+        btn.addEventListener("click", () => deleteDocument(btn.dataset.deleteId));
+      });
+    }
+
+    function getFilteredDocuments() {
+      const keyword = document.getElementById("documentSearch").value.trim().toLowerCase();
+      return currentDocuments.filter((item) => {
+        if (!keyword) { return true; }
+        return [item.label, item.source_label, item.raw_relative_path, item.chunk_relative_path].join(" ").toLowerCase().includes(keyword);
+      });
+    }
+
+    function getDocumentTotalPages() {
+      return Math.max(1, Math.ceil(getFilteredDocuments().length / DOCUMENTS_PAGE_SIZE));
+    }
+
+    function renderDocuments() {
+      const body = document.getElementById("documentsTableBody");
+      const filteredRows = getFilteredDocuments();
+      const totalPages = Math.max(1, Math.ceil(filteredRows.length / DOCUMENTS_PAGE_SIZE));
+      currentDocumentPage = Math.min(currentDocumentPage, totalPages);
+      const startIndex = (currentDocumentPage - 1) * DOCUMENTS_PAGE_SIZE;
+      const rows = filteredRows.slice(startIndex, startIndex + DOCUMENTS_PAGE_SIZE);
+
+      if (!filteredRows.length) {
+        body.innerHTML = '<tr><td colspan="5" class="meta-text">Không có tài liệu nào phù hợp với bộ lọc hiện tại.</td></tr>';
+      } else {
+        body.innerHTML = rows.map((item) => `
+          <tr>
+            <td>
+              <div class="doc-name">${escapeHtml(item.label || "")}</div>
+              <div class="doc-path">${escapeHtml(item.source_label || item.raw_relative_path || "")}</div>
+              ${item.chunk_relative_path ? `<div class="doc-path">${escapeHtml(item.chunk_relative_path)}</div>` : ""}
+            </td>
+            <td style="font-size:12px; color:var(--text-2);">${escapeHtml(item.kind || "")}</td>
+            <td><span class="pill ${escapeHtml(item.ingest_status || "missing")}">${escapeHtml(item.ingest_status || "missing")}</span></td>
+            <td style="font-size:12px; color:var(--text-2); white-space:nowrap;">${formatTime(item.updated_at)}</td>
+            <td><button class="btn" type="button" style="font-size:12px; padding:5px 10px;" data-delete-id="${escapeHtml(item.id || "")}">Xóa</button></td>
+          </tr>`).join("");
+      }
+
+      setText(
+        "documentPaginationSummary",
+        filteredRows.length
+          ? `${startIndex + 1}-${Math.min(startIndex + rows.length, filteredRows.length)} / ${filteredRows.length} `
+          : "0 / 0 ",
+      );
+      setText("documentsPageLabel", `Trang ${currentDocumentPage}/${totalPages}`);
+      document.getElementById("documentsPrevBtn").disabled = currentDocumentPage <= 1;
+      document.getElementById("documentsNextBtn").disabled = currentDocumentPage >= totalPages;
+
+      body.querySelectorAll("[data-delete-id]").forEach((btn) => {
+        btn.addEventListener("click", () => deleteDocument(btn.dataset.deleteId));
+      });
+    }
+
+    async function addDocument() {
+      const displayName = document.getElementById("displayName").value.trim();
+      const linksText = document.getElementById("linkInput").value.trim();
+      const files = Array.from(document.getElementById("pdfInput").files || []);
+      if (!linksText && !files.length) { setText("documentsStatus", "Nhập 1 URL hoặc chọn 1 PDF."); return; }
+      setText("documentsStatus", "Đang thêm tài liệu...");
+      const pdfFiles = await Promise.all(files.map(async (file) => ({
+        name: file.name,
+        content_base64: await fileToBase64(file)
+      })));
+      const response = await fetch(APP_CONFIG.api_add_data_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ async_mode: true, display_name: displayName, links_text: linksText, pdf_files: pdfFiles })
+      });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không thêm được tài liệu."); }
+      setText("documentsStatus", `Đã tạo job ${payload.job_id}.`);
+      document.getElementById("displayName").value = "";
+      document.getElementById("linkInput").value = "";
+      document.getElementById("pdfInput").value = "";
+      await Promise.all([loadJobs(), loadDocuments()]);
+    }
+
+    async function deleteDocument(documentId) {
+      if (!window.confirm("Xóa tài liệu này khỏi corpus dùng chung?")) { return; }
+      setText("documentsStatus", "Đang tạo job xóa tài liệu...");
+      const response = await fetch(APP_CONFIG.api_delete_data_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ async_mode: true, documents: [{ id: documentId }] })
+      });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không xóa được tài liệu."); }
+      setText("documentsStatus", `Đã tạo job ${payload.job_id}.`);
+      await Promise.all([loadJobs(), loadDocuments()]);
+    }
+
+    async function triggerReload() {
+      setText("documentsStatus", "Đang tạo job reload toàn cụm...");
+      const response = await fetch(APP_CONFIG.api_reload_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ async_mode: true, full_reload: true })
+      });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không tạo được job reload."); }
+      setText("documentsStatus", `Đã tạo job ${payload.job_id}.`);
+      await loadJobs();
+    }
+
+    async function loadJobs() {
+      const response = await fetch(APP_CONFIG.api_job_url, { credentials: "same-origin" });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không tải được jobs."); }
+      const jobs = payload.jobs || [];
+      const list = document.getElementById("jobList");
+      list.innerHTML = jobs.map((job) => `
+        <div class="job-item">
+          <div class="job-head">
+            <div>
+              <div class="job-action">${escapeHtml(job.action || "")}</div>
+              <div class="job-id">Mã tác vụ: ${escapeHtml(job.job_id || "")}</div>
+            </div>
+            <span class="pill ${escapeHtml(job.status || "queued")}">${escapeHtml(job.status || "")}</span>
+          </div>
+          <div class="job-detail">Giai đoạn: ${escapeHtml(job.stage || "")} &nbsp;·&nbsp; Tiến độ: ${escapeHtml(String(job.progress ?? 0))}%</div>
+          ${job.detail ? `<div class="job-detail">${escapeHtml(job.detail)}</div>` : ""}
+          <div class="job-time">Tạo lúc: ${formatTime(job.created_at)} &nbsp;·&nbsp; Cập nhật: ${formatTime(job.updated_at)}</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${Math.max(0, Math.min(100, Number(job.progress || 0)))}%"></div></div>
+        </div>`).join("") || '<p style="color:var(--text-3); font-size:13px;">Chưa có job nào.</p>';
+    }
+
+    async function loadSystem() {
+      const response = await fetch(APP_CONFIG.api_system_url, { credentials: "same-origin" });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không tải được trạng thái hệ thống."); }
+      const systems = payload.systems || {};
+      const list = document.getElementById("systemList");
+      list.innerHTML = Object.entries(systems).map(([ragId, item]) => `
+        <div class="system-card">
+          <div class="system-head">
+            <div>
+              <div class="system-name">${escapeHtml(ragId)}</div>
+              <div class="system-port">Port: ${escapeHtml(String(item.port ?? ""))}</div>
+            </div>
+            <span class="pill ${escapeHtml(item.health || "offline")}">${escapeHtml(item.health || "unknown")}</span>
+          </div>
+          <div class="system-detail">Backend: ${escapeHtml(item.backend_url || "")}</div>
+          <div class="system-detail">Collection: ${escapeHtml(item.collection || "-")} · Điểm dữ liệu: ${escapeHtml(String(item.point_count ?? "-"))}</div>
+          <div class="system-detail">Graph sẵn sàng: ${escapeHtml(String(item.graph_ready ?? "-"))} · Facts: ${escapeHtml(String(item.fact_count ?? "-"))}</div>
+          ${item.message || item.error ? `<div class="system-detail" style="color:var(--text-3);">${escapeHtml(item.message || item.error)}</div>` : ""}
+        </div>`).join("");
+    }
+
+    async function runCompare() {
+      const question = document.getElementById("compareQuestion").value.trim();
+      if (!question) { setText("compareStatus", "Nhập câu hỏi để so sánh."); return; }
+      setText("compareStatus", "Đang gọi 3 backend...");
+      const response = await fetch(APP_CONFIG.api_compare_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không so sánh được."); }
+      setText("compareStatus", `Kết quả cho: "${question}"`);
+      const grid = document.getElementById("compareGrid");
+      grid.innerHTML = Object.entries(payload.results || {}).map(([ragId, item]) => `
+        <div class="compare-card">
+          <div class="compare-head">
+            <span class="compare-rag">${escapeHtml(ragId)}</span>
+            <span class="pill ${escapeHtml(item.status || "error")}">${escapeHtml(item.status || "")}</span>
+          </div>
+          <div class="compare-latency">Độ trễ: ${escapeHtml(String(item.latency_ms ?? "-"))} ms</div>
+          <div class="compare-answer">${escapeHtml(item.answer || item.error || "")}</div>
+          <div class="source-list">${(item.sources || []).slice(0, 3).map((source) => `
+            <div class="source-item">
+              <strong>${escapeHtml(source.source || source.relative_path || "source")}</strong>
+              <div>${escapeHtml(source.relative_path || source.heading_path || "")}</div>
+            </div>`).join("")}</div>
+        </div>`).join("");
+      try {
+        localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify({
+          question,
+          statusText: document.getElementById("compareStatus").textContent,
+          gridHtml: grid.innerHTML
+        }));
+      } catch (error) {}
+    }
+
+    function restoreCompareSnapshot() {
+      try {
+        const raw = localStorage.getItem(COMPARE_STORAGE_KEY);
+        if (!raw) { return; }
+        const payload = JSON.parse(raw);
+        if (!payload || !payload.gridHtml) { return; }
+        document.getElementById("compareQuestion").value = String(payload.question || "");
+        document.getElementById("compareStatus").textContent = String(payload.statusText || "");
+        document.getElementById("compareGrid").innerHTML = String(payload.gridHtml || "");
+      } catch (error) {}
+    }
+
+    async function seedCompareSnapshot() {
+      const input = document.getElementById("compareQuestion");
+      if (!input.value.trim()) {
+        input.value = "Mã trường Đại học Nha Trang là gì?";
+      }
+      await runCompare();
+    }
+
+    async function loadRuntimeConfig() {
+      const response = await fetch(APP_CONFIG.api_runtime_config_url, { credentials: "same-origin" });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không tải được runtime config."); }
+      runtimeConfigPayload = payload;
+      setText("configStatus", "");
+      renderConfigForm();
+    }
+
+    function renderConfigForm() {
+      if (!runtimeConfigPayload) { return; }
+      const scope = runtimeConfigPayload.effective_scope || "shared";
+      const fields = runtimeConfigPayload.definitions?.[scope] || [];
+      const values = runtimeConfigPayload.current_values || runtimeConfigPayload.scopes?.[scope] || {};
+      const form = document.getElementById("configForm");
+      form.innerHTML = fields.map((field) => {
+        const value = values[field.key] ?? "";
+        const isMultiline = field.type === "multiline";
+        const placeholder = field.key === "llm_seed" ? "Không đặt (None)" : field.key;
+        return `
+          <div class="field${isMultiline ? '" style="grid-column:1/-1' : ''}">
+            <label for="cfg-${escapeHtml(field.key)}">${escapeHtml(field.label)}</label>
+            ${isMultiline
+              ? `<textarea id="cfg-${escapeHtml(field.key)}" data-config-key="${escapeHtml(field.key)}">${escapeHtml(String(value))}</textarea>`
+              : `<input id="cfg-${escapeHtml(field.key)}" data-config-key="${escapeHtml(field.key)}" value="${escapeHtml(String(value))}" placeholder="${escapeHtml(placeholder)}">`}
+          </div>`;
+      }).join("");
+    }
+
+    async function saveRuntimeConfig() {
+      const scope = runtimeConfigPayload?.effective_scope || "shared";
+      const values = {};
+      document.querySelectorAll("[data-config-key]").forEach((input) => { values[input.dataset.configKey] = input.value; });
+      const response = await fetch(APP_CONFIG.api_runtime_config_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope, values })
+      });
+      const payload = await response.json();
+      if (!response.ok) { throw new Error(payload.error || "Không lưu được runtime config."); }
+      runtimeConfigPayload = payload;
+      setText("configStatus", "Đã lưu cấu hình runtime.");
+      renderConfigForm();
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          resolve(result.includes(",") ? result.split(",", 2)[1] : result);
+        };
+        reader.onerror = () => reject(new Error(`Không đọc được file ${file.name}.`));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function setText(id, text) { document.getElementById(id).textContent = text; }
+
+    function formatTime(value) {
+      if (!value) { return "-"; }
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) { return String(value); }
+      return new Date(numeric * 1000).toLocaleString("vi-VN");
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+  </script>
+</body>
+</html>

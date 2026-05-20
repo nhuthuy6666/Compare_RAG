@@ -303,6 +303,7 @@ def _iter_batches(items: list[dict[str, Any]], batch_size: int):
         yield items[start : start + batch_size]
 
 
+## Xóa toàn bộ Fact và Chunk gắn với tập `relative_path` vừa bị thay đổi hoặc xóa.
 def _delete_paths(tx, relative_paths: list[str]) -> None:
     tx.run(
                 (
@@ -326,6 +327,7 @@ def _delete_paths(tx, relative_paths: list[str]) -> None:
     )
 
 
+## Dọn các Entity không còn liên kết với Fact nào sau khi xóa dữ liệu cũ.
 def _delete_orphan_entities(tx) -> None:
     tx.run(
                 (
