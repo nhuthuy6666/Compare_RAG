@@ -146,6 +146,21 @@
     .btn-primary:hover { opacity: 0.88; }
     .btn-primary:active { transform: scale(0.98); }
 
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      padding: 10px 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      font-size: 13px;
+    }
+
+    .btn-danger:hover { opacity: 0.88; }
+    .btn-danger:active { transform: scale(0.98); }
+
     .btn-secondary {
       background: var(--surface-2);
       color: var(--text-2);
@@ -397,47 +412,231 @@
     .chip:hover { background: var(--surface-3); color: var(--text); border-color: var(--border-hover); }
 
     .login-card {
-      max-width: 400px;
+      width: min(460px, calc(100% - 32px));
       margin: auto;
-      padding: 32px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+      padding: 34px;
+      background:
+        radial-gradient(circle at top right, rgba(78,155,255,0.12), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.015), transparent 100%),
+        var(--surface);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    }
+
+    .auth-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(78,155,255,0.18);
+      background: rgba(78,155,255,0.08);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .auth-kicker::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 12px currentColor;
     }
 
     .login-card h3 {
-      font-size: 20px;
-      font-weight: 500;
+      font-size: 26px;
+      font-weight: 600;
       letter-spacing: -0.02em;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .login-card p {
       font-size: 13px;
       color: var(--text-2);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       line-height: 1.6;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 4px;
+      background: rgba(78,155,255,0.06);
+      border: 1px solid rgba(78,155,255,0.12);
+      border-radius: 14px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      background: rgba(78,155,255,0.08);
+      color: var(--accent);
+      border: 1px solid rgba(78,155,255,0.14);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .auth-tab:hover { background: rgba(78,155,255,0.16); color: #dcecff; border-color: rgba(78,155,255,0.24); }
+    .auth-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: rgba(78,155,255,0.42);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
     }
 
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 11px;
     }
 
     .login-form input {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
       color: var(--text);
-      padding: 10px 12px;
+      padding: 12px 14px;
       font-size: 13px;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     }
 
-    .login-form input:focus { border-color: var(--accent); }
+    .login-form input:hover { background: rgba(255,255,255,0.04); }
+    .login-form input:focus {
+      border-color: rgba(78,155,255,0.45);
+      box-shadow: 0 0 0 3px rgba(78,155,255,0.14);
+      background: rgba(255,255,255,0.05);
+    }
     .login-form input::placeholder { color: var(--text-3); }
+
+    .auth-submit {
+      width: 100%;
+      margin-top: 4px;
+      padding: 11px 14px;
+      border-radius: 14px;
+    }
+
+    .notice {
+      font-size: 12px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .notice.error {
+      color: #f08080;
+      background: rgba(224,82,82,0.08);
+      border-color: rgba(224,82,82,0.2);
+    }
+
+    .notice.success {
+      color: #b3f0ca;
+      background: rgba(62,207,122,0.1);
+      border-color: rgba(62,207,122,0.24);
+    }
+
+    .notice a {
+      color: inherit;
+      text-decoration: underline;
+    }
+
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      background: rgba(6,10,16,0.56);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+    }
+
+    .modal-card {
+      width: min(460px, 100%);
+      background:
+        radial-gradient(circle at top right, rgba(78,155,255,0.12), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.018), transparent 100%),
+        var(--surface);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+      padding: 24px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .modal-head h3 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .modal-head p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .icon-btn {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-2);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .icon-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+    .account-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .account-section {
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .account-section:first-child {
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .account-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .account-section p {
+      font-size: 12px;
+      color: var(--text-2);
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
 
     .error { color: #f08080; font-size: 12px; padding: 8px 12px; background: rgba(224,82,82,0.08); border-radius: var(--r); border: 1px solid rgba(224,82,82,0.2); }
     .ok-msg { color: var(--ok); font-size: 12px; }
@@ -651,6 +850,7 @@
       .sidebar { max-height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
       .row { padding: 4px 16px; }
       .header { padding: 14px 18px; }
+      .login-card { width: min(100%, calc(100% - 24px)); padding: 24px; }
     }
   </style>
 </head>
@@ -683,6 +883,7 @@
         </div>
         <div class="header-right">
           <span id="sessionLabel" class="session-badge"></span>
+          <button id="accountBtn" class="btn-secondary hidden" type="button">Tài khoản</button>
           <button id="logoutBtn" class="btn-ghost hidden" type="button">Đăng xuất</button>
         </div>
       </header>
@@ -705,6 +906,7 @@
       </footer>
     </main>
   </div>
+  <div id="accountRoot" class="modal-root hidden"></div>
 
   <script>
     const APP_CONFIG = __CHAT_UI_CONFIG__;
@@ -717,12 +919,20 @@
     const statusLine = document.getElementById("statusLine");
     const historySearchEl = document.getElementById("historySearch");
     const logoutBtn = document.getElementById("logoutBtn");
+    const accountBtn = document.getElementById("accountBtn");
+    const accountRoot = document.getElementById("accountRoot");
     const adminLink = document.getElementById("adminLink");
     let currentSession = null;
     let sessions = [];
     let activeSessionId = "";
     let sessionInfo = null;
     let isSending = false;
+    let authMode = "login";
+    let authMessage = "";
+    let authMessageType = "error";
+    let pendingIdentifier = "";
+    let verificationLink = "";
+    let selfServiceEnabled = false;
 
     init();
 
@@ -764,6 +974,7 @@
       });
       inputEl.addEventListener("input", autoResize);
       historySearchEl.addEventListener("input", renderHistory);
+      accountBtn.addEventListener("click", openAccountPanel);
       logoutBtn.addEventListener("click", logout);
     }
 
@@ -773,10 +984,14 @@
         const payload = await response.json();
         if (!response.ok || !payload.authenticated) {
           sessionInfo = null;
+          selfServiceEnabled = false;
           renderLogin();
           return;
         }
         sessionInfo = payload.session;
+        selfServiceEnabled = Boolean(payload.self_service_enabled);
+        authMessage = "";
+        verificationLink = "";
         loadState();
         renderApp();
       } catch (error) {
@@ -798,29 +1013,54 @@
       });
     }
 
-    function renderLogin(message = "") {
-      const error = message ? `<p class="error">${escapeHtml(message)}</p>` : "";
+    function renderLogin(message = authMessage, mode = authMode, messageType = authMessageType, link = verificationLink) {
+      authMode = mode;
+      authMessage = message || "";
+      authMessageType = messageType || "error";
+      verificationLink = link || "";
+      const notice = authMessage
+        ? `<div class="notice ${escapeHtml(authMessageType)}">${escapeHtml(authMessage)}${verificationLink ? ` <a href="${escapeHtml(verificationLink)}" target="_blank" rel="noreferrer">Mở liên kết xác thực</a>` : ""}</div>`
+        : "";
       messagesEl.innerHTML = `
         <div class="login-card">
-          <h3>Đăng nhập</h3>
-          <p>Giao diện người dùng dành cho user hoặc admin. Admin có thể chuyển sang trang quản trị riêng sau khi đăng nhập.</p>
-          ${error}
-          <form id="loginForm" class="login-form">
-            <input id="loginUsername" type="text" placeholder="Tên đăng nhập" autocomplete="username">
+          <div class="auth-kicker">NTU Client Access</div>
+          <div class="auth-tabs">
+            <button id="loginTabBtn" class="auth-tab ${authMode === "login" ? "active" : ""}" type="button">Đăng nhập</button>
+            <button id="registerTabBtn" class="auth-tab ${authMode === "register" ? "active" : ""}" type="button">Đăng ký</button>
+          </div>
+          <h3>${authMode === "register" ? "Tạo tài khoản mới" : "Đăng nhập vào NTU Bot"}</h3>
+          ${notice}
+          <form id="loginForm" class="login-form ${authMode === "login" ? "" : "hidden"}">
+            <input id="loginUsername" type="text" placeholder="Email hoặc tên đăng nhập" autocomplete="username">
             <input id="loginPassword" type="password" placeholder="Mật khẩu" autocomplete="current-password">
-            <button class="btn-primary" type="submit">Đăng nhập</button>
+            <button class="btn-primary auth-submit" type="submit">Đăng nhập</button>
+          </form>
+          <form id="registerForm" class="login-form ${authMode === "register" ? "" : "hidden"}">
+            <input id="registerDisplayName" type="text" placeholder="Tên hiển thị" autocomplete="name">
+            <input id="registerEmail" type="email" placeholder="Email" autocomplete="email">
+            <input id="registerPassword" type="password" placeholder="Mật khẩu (ít nhất 8 ký tự)" autocomplete="new-password">
+            <input id="registerPasswordConfirm" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+            <button class="btn-primary auth-submit" type="submit">Đăng ký và gửi email xác thực</button>
           </form>
         </div>`;
+      document.getElementById("loginTabBtn").addEventListener("click", () => renderLogin("", "login", "error", ""));
+      document.getElementById("registerTabBtn").addEventListener("click", () => renderLogin("", "register", "error", ""));
       document.getElementById("loginForm").addEventListener("submit", handleLogin);
+      document.getElementById("registerForm").addEventListener("submit", handleRegister);
+      document.getElementById("loginUsername").value = pendingIdentifier;
+      document.getElementById("registerEmail").value = pendingIdentifier;
       historyListEl.innerHTML = "";
       document.getElementById("sessionLabel").textContent = "Chưa đăng nhập";
+      accountBtn.classList.add("hidden");
       logoutBtn.classList.add("hidden");
+      closeAccountPanel();
     }
 
     async function handleLogin(event) {
       event.preventDefault();
       const username = document.getElementById("loginUsername").value.trim();
       const password = document.getElementById("loginPassword").value;
+      pendingIdentifier = username;
       try {
         const response = await fetch(APP_CONFIG.api_login_url, {
           method: "POST",
@@ -831,19 +1071,54 @@
         const payload = await response.json();
         if (!response.ok) { throw new Error(payload.error || "Đăng nhập thất bại."); }
         sessionInfo = payload.session;
+        selfServiceEnabled = sessionInfo.account_type === "registered" && Boolean(sessionInfo.email);
+        authMessage = "";
+        verificationLink = "";
         loadState();
         renderApp();
       } catch (error) {
-        renderLogin(error.message || "Đăng nhập thất bại.");
+        renderLogin(error.message || "Đăng nhập thất bại.", "login", "error", "");
+      }
+    }
+
+    async function handleRegister(event) {
+      event.preventDefault();
+      const displayName = document.getElementById("registerDisplayName").value.trim();
+      const email = document.getElementById("registerEmail").value.trim();
+      const password = document.getElementById("registerPassword").value;
+      const passwordConfirm = document.getElementById("registerPasswordConfirm").value;
+      pendingIdentifier = email;
+      if (!email) {
+        renderLogin("Vui lòng nhập email.", "register", "error", "");
+        return;
+      }
+      if (password !== passwordConfirm) {
+        renderLogin("Mật khẩu xác nhận không khớp.", "register", "error", "");
+        return;
+      }
+      try {
+        const response = await fetch(APP_CONFIG.api_register_url, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, display_name: displayName })
+        });
+        const payload = await response.json();
+        if (!response.ok) { throw new Error(payload.error || "Đăng ký thất bại."); }
+        renderLogin(payload.message || "Đăng ký thành công.", "login", "success", payload.verification_link || "");
+      } catch (error) {
+        renderLogin(error.message || "Đăng ký thất bại.", "register", "error", "");
       }
     }
 
     async function logout() {
       await fetch(APP_CONFIG.api_logout_url, { method: "POST", credentials: "same-origin" }).catch(() => {});
       sessionInfo = null;
+      selfServiceEnabled = false;
       sessions = [];
       activeSessionId = "";
-      renderLogin("Đã đăng xuất.");
+      closeAccountPanel();
+      renderLogin("Đã đăng xuất.", "login", "success", "");
     }
 
     function storageKey() {
@@ -876,11 +1151,133 @@
     }
 
     function renderApp() {
+      accountBtn.classList.remove("hidden");
       logoutBtn.classList.remove("hidden");
       document.getElementById("sessionLabel").textContent = `${sessionInfo.display_name} · ${sessionInfo.role}`;
       renderHistory();
       renderMessages();
       autoResize();
+    }
+
+    function openAccountPanel() {
+      if (!sessionInfo) { return; }
+      const supportsSelfService = selfServiceEnabled && sessionInfo.account_type === "registered";
+      const accountDetails = [
+        sessionInfo.username ? `TÃªn Ä‘Äƒng nháº­p: ${escapeHtml(sessionInfo.username)}` : "",
+        sessionInfo.email && sessionInfo.email !== sessionInfo.username ? `Email: ${escapeHtml(sessionInfo.email)}` : ""
+      ].filter(Boolean).join("<br>");
+      accountRoot.classList.remove("hidden");
+      accountRoot.innerHTML = `
+        <div class="modal-card">
+          <div class="modal-head">
+            <div>
+              <h3>Tài khoản</h3>
+              <p>${escapeHtml(sessionInfo.display_name || "")} · ${escapeHtml(sessionInfo.role || "")}</p>
+            </div>
+            <button id="closeAccountBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
+          </div>
+          <div id="accountStatus" class="notice hidden"></div>
+          <div class="account-stack">
+            <div class="account-section">
+              <h4>Thông tin đăng nhập</h4>
+              <p>${accountDetails || escapeHtml(sessionInfo.email || sessionInfo.username || "")}</p>
+            </div>
+            ${supportsSelfService ? `
+              <div class="account-section">
+                <h4>Đổi mật khẩu</h4>
+                <p>Cập nhật mật khẩu cho tài khoản hiện tại.</p>
+                <form id="changePasswordForm" class="login-form">
+                  <input id="currentPassword" type="password" placeholder="Mật khẩu hiện tại" autocomplete="current-password">
+                  <input id="newPassword" type="password" placeholder="Mật khẩu mới" autocomplete="new-password">
+                  <input id="confirmNewPassword" type="password" placeholder="Nhập lại mật khẩu mới" autocomplete="new-password">
+                  <button class="btn-primary auth-submit" type="submit">Đổi mật khẩu</button>
+                </form>
+              </div>
+              <div class="account-section">
+                <h4>Xóa tài khoản</h4>
+                <p>Xóa vĩnh viễn tài khoản email hiện tại khỏi hệ thống.</p>
+                <form id="deleteAccountForm" class="login-form">
+                  <input id="deletePassword" type="password" placeholder="Nhập mật khẩu để xác nhận" autocomplete="current-password">
+                  <button class="btn-danger auth-submit" type="submit">Xóa tài khoản</button>
+                </form>
+              </div>` : `
+              <div class="account-section">
+                <h4>Quản lý tài khoản</h4>
+                <p>Tài khoản hệ thống chỉ hỗ trợ đăng nhập. Tùy chọn đổi mật khẩu và xóa tài khoản áp dụng cho tài khoản đăng ký qua email.</p>
+              </div>
+            `}
+          </div>
+        </div>`;
+      accountRoot.onclick = handleAccountBackdropClick;
+      document.getElementById("closeAccountBtn").addEventListener("click", closeAccountPanel);
+      if (supportsSelfService) {
+        document.getElementById("changePasswordForm").addEventListener("submit", handleChangePassword);
+        document.getElementById("deleteAccountForm").addEventListener("submit", handleDeleteAccount);
+      }
+    }
+
+    function closeAccountPanel() {
+      accountRoot.classList.add("hidden");
+      accountRoot.innerHTML = "";
+      accountRoot.onclick = null;
+    }
+
+    function handleAccountBackdropClick(event) {
+      if (event.target === accountRoot) { closeAccountPanel(); }
+    }
+
+    function setAccountStatus(message = "", type = "error") {
+      const statusEl = document.getElementById("accountStatus");
+      if (!statusEl) { return; }
+      if (!message) {
+        statusEl.className = "notice hidden";
+        statusEl.textContent = "";
+        return;
+      }
+      statusEl.className = `notice ${type}`;
+      statusEl.textContent = message;
+    }
+
+    async function handleChangePassword(event) {
+      event.preventDefault();
+      const currentPassword = document.getElementById("currentPassword").value;
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmNewPassword = document.getElementById("confirmNewPassword").value;
+      if (newPassword !== confirmNewPassword) {
+        setAccountStatus("Mật khẩu mới xác nhận không khớp.", "error");
+        return;
+      }
+      const response = await fetch(APP_CONFIG.api_change_password_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setAccountStatus(payload.error || "Không đổi được mật khẩu.", "error");
+        return;
+      }
+      setAccountStatus(payload.message || "Đổi mật khẩu thành công.", "success");
+      event.target.reset();
+    }
+
+    async function handleDeleteAccount(event) {
+      event.preventDefault();
+      const password = document.getElementById("deletePassword").value;
+      const response = await fetch(APP_CONFIG.api_delete_account_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setAccountStatus(payload.error || "Không xóa được tài khoản.", "error");
+        return;
+      }
+      closeAccountPanel();
+      await logout();
     }
 
     function renderHistory() {

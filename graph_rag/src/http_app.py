@@ -9,7 +9,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock, Thread
 from types import SimpleNamespace
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -21,10 +21,11 @@ from ingest import _load_records, _run_ingest_pipeline, sync_shared_chunk_change
 from llamaindex_shared import (
     AdminUiConfig,
     ChatUiConfig,
-    authenticate_user,
+    authenticate_user_with_status,
     build_admin_ui_url,
     build_chat_ui_tabs,
     build_cluster_server_urls,
+    change_password_for_session,
     build_logout_cookie,
     build_runtime_config_payload,
     build_session_cookie,
@@ -32,7 +33,7 @@ from llamaindex_shared import (
     compare_cluster_answers,
     create_job,
     delete_corpus_documents,
-    get_default_accounts_hint,
+    delete_account_for_session,
     get_job,
     has_role,
     is_internal_cluster_request,
@@ -41,10 +42,14 @@ from llamaindex_shared import (
     load_document_ids_from_payload,
     post_json,
     read_session_from_cookie,
+    register_email_user,
     render_admin_ui,
     render_chat_ui,
+    render_email_verification_result,
     set_job_progress,
+    supports_self_service_account,
     update_runtime_scope,
+    verify_email_token,
     wait_for_job,
     add_corpus_documents,
 )
@@ -449,6 +454,9 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         if parsed.path == "/":
             self._send_html(load_ui_html())
             return
+        if parsed.path == "/verify-email":
+            self._handle_verify_email_request(parsed.query)
+            return
         if parsed.path == "/admin":
             self._redirect(build_admin_ui_url())
             return
@@ -500,6 +508,15 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/auth/login":
             self._handle_login_request()
             return
+        if parsed.path == "/api/auth/register":
+            self._handle_register_request()
+            return
+        if parsed.path == "/api/auth/change-password":
+            self._handle_change_password_request()
+            return
+        if parsed.path == "/api/auth/delete-account":
+            self._handle_delete_account_request()
+            return
         if parsed.path == "/api/auth/logout":
             self._handle_logout_request()
             return
@@ -542,7 +559,7 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             {
                 "authenticated": session is not None,
                 "session": session,
-                "accounts_hint": get_default_accounts_hint(),
+                "self_service_enabled": supports_self_service_account(session),
             }
         )
 
@@ -551,15 +568,93 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
         payload = self._read_json_payload()
         if payload is None:
             return
-        account = authenticate_user(str(payload.get("username") or ""), str(payload.get("password") or ""))
-        if account is None:
-            self._send_json({"error": "Sai tên đăng nhập hoặc mật khẩu."}, status=HTTPStatus.UNAUTHORIZED)
+        result = authenticate_user_with_status(str(payload.get("username") or ""), str(payload.get("password") or ""))
+        account = result.get("account")
+        if not isinstance(account, dict):
+            self._send_json(
+                {"error": str(result.get("message") or "Sai tên đăng nhập hoặc mật khẩu.")},
+                status=HTTPStatus.UNAUTHORIZED,
+            )
             return
         self._send_json({"authenticated": True, "session": account}, headers={"Set-Cookie": build_session_cookie(account)})
+
+    # Helper cho `handle_register_request` trong module nay.
+    def _handle_register_request(self) -> None:
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+        try:
+            result = register_email_user(
+                email=str(payload.get("email") or ""),
+                password=str(payload.get("password") or ""),
+                display_name=str(payload.get("display_name") or ""),
+                verification_base_url=self._build_absolute_url("/verify-email"),
+            )
+        except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            return
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
+        self._send_json(result, status=HTTPStatus.CREATED)
 
     # Helper cho `handle_logout_request` trong module nay.
     def _handle_logout_request(self) -> None:
         self._send_json({"authenticated": False}, headers={"Set-Cookie": build_logout_cookie()})
+
+    # Helper cho `handle_change_password_request` trong module nay.
+    def _handle_change_password_request(self) -> None:
+        if not self._require_role("user"):
+            return
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+        try:
+            result = change_password_for_session(
+                self._get_session(),
+                current_password=str(payload.get("current_password") or ""),
+                new_password=str(payload.get("new_password") or ""),
+            )
+        except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            return
+        self._send_json(result)
+
+    # Helper cho `handle_delete_account_request` trong module nay.
+    def _handle_delete_account_request(self) -> None:
+        if not self._require_role("user"):
+            return
+        payload = self._read_json_payload()
+        if payload is None:
+            return
+        try:
+            result = delete_account_for_session(
+                self._get_session(),
+                password=str(payload.get("password") or ""),
+            )
+        except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            return
+        self._send_json(result, headers={"Set-Cookie": build_logout_cookie()})
+
+    # Helper cho `handle_verify_email_request` trong module nay.
+    def _handle_verify_email_request(self, raw_query: str) -> None:
+        query = parse_qs(raw_query or "")
+        token = str((query.get("token") or [""])[0] or "").strip()
+        try:
+            result = verify_email_token(token)
+            self._send_html(
+                render_email_verification_result(
+                    success=True,
+                    message=str(result.get("message") or "Xác thực email thành công."),
+                    login_href="/",
+                )
+            )
+        except Exception as exc:
+            self._send_html(
+                render_email_verification_result(success=False, message=str(exc), login_href="/"),
+                status=HTTPStatus.BAD_REQUEST,
+            )
 
     # Helper cho `handle_chat_request` trong module nay.
     def _handle_chat_request(self) -> None:
@@ -733,6 +828,14 @@ class ChatHTTPRequestHandler(BaseHTTPRequestHandler):
             self._send_json({"error": f"Không tải được trạng thái hệ thống. Chi tiết: {exc}"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
             return
         self._send_json(payload)
+
+    # Helper cho `build_absolute_url` trong module nay.
+    def _build_absolute_url(self, path: str) -> str:
+        forwarded_proto = str(self.headers.get("X-Forwarded-Proto") or "").strip()
+        scheme = forwarded_proto or "http"
+        host = str(self.headers.get("Host") or f"{DEFAULT_HOST}:{resolve_server_port()}").strip()
+        normalized_path = path if str(path or "").startswith("/") else f"/{path}"
+        return f"{scheme}://{host}{normalized_path}"
 
     # Lay `session` cho luong xu ly hien tai.
     def _get_session(self) -> dict[str, str] | None:

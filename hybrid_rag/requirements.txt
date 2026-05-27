@@ -3,3 +3,4 @@ llama-index-core
 llama-index-vector-stores-qdrant
 fastembed
 python-dotenv
+bcrypt

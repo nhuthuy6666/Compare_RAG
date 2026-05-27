@@ -143,6 +143,14 @@
 
     .btn-primary:hover { background: #1447be; border-color: #1447be; color: #fff; }
 
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
+    }
+
+    .btn-danger:hover { background: #b42318; border-color: #b42318; color: #fff; }
+
     .session-badge {
       background: var(--surface-2);
       border: 1px solid var(--border);
@@ -498,29 +506,59 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
+      background:
+        radial-gradient(circle at top, rgba(26,86,219,0.12), transparent 34%),
+        linear-gradient(180deg, #f4f7fb 0%, #eef2f8 100%);
     }
 
     .login-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r-lg);
-      box-shadow: var(--shadow);
-      padding: 32px;
+      background:
+        radial-gradient(circle at top right, rgba(26,86,219,0.12), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.98)),
+        var(--surface);
+      border: 1px solid rgba(195,208,245,0.8);
+      border-radius: 22px;
+      box-shadow: 0 28px 80px rgba(15,22,35,0.12);
+      padding: 34px;
       width: 100%;
-      max-width: 400px;
+      max-width: 440px;
+    }
+
+    .auth-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-border);
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .auth-kicker::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
     }
 
     .login-card h2 {
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 600;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
     }
 
     .login-card p {
       font-size: 13px;
       color: var(--text-2);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
       line-height: 1.6;
     }
 
@@ -529,9 +567,113 @@
       font-size: 12px;
       background: var(--danger-light);
       border: 1px solid var(--danger-border);
-      border-radius: var(--r);
-      padding: 8px 12px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .info {
+      color: var(--text-2);
+      font-size: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+
+    .login-card .field input {
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .auth-submit {
+      width: 100%;
+      margin-top: 4px;
+      border-radius: 14px;
+      justify-content: center;
+      padding: 11px 14px;
+    }
+
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,18,30,0.45);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+    }
+
+    .modal-card {
+      width: min(460px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 28px 80px rgba(15,22,35,0.18);
+      padding: 24px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .modal-head h3 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .modal-head p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-2);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .account-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .account-section {
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .account-section:first-child {
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .account-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .account-section p {
+      font-size: 12px;
+      color: var(--text-2);
       margin-bottom: 12px;
+      line-height: 1.6;
     }
 
     .action-row {
@@ -572,6 +714,7 @@
       <div class="topbar-actions">
         <a id="clientLink" class="btn" href="/">Giao diện người dùng</a>
         <span id="sessionLabel" class="session-badge"></span>
+        <button id="accountBtn" class="btn" type="button">Tài khoản</button>
         <button id="logoutBtn" class="btn" type="button">Đăng xuất</button>
       </div>
     </div>
@@ -692,11 +835,14 @@
   </div>
 
   <div id="loginRoot" class="login-wrap hidden"></div>
+  <div id="accountRoot" class="modal-root hidden"></div>
 
   <script>
     const APP_CONFIG = __ADMIN_UI_CONFIG__;
     const appEl = document.getElementById("app");
     const loginRoot = document.getElementById("loginRoot");
+    const accountRoot = document.getElementById("accountRoot");
+    const accountBtn = document.getElementById("accountBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const sessionLabel = document.getElementById("sessionLabel");
     const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
@@ -708,6 +854,7 @@
       config: document.getElementById("section-config")
     };
     let sessionInfo = null;
+    let selfServiceEnabled = false;
     let currentDocuments = [];
     let currentDocumentPage = 1;
     let runtimeConfigPayload = null;
@@ -729,6 +876,7 @@
     }
 
     function bindEvents() {
+      accountBtn.addEventListener("click", openAccountPanel);
       logoutBtn.addEventListener("click", logout);
       tabButtons.forEach((btn) => { btn.addEventListener("click", () => showSection(btn.dataset.section)); });
       document.getElementById("refreshDocumentsBtn").addEventListener("click", loadDocuments);
@@ -759,9 +907,11 @@
         const payload = await response.json();
         if (!response.ok || !payload.authenticated) { renderLogin(); return; }
         sessionInfo = payload.session;
+        selfServiceEnabled = Boolean(payload.self_service_enabled);
         if (sessionInfo.role !== "admin") { renderForbidden(); return; }
         appEl.classList.remove("hidden");
         loginRoot.classList.add("hidden");
+        accountRoot.classList.add("hidden");
         sessionLabel.textContent = `${sessionInfo.display_name} · ${sessionInfo.role}`;
         await Promise.all([loadDocuments(), loadJobs(), loadSystem(), loadRuntimeConfig()]);
         restoreCompareSnapshot();
@@ -776,10 +926,12 @@
     function renderLogin(message = "") {
       appEl.classList.add("hidden");
       loginRoot.classList.remove("hidden");
+      closeAccountPanel();
       loginRoot.innerHTML = `
         <div class="login-card">
-          <h2>Đăng nhập admin</h2>
-          <p>Giao diện quản trị dành riêng cho tài khoản quản trị. Người dùng thông thường chỉ nên dùng giao diện người dùng.</p>
+          <div class="auth-kicker">NTU Admin Access</div>
+          <h2>Đăng nhập trang quản trị</h2>
+          <p>Quản lý cụm Baseline, Hybrid và GraphRAG từ một giao diện thống nhất.</p>
           ${message ? `<div class="error">${escapeHtml(message)}</div>` : ""}
           <form id="loginForm" class="form-stack">
             <div class="field">
@@ -790,7 +942,7 @@
               <label>Mật khẩu</label>
               <input id="loginPassword" type="password" autocomplete="current-password">
             </div>
-            <button class="btn btn-primary" type="submit" style="margin-top:4px;">Đăng nhập</button>
+            <button class="btn btn-primary auth-submit" type="submit">Đăng nhập</button>
           </form>
         </div>`;
       document.getElementById("loginForm").addEventListener("submit", handleLogin);
@@ -799,11 +951,13 @@
     function renderForbidden() {
       appEl.classList.add("hidden");
       loginRoot.classList.remove("hidden");
+      closeAccountPanel();
       loginRoot.innerHTML = `
         <div class="login-card">
+          <div class="auth-kicker">NTU Admin Access</div>
           <h2>Không đủ quyền</h2>
-          <p>Tài khoản hiện tại chỉ có quyền user. Hãy đăng xuất và đăng nhập bằng tài khoản admin để dùng trang quản trị.</p>
-          <button id="logoutOnlyBtn" class="btn btn-primary" type="button">Đăng xuất</button>
+          <p>Tài khoản hiện tại không có quyền admin. Đăng xuất và dùng tài khoản quản trị để tiếp tục.</p>
+          <button id="logoutOnlyBtn" class="btn btn-primary auth-submit" type="button">Đăng xuất</button>
         </div>`;
       document.getElementById("logoutOnlyBtn").addEventListener("click", logout);
     }
@@ -832,7 +986,131 @@
     async function logout() {
       await fetch(APP_CONFIG.api_logout_url, { method: "POST", credentials: "same-origin" }).catch(() => {});
       sessionInfo = null;
+      selfServiceEnabled = false;
+      closeAccountPanel();
       renderLogin("Đã đăng xuất.");
+    }
+
+    function openAccountPanel() {
+      if (!sessionInfo) { return; }
+      const supportsSelfService = selfServiceEnabled && sessionInfo.account_type === "registered";
+      accountRoot.classList.remove("hidden");
+      accountRoot.innerHTML = `
+        <div class="modal-card">
+          <div class="modal-head">
+            <div>
+              <h3>Tài khoản</h3>
+              <p>${escapeHtml(sessionInfo.display_name || sessionInfo.username || "")} · ${escapeHtml(sessionInfo.role || "")}</p>
+            </div>
+            <button id="closeAccountBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
+          </div>
+          <div id="accountStatus" class="info hidden"></div>
+          <div class="account-stack">
+            ${supportsSelfService ? `
+              <div class="account-section">
+                <h4>Đổi mật khẩu</h4>
+                <p>Cập nhật mật khẩu cho tài khoản hiện tại.</p>
+                <form id="changePasswordForm" class="form-stack">
+                  <div class="field">
+                    <label>Mật khẩu hiện tại</label>
+                    <input id="currentPassword" type="password" autocomplete="current-password">
+                  </div>
+                  <div class="field">
+                    <label>Mật khẩu mới</label>
+                    <input id="newPassword" type="password" autocomplete="new-password">
+                  </div>
+                  <div class="field">
+                    <label>Nhập lại mật khẩu mới</label>
+                    <input id="confirmNewPassword" type="password" autocomplete="new-password">
+                  </div>
+                  <button class="btn btn-primary auth-submit" type="submit">Đổi mật khẩu</button>
+                </form>
+              </div>
+              <div class="account-section">
+                <h4>Xóa tài khoản</h4>
+                <p>Hành động này sẽ xóa vĩnh viễn tài khoản đăng ký hiện tại.</p>
+                <form id="deleteAccountForm" class="form-stack">
+                  <div class="field">
+                    <label>Xác nhận mật khẩu</label>
+                    <input id="deletePassword" type="password" autocomplete="current-password">
+                  </div>
+                  <button class="btn btn-danger auth-submit" type="submit">Xóa tài khoản</button>
+                </form>
+              </div>` : `
+              <div class="info">Tài khoản hiện tại là tài khoản hệ thống quản trị. Tùy chọn đổi mật khẩu và xóa tài khoản chỉ áp dụng cho tài khoản đăng ký qua email.</div>
+            `}
+          </div>
+        </div>`;
+      accountRoot.onclick = handleAccountBackdropClick;
+      document.getElementById("closeAccountBtn").addEventListener("click", closeAccountPanel);
+      if (supportsSelfService) {
+        document.getElementById("changePasswordForm").addEventListener("submit", handleChangePassword);
+        document.getElementById("deleteAccountForm").addEventListener("submit", handleDeleteAccount);
+      }
+    }
+
+    function closeAccountPanel() {
+      accountRoot.classList.add("hidden");
+      accountRoot.innerHTML = "";
+      accountRoot.onclick = null;
+    }
+
+    function handleAccountBackdropClick(event) {
+      if (event.target === accountRoot) { closeAccountPanel(); }
+    }
+
+    function setAccountStatus(message = "", isError = false) {
+      const statusEl = document.getElementById("accountStatus");
+      if (!statusEl) { return; }
+      if (!message) {
+        statusEl.className = "info hidden";
+        statusEl.textContent = "";
+        return;
+      }
+      statusEl.className = isError ? "error" : "info";
+      statusEl.textContent = message;
+    }
+
+    async function handleChangePassword(event) {
+      event.preventDefault();
+      const currentPassword = document.getElementById("currentPassword").value;
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmNewPassword = document.getElementById("confirmNewPassword").value;
+      if (newPassword !== confirmNewPassword) {
+        setAccountStatus("Mật khẩu mới xác nhận không khớp.", true);
+        return;
+      }
+      const response = await fetch(APP_CONFIG.api_change_password_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setAccountStatus(payload.error || "Không đổi được mật khẩu.", true);
+        return;
+      }
+      setAccountStatus(payload.message || "Đổi mật khẩu thành công.");
+      event.target.reset();
+    }
+
+    async function handleDeleteAccount(event) {
+      event.preventDefault();
+      const password = document.getElementById("deletePassword").value;
+      const response = await fetch(APP_CONFIG.api_delete_account_url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setAccountStatus(payload.error || "Không xóa được tài khoản.", true);
+        return;
+      }
+      closeAccountPanel();
+      await logout();
     }
 
     function showSection(name) {

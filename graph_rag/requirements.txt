@@ -5,3 +5,4 @@ llama-index-llms-openai
 llama-index-embeddings-openai
 fastembed
 neo4j
+bcrypt
