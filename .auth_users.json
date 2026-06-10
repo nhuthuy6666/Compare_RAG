@@ -2,17 +2,17 @@
   "users": {
     "sharyumonkey7@gmail.com": {
       "email": "sharyumonkey7@gmail.com",
+      "username": "phnt6666",
       "display_name": "phnt6666",
       "role": "user",
       "password_algo": "bcrypt",
       "password_salt": "",
-      "password_hash": "$2b$12$kjNBRsfosE9qNxJj9/Gw8OGfB2IAUsnHaPH0KthoKrBgJg2bt7jEW",
+      "password_hash": "$2b$12$HFvKXHaDZN.ku0Asz7g/Ve8fJTKCAfpoA.O23gFf5ViH.P/fbQBi6",
       "verified": true,
       "verification_token_hash": "",
       "verification_expires_at": 0,
-      "created_at": 1779837883,
-      "updated_at": 1779837946,
-      "username": "phnt6666"
+      "created_at": 1781080604,
+      "updated_at": 1781080613
     }
   }
 }

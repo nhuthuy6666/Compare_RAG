@@ -1163,7 +1163,7 @@
       if (!sessionInfo) { return; }
       const supportsSelfService = selfServiceEnabled && sessionInfo.account_type === "registered";
       const accountDetails = [
-        sessionInfo.username ? `TÃªn Ä‘Äƒng nháº­p: ${escapeHtml(sessionInfo.username)}` : "",
+        sessionInfo.username ? `Tên đăng nhập: ${escapeHtml(sessionInfo.username)}` : "",
         sessionInfo.email && sessionInfo.email !== sessionInfo.username ? `Email: ${escapeHtml(sessionInfo.email)}` : ""
       ].filter(Boolean).join("<br>");
       accountRoot.classList.remove("hidden");
