@@ -241,7 +241,7 @@ def classify_text_line(text: str) -> str:
     return cleaned
 
 
-# Kiểm tra dòng có phải nhiễu header/footer số trang cán bộ.
+# Kiểm tra dòng có phải nhiễu header/footer.
 def is_noise_line(line: str) -> bool:
     if not line or re.fullmatch(r"\d{1,3}", line):
         return True
