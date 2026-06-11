@@ -34,12 +34,6 @@ PAGE_NOISE_PATTERNS = [
 SPECIAL_BULLET_CHARS = "\u2022\uf086\uf0a7\uf09f\uf0d8\uf0fc\uf02d\uf02b\uf076\uf0e0\uf071\u27a2"
 LEADING_SPECIAL_BULLET_RE = re.compile(rf"^\s*[{re.escape(SPECIAL_BULLET_CHARS)}]+\s*")
 SPECIAL_CHAR_RE = re.compile(rf"[{re.escape(SPECIAL_BULLET_CHARS)}]")
-LOW_VALUE_TABLE_MARKERS = (
-    "họ tên",
-    "trình độ, học vị",
-    "chuyên môn được đào tạo",
-    "ngành tham gia giảng dạy",
-)
 HeadingNode: TypeAlias = tuple[int, str]
 
 
@@ -817,15 +811,6 @@ def wrap_text_by_words(text: str, max_chars: int) -> list[str]:
         chunks.append(" ".join(current_words))
     return [chunk for chunk in chunks if chunk.strip()]
 
-# Lọc bỏ bảng rác dựa trên từ khóa trong header
-def is_low_value_table_section(section: Section) -> bool:
-    if not is_table_section(section):
-        return False
-    header_sample = re.sub(r"[\W_]+", " ", "\n".join(section.lines[:3]).lower()).strip()
-    normalized_markers = [re.sub(r"[\W_]+", " ", marker.lower()).strip() for marker in LOW_VALUE_TABLE_MARKERS]
-    return all(marker in header_sample for marker in normalized_markers)
-
-
 # Tạo các dòng JSONL chunk từ văn bản TXT gốc.
 def build_chunk_rows(
     text: str,
@@ -834,11 +819,11 @@ def build_chunk_rows(
     max_chars: int,
     max_sections_per_chunk: int,
 ) -> list[dict]:
-    # B1) Tách tài liệu thành các section theo heading, rồi lọc bớt section “ít giá trị”.
+    # B1) Tách tài liệu thành các section theo heading, chỉ bỏ section source-only.
     sections = [
         section
         for section in split_sections(text)
-        if not is_low_value_table_section(section) and not is_source_only_section(section)
+        if not is_source_only_section(section)
     ]
     if not sections:
         return []
