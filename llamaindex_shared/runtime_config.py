@@ -40,7 +40,7 @@ FIELD_DEFINITIONS: dict[str, list[dict[str, Any]]] = {
 }
 
 
-## Tạo index `field_key -> field_type` để parse payload cập nhật nhanh hơn.
+# Tạo index `field_key -> field_type` để parse payload cập nhật nhanh hơn.
 def _field_type_index() -> dict[str, str]:
     mapping: dict[str, str] = {}
     for fields in FIELD_DEFINITIONS.values():
@@ -52,12 +52,12 @@ def _field_type_index() -> dict[str, str]:
 FIELD_TYPES = _field_type_index()
 
 
-## Tạo state runtime config rỗng với đầy đủ mọi scope chuẩn của hệ thống.
+# Tạo state runtime config rỗng với đầy đủ mọi scope chuẩn của hệ thống.
 def _empty_payload() -> dict[str, dict[str, Any]]:
     return {scope: {} for scope in RUNTIME_SCOPES}
 
 
-## Gom cac scope cu ve scope `shared` de runtime config luon duoc ap dung chung cho 3 RAG.
+# Gom cac scope cu ve scope `shared` de runtime config luon duoc ap dung chung cho 3 RAG.
 def _collapse_legacy_scopes(payload: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     collapsed = _empty_payload()
     shared = dict(payload.get(PRIMARY_SCOPE) or {})
@@ -69,7 +69,7 @@ def _collapse_legacy_scopes(payload: dict[str, dict[str, Any]]) -> dict[str, dic
     return collapsed
 
 
-## Đọc file runtime config từ đĩa và chuẩn hóa về đúng cấu trúc scope.
+# Đọc file runtime config từ đĩa và chuẩn hóa về đúng cấu trúc scope.
 def load_runtime_config_state() -> dict[str, dict[str, Any]]:
     if not RUNTIME_CONFIG_PATH.exists():
         return _empty_payload()
@@ -87,7 +87,7 @@ def load_runtime_config_state() -> dict[str, dict[str, Any]]:
     return _collapse_legacy_scopes(normalized)
 
 
-## Ghi runtime config xuống đĩa sau khi lọc các field rỗng hoặc không hợp lệ.
+# Ghi runtime config xuống đĩa sau khi lọc các field rỗng hoặc không hợp lệ.
 def save_runtime_config_state(payload: dict[str, dict[str, Any]]) -> None:
     cleaned = _empty_payload()
     collapsed = _collapse_legacy_scopes(payload)
@@ -108,7 +108,7 @@ def save_runtime_config_state(payload: dict[str, dict[str, Any]]) -> None:
     )
 
 
-## Parse giá trị boolean từ payload form/JSON theo nhiều cách nhập phổ biến.
+# Parse giá trị boolean từ payload form/JSON theo nhiều cách nhập phổ biến.
 def _parse_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -120,7 +120,7 @@ def _parse_bool(value: Any) -> bool:
     raise ValueError(f"Giá trị boolean không hợp lệ: {value!r}")
 
 
-## Parse giá trị runtime theo type khai báo của field tương ứng.
+# Parse giá trị runtime theo type khai báo của field tương ứng.
 def _parse_value(field_key: str, value: Any) -> Any:
     field_type = FIELD_TYPES[field_key]
     if value in (None, ""):
@@ -134,7 +134,7 @@ def _parse_value(field_key: str, value: Any) -> Any:
     return str(value).strip()
 
 
-## Chuan hoa ten scope tu payload cu ve scope `shared` duy nhat.
+# Chuan hoa ten scope tu payload cu ve scope `shared` duy nhat.
 def _resolve_scope(scope: str) -> str:
     normalized_scope = str(scope or "").strip()
     if normalized_scope not in RUNTIME_SCOPES:
@@ -142,7 +142,7 @@ def _resolve_scope(scope: str) -> str:
     return PRIMARY_SCOPE
 
 
-## Loc payload gia tri runtime de UI co the hien thi "gia tri dang chay" hien tai.
+# Loc payload gia tri runtime de UI co the hien thi "gia tri dang chay" hien tai.
 def serialize_runtime_values(values: dict[str, Any] | None) -> dict[str, Any]:
     serialized: dict[str, Any] = {}
     for key, value in (values or {}).items():
@@ -153,7 +153,7 @@ def serialize_runtime_values(values: dict[str, Any] | None) -> dict[str, Any]:
     return serialized
 
 
-## Lọc và chuẩn hóa payload cập nhật của một scope trước khi ghi xuống state.
+# Lọc và chuẩn hóa payload cập nhật của một scope trước khi ghi xuống state.
 def normalize_scope_updates(scope: str, values: dict[str, Any]) -> dict[str, Any]:
     resolved_scope = _resolve_scope(scope)
     allowed_keys = {field["key"] for field in FIELD_DEFINITIONS.get(resolved_scope, [])}
@@ -166,7 +166,7 @@ def normalize_scope_updates(scope: str, values: dict[str, Any]) -> dict[str, Any
     return normalized
 
 
-## Áp cập nhật runtime config cho một scope và persist ngay xuống file JSON.
+# Áp cập nhật runtime config cho một scope và persist ngay xuống file JSON.
 def update_runtime_scope(scope: str, values: dict[str, Any]) -> dict[str, dict[str, Any]]:
     state = load_runtime_config_state()
     resolved_scope = _resolve_scope(scope)
@@ -182,13 +182,13 @@ def update_runtime_scope(scope: str, values: dict[str, Any]) -> dict[str, dict[s
     return state
 
 
-## Hợp nhất override của scope `shared` với override riêng của từng RAG.
+# Hợp nhất override của scope `shared` với override riêng của từng RAG.
 def get_runtime_overrides_for_rag(rag_id: str) -> dict[str, Any]:
     state = load_runtime_config_state()
     return dict(state.get(PRIMARY_SCOPE) or {})
 
 
-## Trả về payload đầy đủ để admin UI render form runtime config.
+# Trả về payload đầy đủ để admin UI render form runtime config.
 def build_runtime_config_payload(*, current_values: dict[str, Any] | None = None) -> dict[str, Any]:
     state = load_runtime_config_state()
     return {
