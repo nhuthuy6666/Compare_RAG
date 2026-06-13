@@ -35,7 +35,7 @@ EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}$", re.IGNO
 USERNAME_ALLOWED_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])?$")
 AUTH_STORE_LOCK = Lock()
 
-
+# Ký payload
 def _get_secret() -> bytes:
     return os.getenv("NTU_AUTH_SECRET", "ntu-fusion-local-secret").encode("utf-8")
 
@@ -56,7 +56,7 @@ def _get_accounts() -> list[dict[str, str]]:
         },
     ]
 
-
+# Tạo tài khoản mặc định
 def _build_account_payload(account: dict[str, Any]) -> dict[str, str]:
     payload = {
         "username": str(account.get("username") or "").strip(),
@@ -69,36 +69,36 @@ def _build_account_payload(account: dict[str, Any]) -> dict[str, str]:
         payload["email"] = email
     return payload
 
-
+# Chuẩn hóa email
 def _normalize_email(email: str) -> str:
     return str(email or "").strip().lower()
 
-
+# Kiểm tra email có hợp lệ không
 def _validate_email(email: str) -> str:
     normalized = _normalize_email(email)
     if not normalized or not EMAIL_PATTERN.match(normalized):
         raise ValueError("Email không hợp lệ.")
     return normalized
 
-
+# Kiểm tra mật khẩu có đạt độ dài tối thiểu không
 def _validate_password(password: str) -> str:
     raw_password = str(password or "")
     if len(raw_password) < PASSWORD_MIN_LENGTH:
         raise ValueError(f"Mật khẩu phải có ít nhất {PASSWORD_MIN_LENGTH} ký tự.")
     return raw_password
 
-
+# Chuẩn hóa tên hiển thị của user
 def _normalize_display_name(display_name: str, fallback_email: str) -> str:
     value = str(display_name or "").strip()
     if value:
         return value[:80]
     return fallback_email.split("@", 1)[0][:80] or "User"
 
-
+# Chuẩn hóa username
 def _normalize_username(username: str) -> str:
     return str(username or "").strip().lower()
 
-
+# Biến một chuỗi bất kỳ thành một username sạch
 def _slugify_username(value: str) -> str:
     ascii_value = unicodedata.normalize("NFKD", str(value or "")).encode("ascii", "ignore").decode("ascii")
     lowered = ascii_value.lower()
@@ -107,7 +107,7 @@ def _slugify_username(value: str) -> str:
     lowered = re.sub(r"[-._]{2,}", "-", lowered)
     return lowered[:32].strip("._-")
 
-
+# Tạo danh sách username gợi ý dựa trên tên hiển thị và email
 def _username_candidates(display_name: str, email: str) -> list[str]:
     local_part = _normalize_email(email).split("@", 1)[0]
     candidates = [
@@ -123,7 +123,7 @@ def _username_candidates(display_name: str, email: str) -> list[str]:
         unique_candidates.append("user")
     return unique_candidates
 
-
+# Hash password bằng PBKDF2
 def _hash_password_pbkdf2(password: str, salt_hex: str | None = None) -> tuple[str, str]:
     salt = bytes.fromhex(salt_hex) if salt_hex else secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac(
@@ -134,14 +134,14 @@ def _hash_password_pbkdf2(password: str, salt_hex: str | None = None) -> tuple[s
     )
     return salt.hex(), digest.hex()
 
-
+# Băm mật khẩu bằng bcrypt
 def _hash_password_bcrypt(password: str) -> str:
     return bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt(rounds=PASSWORD_BCRYPT_ROUNDS),
     ).decode("utf-8")
 
-
+# Kiểm tra password theo thuật toán PBKDF2
 def _verify_password_pbkdf2(password: str, salt_hex: str, digest_hex: str) -> bool:
     try:
         _, calculated = _hash_password_pbkdf2(password, salt_hex=salt_hex)
@@ -149,7 +149,7 @@ def _verify_password_pbkdf2(password: str, salt_hex: str, digest_hex: str) -> bo
         return False
     return hmac.compare_digest(calculated, digest_hex)
 
-
+# Kiểm tra password
 def _verify_password(password: str, user: dict[str, Any]) -> bool:
     algo = str(user.get("password_algo") or "pbkdf2_sha256").strip().lower()
     digest = str(user.get("password_hash") or "")
@@ -160,7 +160,7 @@ def _verify_password(password: str, user: dict[str, Any]) -> bool:
             return False
     return _verify_password_pbkdf2(password, str(user.get("password_salt") or ""), digest)
 
-
+# Nâng cấp mật khẩu từ thuật toán cũ sang bcrypt
 def _upgrade_password_hash_if_needed(email: str, password: str, user: dict[str, Any]) -> None:
     algo = str(user.get("password_algo") or "pbkdf2_sha256").strip().lower()
     if algo == "bcrypt":
@@ -179,15 +179,15 @@ def _upgrade_password_hash_if_needed(email: str, password: str, user: dict[str, 
         users[email] = current
         _save_auth_store(store)
 
-
+# Hash một token bằng SHA-256
 def _token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-
+# Tạo ra một auth store rỗng
 def _empty_auth_store() -> dict[str, dict[str, dict[str, Any]]]:
     return {"users": {}}
 
-
+# Đọc dữ liệu user từ file JSON
 def _load_auth_store() -> dict[str, dict[str, dict[str, Any]]]:
     if not AUTH_STORE_PATH.exists():
         return _empty_auth_store()
@@ -200,18 +200,18 @@ def _load_auth_store() -> dict[str, dict[str, dict[str, Any]]]:
         return _empty_auth_store()
     return {"users": users}
 
-
+# Ghi auth store xuống file JSON
 def _save_auth_store(payload: dict[str, Any]) -> None:
     AUTH_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
     temp_path = AUTH_STORE_PATH.with_suffix(f"{AUTH_STORE_PATH.suffix}.tmp")
     temp_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     os.replace(temp_path, AUTH_STORE_PATH)
 
-
+# Lấy danh sách username của các tài khoản hệ thống mặc định
 def _system_usernames() -> set[str]:
     return {_normalize_username(account.get("username") or "") for account in _get_accounts()}
 
-
+# Kiểm tra một username đã tồn tại chưa
 def _username_exists(store: dict[str, Any], username: str, *, exclude_email: str = "") -> bool:
     normalized_username = _normalize_username(username)
     if not normalized_username:
@@ -228,7 +228,7 @@ def _username_exists(store: dict[str, Any], username: str, *, exclude_email: str
             return True
     return False
 
-
+# Tạo username duy nhất cho user
 def _build_unique_registered_username(
     store: dict[str, Any],
     *,
@@ -248,7 +248,7 @@ def _build_unique_registered_username(
             suffix += 1
     raise ValueError("Không tạo được username hợp lệ cho tài khoản.")
 
-
+# Nếu user nào chưa có username, hoặc username không hợp lệ, tự tạo username mới.
 def _ensure_registered_usernames(store: dict[str, Any]) -> bool:
     users = store.get("users") or {}
     changed = False
@@ -267,7 +267,7 @@ def _ensure_registered_usernames(store: dict[str, Any]) -> bool:
         changed = True
     return changed
 
-
+# Tìm user đã đăng ký bằng identifier (có thể là email hoặc username)
 def _find_registered_user(identifier: str) -> tuple[str, dict[str, Any]] | None:
     normalized_identifier = _normalize_username(identifier)
     if not normalized_identifier:
@@ -293,7 +293,7 @@ def _find_registered_user(identifier: str) -> tuple[str, dict[str, Any]] | None:
             _save_auth_store(store)
     return None
 
-
+# Tìm tài khoản hệ thống theo username
 def _find_system_account(identifier: str) -> dict[str, str] | None:
     normalized = str(identifier or "").strip()
     if not normalized:
@@ -303,7 +303,7 @@ def _find_system_account(identifier: str) -> dict[str, str] | None:
             return account
     return None
 
-
+# Đăng nhập
 def authenticate_user_with_status(username: str, password: str) -> dict[str, Any]:
     normalized_username = str(username or "").strip()
     raw_password = str(password or "")
@@ -340,17 +340,17 @@ def authenticate_user_with_status(username: str, password: str) -> dict[str, Any
         "error": None,
     }
 
-
+# Tạo chữ ký cho payload
 def _sign(payload: bytes) -> str:
     digest = hmac.new(_get_secret(), payload, hashlib.sha256).digest()
     return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
 
-
+# Biến payload dạng dictionary thành chuỗi base64 URL-safe
 def _encode_payload(payload: dict[str, Any]) -> str:
     raw = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
-
+# Nhận chuỗi base64, giải mã ra JSON, rồi biến JSON thành dictionary
 def _decode_payload(value: str) -> dict[str, Any] | None:
     padding = "=" * (-len(value) % 4)
     try:
@@ -360,7 +360,7 @@ def _decode_payload(value: str) -> dict[str, Any] | None:
         return None
     return payload if isinstance(payload, dict) else None
 
-
+# Nhận thông tin tài khoản sau khi đăng nhập thành công, rồi tạo ra một chuỗi Set-Cookie để gửi về trình duyệt
 def build_session_cookie(account: dict[str, str]) -> str:
     payload = {
         "username": account["username"],
@@ -382,7 +382,7 @@ def build_session_cookie(account: dict[str, str]) -> str:
     cookie[SESSION_COOKIE_NAME]["max-age"] = str(SESSION_TTL_SECONDS)
     return cookie.output(header="").strip()
 
-
+# Tạo cookie dùng để đăng xuất
 def build_logout_cookie() -> str:
     cookie = cookies.SimpleCookie()
     cookie[SESSION_COOKIE_NAME] = ""
@@ -393,7 +393,7 @@ def build_logout_cookie() -> str:
     cookie[SESSION_COOKIE_NAME]["expires"] = "Thu, 01 Jan 1970 00:00:00 GMT"
     return cookie.output(header="").strip()
 
-
+# Đọc session từ cookie request gửi lên, kiểm tra cookie có hợp lệ không, rồi trả về thông tin user đang đăng nhập
 def read_session_from_cookie(cookie_header: str | None) -> dict[str, str] | None:
     if not cookie_header:
         return None
@@ -435,13 +435,13 @@ def read_session_from_cookie(cookie_header: str | None) -> dict[str, str] | None
         session["email"] = email
     return session
 
-
+# Kiểm tra session hiện tại có hỗ trợ tự quản lý tài khoản không
 def supports_self_service_account(session: dict[str, str] | None) -> bool:
     if session is None:
         return False
     return str(session.get("account_type") or "").strip() == "registered" and bool(str(session.get("email") or "").strip())
 
-
+# Đổi mật khẩu
 def change_password_for_session(
     session: dict[str, str] | None,
     *,
@@ -475,7 +475,7 @@ def change_password_for_session(
 
     return {"message": "Đổi mật khẩu thành công."}
 
-
+# Xóa tài khoản
 def delete_account_for_session(session: dict[str, str] | None, *, password: str) -> dict[str, str]:
     if session is None:
         raise ValueError("Bạn chưa đăng nhập.")
@@ -499,7 +499,7 @@ def delete_account_for_session(session: dict[str, str] | None, *, password: str)
 
     return {"message": "Tài khoản đã được xóa."}
 
-
+# Tạo link xác thực email từ token
 def _build_verification_link(verification_base_url: str, token: str) -> str:
     base_url = str(verification_base_url or "").strip().rstrip("/")
     if not base_url:
@@ -507,11 +507,11 @@ def _build_verification_link(verification_base_url: str, token: str) -> str:
     separator = "&" if "?" in base_url else "?"
     return f"{base_url}{separator}token={quote(token)}"
 
-
+# Kiểm tra hệ thống đã cấu hình SMTP chưa
 def _smtp_enabled() -> bool:
     return bool(os.getenv("NTU_SMTP_HOST")) and bool(os.getenv("NTU_EMAIL_FROM"))
 
-
+# Gửi email xác thực đến user
 def _send_verification_email(email: str, display_name: str, verification_link: str) -> dict[str, str]:
     if not _smtp_enabled():
         print(f"[auth] Verification link for {email}: {verification_link}")
@@ -607,7 +607,7 @@ def _send_verification_email(email: str, display_name: str, verification_link: s
 
     return {"delivery_mode": "smtp"}
 
-
+# Đăng ký tài khoản bằng email
 def register_email_user(email: str, password: str, display_name: str, verification_base_url: str) -> dict[str, Any]:
     normalized_email = _validate_email(email)
     normalized_password = _validate_password(password)
@@ -662,7 +662,7 @@ def register_email_user(email: str, password: str, display_name: str, verificati
         **delivery,
     }
 
-
+# Xử lý bước xác thực email khi user bấm vào link trong email
 def verify_email_token(token: str) -> dict[str, str]:
     normalized_token = str(token or "").strip()
     if not normalized_token:
@@ -703,7 +703,7 @@ def verify_email_token(token: str) -> dict[str, str]:
         "message": "Xác thực email thành công. Bạn có thể quay lại ứng dụng và đăng nhập.",
     }
 
-
+# Render ra một trang HTML hoàn chỉnh sau khi người dùng bấm link xác thực email
 def render_email_verification_result(success: bool, message: str, login_href: str = "/") -> str:
     title = "Xác thực thành công" if success else "Không thể xác thực email"
     accent = "#3ecf7a" if success else "#e05252"
@@ -814,7 +814,7 @@ def render_email_verification_result(success: bool, message: str, login_href: st
 </body>
 </html>"""
 
-
+# Chống chèn HTML/script
 def _escape_html(value: str) -> str:
     return (
         str(value or "")
@@ -825,7 +825,7 @@ def _escape_html(value: str) -> str:
         .replace("'", "&#39;")
     )
 
-
+# Kiểm tra quyền user/admin
 def has_role(session: dict[str, str] | None, required_role: str) -> bool:
     if session is None:
         return False
@@ -835,15 +835,15 @@ def has_role(session: dict[str, str] | None, required_role: str) -> bool:
         return session.get("role") == "admin"
     return False
 
-
+# Lấy token dùng cho request nội bộ trong cluster
 def get_cluster_token() -> str:
     return os.getenv("NTU_CLUSTER_TOKEN", "ntu-fusion-cluster-token")
 
-
+# Tạo header để gửi request nội bộ
 def build_cluster_headers() -> dict[str, str]:
     return {CLUSTER_TOKEN_HEADER: get_cluster_token()}
 
-
+# Kiểm tra request hiện tại có phải request nội bộ hợp lệ không
 def is_internal_cluster_request(headers) -> bool:
     try:
         provided = str(headers.get(CLUSTER_TOKEN_HEADER) or "").strip()
