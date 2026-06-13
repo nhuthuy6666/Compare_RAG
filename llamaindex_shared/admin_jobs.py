@@ -49,7 +49,7 @@ def create_job(
     return _public_job_payload(payload)
 
 
-## Đọc trạng thái của một job theo `job_id`.
+# Đọc trạng thái của một job theo `job_id`.
 def get_job(job_id: str) -> dict[str, Any] | None:
     with _JOBS_LOCK:
         payload = _JOBS.get(job_id)
@@ -58,14 +58,14 @@ def get_job(job_id: str) -> dict[str, Any] | None:
         return _public_job_payload(payload)
 
 
-## Liệt kê các job gần nhất để trang admin có thể theo dõi tiến trình.
+# Liệt kê các job gần nhất để trang admin có thể theo dõi tiến trình.
 def list_jobs(*, limit: int = 50) -> list[dict[str, Any]]:
     with _JOBS_LOCK:
         rows = sorted(_JOBS.values(), key=lambda item: (item["created_at"], item["job_id"]), reverse=True)
     return [_public_job_payload(payload) for payload in rows[: max(1, limit)]]
 
 
-## Cập nhật tiến độ cho job hiện hành từ bên trong runner đang chạy.
+# Cập nhật tiến độ cho job hiện hành từ bên trong runner đang chạy.
 def set_job_progress(
     *,
     stage: str,
@@ -86,7 +86,7 @@ def set_job_progress(
     _update_job(job_id, **changes)
 
 
-## Chạy phần việc thật của job trong thread nền và ghi nhận success/failure.
+# Chạy phần việc thật của job trong thread nền và ghi nhận success/failure.
 def _run_job(job_id: str, runner: Callable[[], dict[str, Any]]) -> None:
     _JOB_CONTEXT.job_id = job_id
     _update_job(
@@ -125,7 +125,7 @@ def _run_job(job_id: str, runner: Callable[[], dict[str, Any]]) -> None:
     _JOB_CONTEXT.job_id = None
 
 
-## Ghi đè một phần trạng thái job và tự cập nhật `updated_at`.
+# Ghi đè một phần trạng thái job và tự cập nhật `updated_at`.
 def _update_job(job_id: str, **changes: Any) -> None:
     with _JOBS_LOCK:
         payload = _JOBS[job_id]
@@ -133,7 +133,7 @@ def _update_job(job_id: str, **changes: Any) -> None:
         payload["updated_at"] = _now()
 
 
-## Rút gọn payload nội bộ thành dữ liệu public an toàn cho API.
+# Rút gọn payload nội bộ thành dữ liệu public an toàn cho API.
 def _public_job_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "job_id": payload["job_id"],

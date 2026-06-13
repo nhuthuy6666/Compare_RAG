@@ -30,7 +30,7 @@ if str(EXTRACT_SCRIPTS_ROOT) not in sys.path:
 PDF_UPLOAD_NAME_RE = re.compile(r"[^A-Za-z0-9._ -]+")
 
 
-## Đọc biến môi trường dạng số nguyên và báo lỗi rõ nếu giá trị không hợp lệ.
+# Đọc biến môi trường dạng số nguyên và báo lỗi rõ nếu giá trị không hợp lệ.
 def _get_int_env(name: str, default: int) -> int:
     raw = os.getenv(name)
     if raw is None:
@@ -41,7 +41,7 @@ def _get_int_env(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got: {raw!r}") from exc
 
 
-## Đọc biến môi trường dạng boolean theo các giá trị bật/tắt thông dụng.
+# Đọc biến môi trường dạng boolean theo các giá trị bật/tắt thông dụng.
 def _get_bool_env(name: str, default: bool) -> bool:
     raw = os.getenv(name)
     if raw is None:
@@ -214,7 +214,7 @@ def add_corpus_documents(
     }
 
 
-## Xóa tài liệu khỏi corpus dùng chung và dọn toàn bộ artifact TXT/JSONL/cache tương ứng.
+# Xóa tài liệu khỏi corpus dùng chung và dọn toàn bộ artifact TXT/JSONL/cache tương ứng.
 def delete_corpus_documents(document_ids: list[str]) -> dict[str, Any]:
     dedupe_preserve_order, extract_urls_from_markdown, safe_slug_from_url = _load_web_listing_tools()
     removed: list[dict[str, Any]] = []
@@ -306,7 +306,7 @@ def delete_corpus_documents(document_ids: list[str]) -> dict[str, Any]:
     }
 
 
-## Chuẩn hóa payload xóa tài liệu thành danh sách `document_id` phẳng để backend dùng chung.
+# Chuẩn hóa payload xóa tài liệu thành danh sách `document_id` phẳng để backend dùng chung.
 def load_document_ids_from_payload(payload: dict[str, Any]) -> list[str]:
     raw_documents = payload.get("documents") or payload.get("document_ids") or []
     document_ids: list[str] = []
@@ -323,7 +323,7 @@ def load_document_ids_from_payload(payload: dict[str, Any]) -> list[str]:
     return document_ids
 
 
-## Liệt kê toàn bộ tài liệu web đang có trong corpus cùng trạng thái ingest của từng mục.
+# Liệt kê toàn bộ tài liệu web đang có trong corpus cùng trạng thái ingest của từng mục.
 def _list_web_documents(labels: dict[str, str]) -> list[dict[str, Any]]:
     _, extract_urls_from_markdown, safe_slug_from_url = _load_web_listing_tools()
     documents: list[dict[str, Any]] = []
@@ -357,7 +357,7 @@ def _list_web_documents(labels: dict[str, str]) -> list[dict[str, Any]]:
     return documents
 
 
-## Liệt kê toàn bộ tài liệu PDF trong corpus cùng đường dẫn TXT/chunk liên quan.
+# Liệt kê toàn bộ tài liệu PDF trong corpus cùng đường dẫn TXT/chunk liên quan.
 def _list_pdf_documents(labels: dict[str, str]) -> list[dict[str, Any]]:
     documents: list[dict[str, Any]] = []
     for pdf_path in sorted(PDF_ROOT.rglob("*.pdf")):
@@ -382,7 +382,7 @@ def _list_pdf_documents(labels: dict[str, str]) -> list[dict[str, Any]]:
     return documents
 
 
-## Lưu file PDF người dùng upload xuống thư mục chuẩn và phát hiện trùng nội dung.
+# Lưu file PDF người dùng upload xuống thư mục chuẩn và phát hiện trùng nội dung.
 def _store_uploaded_pdf(file_payload: dict[str, Any]) -> dict[str, str]:
     file_name = str(file_payload.get("name") or "").strip()
     if not file_name:
@@ -417,7 +417,7 @@ def _store_uploaded_pdf(file_payload: dict[str, Any]) -> dict[str, str]:
     return {"status": "stored", "raw_pdf_path": str(target_path)}
 
 
-## Tìm PDF đã tồn tại trước đó theo hash nội dung để tránh ingest trùng lặp.
+# Tìm PDF đã tồn tại trước đó theo hash nội dung để tránh ingest trùng lặp.
 def _find_existing_pdf_by_hash(content_hash: str) -> Path | None:
     for pdf_path in PDF_ROOT.rglob("*.pdf"):
         try:
@@ -429,7 +429,7 @@ def _find_existing_pdf_by_hash(content_hash: str) -> Path | None:
     return None
 
 
-## Làm sạch tên file PDF upload để tránh ký tự lạ hoặc path nguy hiểm.
+# Làm sạch tên file PDF upload để tránh ký tự lạ hoặc path nguy hiểm.
 def _safe_pdf_filename(file_name: str) -> str:
     _, _, slugify, _ = _load_corpus_tools()
     stem = Path(file_name).stem or "tai-lieu-moi"
@@ -438,7 +438,7 @@ def _safe_pdf_filename(file_name: str) -> str:
     return f"{safe_stem}.pdf"
 
 
-## Sinh đường dẫn mới không đè file cũ bằng cách thêm hậu tố tăng dần.
+# Sinh đường dẫn mới không đè file cũ bằng cách thêm hậu tố tăng dần.
 def _unique_path(path: Path) -> Path:
     if not path.exists():
         return path
@@ -449,7 +449,7 @@ def _unique_path(path: Path) -> Path:
     raise RuntimeError(f"Không thể tạo tên file duy nhất cho {path.name}")
 
 
-## Chunk một file TXT thành JSONL theo bộ tham số baseline hiện tại.
+# Chunk một file TXT thành JSONL theo bộ tham số baseline hiện tại.
 def _chunk_txt_file(txt_path: Path) -> tuple[int, Path]:
     build_chunk_rows, _, _, write_jsonl = _load_corpus_tools()
     settings = _load_chunk_settings()
@@ -466,7 +466,7 @@ def _chunk_txt_file(txt_path: Path) -> tuple[int, Path]:
     return len(rows), chunk_path
 
 
-## Đọc chunk settings hiện hành từ `rag_baseline.json` để admin ingest dùng cùng cấu hình.
+# Đọc chunk settings hiện hành từ `rag_baseline.json` để admin ingest dùng cùng cấu hình.
 def _load_chunk_settings() -> dict[str, int]:
     default = {
         "min_chars": 120,
@@ -487,7 +487,7 @@ def _load_chunk_settings() -> dict[str, int]:
     }
 
 
-## Làm mới số lượng chunk trong baseline config sau khi corpus web/pdf thay đổi.
+# Làm mới số lượng chunk trong baseline config sau khi corpus web/pdf thay đổi.
 def _refresh_baseline_chunk_count() -> None:
     if not BASELINE_CONFIG_PATH.exists():
         return
@@ -500,7 +500,7 @@ def _refresh_baseline_chunk_count() -> None:
     BASELINE_CONFIG_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-## Đếm tổng số dòng chunk JSONL hiện đang có trong thư mục corpus.
+# Đếm tổng số dòng chunk JSONL hiện đang có trong thư mục corpus.
 def _count_chunk_rows() -> int:
     total = 0
     if not CHUNK_ROOT.exists():
@@ -511,24 +511,24 @@ def _count_chunk_rows() -> int:
     return total
 
 
-## Chuyển path tuyệt đối trong extract_md về đường dẫn tương đối để trả về API/UI.
+# Chuyển path tuyệt đối trong extract_md về đường dẫn tương đối để trả về API/UI.
 def _relative_to_extract(path: Path) -> str:
     return path.relative_to(EXTRACT_ROOT).as_posix()
 
 
-## Suy ra file TXT chuẩn hóa tương ứng với một file PDF gốc.
+# Suy ra file TXT chuẩn hóa tương ứng với một file PDF gốc.
 def _pdf_txt_path(pdf_path: Path) -> Path:
     _, guess_year, slugify, _ = _load_corpus_tools()
     year = guess_year(pdf_path)
     return TXT_ROOT / year / f"{slugify(pdf_path.stem)}.txt"
 
 
-## Suy ra file chunk JSONL tương ứng với một file TXT nguồn.
+# Suy ra file chunk JSONL tương ứng với một file TXT nguồn.
 def _txt_to_chunk_path(txt_path: Path) -> Path:
     return (CHUNK_ROOT / txt_path.relative_to(TXT_ROOT)).with_suffix(".jsonl")
 
 
-## Hoàn tác các artifact PDF vừa tạo nếu pipeline xử lý PDF thất bại giữa chừng.
+# Hoàn tác các artifact PDF vừa tạo nếu pipeline xử lý PDF thất bại giữa chừng.
 def _rollback_pdf_artifacts(raw_pdf_path: Path) -> None:
     txt_path = _pdf_txt_path(raw_pdf_path)
     chunk_path = _txt_to_chunk_path(txt_path)
@@ -539,14 +539,14 @@ def _rollback_pdf_artifacts(raw_pdf_path: Path) -> None:
     _remove_file(graph_chunk_path)
 
 
-## Đọc text an toàn từ file, thiếu file thì trả chuỗi rỗng để luồng admin không gãy.
+# Đọc text an toàn từ file, thiếu file thì trả chuỗi rỗng để luồng admin không gãy.
 def _read_text(path: Path) -> str:
     if not path.exists():
         return ""
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
-## Tổng hợp trạng thái ingest của một tài liệu từ raw/cache, TXT và chunk JSONL.
+# Tổng hợp trạng thái ingest của một tài liệu từ raw/cache, TXT và chunk JSONL.
 def _build_document_status(*, raw_paths: list[Path], txt_path: Path, chunk_path: Path) -> str:
     has_raw = any(path.exists() for path in raw_paths)
     if has_raw and txt_path.exists() and chunk_path.exists():
@@ -558,7 +558,7 @@ def _build_document_status(*, raw_paths: list[Path], txt_path: Path, chunk_path:
     return "missing"
 
 
-## Lấy mốc cập nhật mới nhất từ nhiều artifact để hiển thị trong admin UI.
+# Lấy mốc cập nhật mới nhất từ nhiều artifact để hiển thị trong admin UI.
 def _resolve_updated_at(*paths: Path) -> float | None:
     existing_timestamps = [path.stat().st_mtime for path in paths if path.exists()]
     if not existing_timestamps:
@@ -566,7 +566,7 @@ def _resolve_updated_at(*paths: Path) -> float | None:
     return max(existing_timestamps)
 
 
-## Kiểm tra một URL web đã có đủ cache HTML, TXT và chunk để coi là sẵn sàng hay chưa.
+# Kiểm tra một URL web đã có đủ cache HTML, TXT và chunk để coi là sẵn sàng hay chưa.
 def _web_artifacts_ready(url: str) -> bool:
     _, _, safe_slug_from_url = _load_web_listing_tools()
     slug = safe_slug_from_url(url)
@@ -575,14 +575,14 @@ def _web_artifacts_ready(url: str) -> bool:
     return txt_path.exists() and chunk_path.exists()
 
 
-## Ghi lại `link.md` theo đúng danh sách URL hợp lệ hiện tại của corpus web.
+# Ghi lại `link.md` theo đúng danh sách URL hợp lệ hiện tại của corpus web.
 def _write_link_md(urls: list[str]) -> None:
     WEB_LINK_MD.parent.mkdir(parents=True, exist_ok=True)
     content = "\n".join(urls).strip()
     WEB_LINK_MD.write_text((content + "\n") if content else "", encoding="utf-8")
 
 
-## Xóa file nếu tồn tại và trả về cờ cho biết có xóa thật hay không.
+# Xóa file nếu tồn tại và trả về cờ cho biết có xóa thật hay không.
 def _remove_file(path: Path) -> bool:
     if not path.exists() or path.is_dir():
         return False
@@ -590,7 +590,7 @@ def _remove_file(path: Path) -> bool:
     return True
 
 
-## Dọn các thư mục con rỗng còn sót lại sau khi xóa tài liệu khỏi corpus.
+# Dọn các thư mục con rỗng còn sót lại sau khi xóa tài liệu khỏi corpus.
 def _prune_empty_dirs(root: Path) -> None:
     if not root.exists():
         return
@@ -696,12 +696,12 @@ def _remove_document_labels(document_ids: list[str]) -> None:
         _write_document_labels(labels)
 
 
-## Kiểm tra một item skipped có phải do PDF trùng nội dung hay không.
+# Kiểm tra một item skipped có phải do PDF trùng nội dung hay không.
 def _is_duplicate_pdf_skip(item: dict[str, Any]) -> bool:
     return "trùng nội dung" in str(item.get("reason") or "").lower()
 
 
-## Tạo message kết quả tổng hợp cho thao tác thêm tài liệu web/PDF.
+# Tạo message kết quả tổng hợp cho thao tác thêm tài liệu web/PDF.
 def _build_add_message(
     added_urls: list[dict[str, Any]],
     repaired_urls: list[dict[str, Any]],
@@ -728,7 +728,7 @@ def _build_add_message(
     return " ".join(parts)
 
 
-## Tạo message kết quả tổng hợp cho thao tác xóa tài liệu khỏi corpus.
+# Tạo message kết quả tổng hợp cho thao tác xóa tài liệu khỏi corpus.
 def _build_delete_message(removed: list[dict[str, Any]], skipped: list[dict[str, str]]) -> str:
     parts: list[str] = []
     if removed:
@@ -740,28 +740,28 @@ def _build_delete_message(removed: list[dict[str, Any]], skipped: list[dict[str,
     return " ".join(parts)
 
 
-## Lazy-load nhóm helper xử lý web để tránh import nặng ở thời điểm khởi động app.
+# Lazy-load nhóm helper xử lý web để tránh import nặng ở thời điểm khởi động app.
 def _load_web_tools():
     from build_links_txt import build_web_txt, dedupe_preserve_order, extract_urls_from_markdown, safe_slug_from_url
 
     return build_web_txt, dedupe_preserve_order, extract_urls_from_markdown, safe_slug_from_url
 
 
-## Lazy-load nhóm helper liệt kê web artifact dùng chung cho các thao tác admin.
+# Lazy-load nhóm helper liệt kê web artifact dùng chung cho các thao tác admin.
 def _load_web_listing_tools():
     from build_links_txt import dedupe_preserve_order, extract_urls_from_markdown, safe_slug_from_url
 
     return dedupe_preserve_order, extract_urls_from_markdown, safe_slug_from_url
 
 
-## Lazy-load builder PDF -> TXT để chỉ import khi thật sự cần xử lý PDF.
+# Lazy-load builder PDF -> TXT để chỉ import khi thật sự cần xử lý PDF.
 def _load_pdf_builder():
     from build_pdf_txt import build_pdf_txt
 
     return build_pdf_txt
 
 
-## Lazy-load bộ công cụ chunk corpus để tránh vòng import khi server khởi động.
+# Lazy-load bộ công cụ chunk corpus để tránh vòng import khi server khởi động.
 def _load_corpus_tools():
     from corpus_utils import build_chunk_rows, guess_year, slugify, write_jsonl
 

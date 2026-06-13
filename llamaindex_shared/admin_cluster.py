@@ -7,7 +7,7 @@ from urllib import error, request
 from llamaindex_shared.auth import build_cluster_headers
 
 
-## Tạo map `rag_id -> base_url` để các backend gọi chéo nhau trong cụm 3 RAG.
+# Tạo map `rag_id -> base_url` để các backend gọi chéo nhau trong cụm 3 RAG.
 def build_cluster_server_urls() -> dict[str, str]:
     import os
 
@@ -19,7 +19,7 @@ def build_cluster_server_urls() -> dict[str, str]:
     }
 
 
-## Gửi request POST JSON sang backend khác trong cụm và chuẩn hóa lỗi HTTP/network.
+# Gửi request POST JSON sang backend khác trong cụm và chuẩn hóa lỗi HTTP/network.
 def post_json(url: str, payload: dict | None = None, *, timeout: int | None = None) -> dict:
     body = json.dumps(payload or {}, ensure_ascii=False).encode("utf-8")
     req = request.Request(
@@ -44,7 +44,7 @@ def post_json(url: str, payload: dict | None = None, *, timeout: int | None = No
         raise RuntimeError(f"Không kết nối được tới {url}: {exc.reason}") from exc
 
 
-## Gửi request GET JSON sang backend khác trong cụm và chuẩn hóa lỗi trả về.
+# Gửi request GET JSON sang backend khác trong cụm và chuẩn hóa lỗi trả về.
 def get_json(url: str, *, timeout: int | None = None) -> dict:
     req = request.Request(url, headers={"Accept": "application/json", **build_cluster_headers()}, method="GET")
     try:
@@ -63,7 +63,7 @@ def get_json(url: str, *, timeout: int | None = None) -> dict:
         raise RuntimeError(f"Không kết nối được tới {url}: {exc.reason}") from exc
 
 
-## Poll một admin job từ backend khác cho tới khi completed hoặc failed.
+# Poll một admin job từ backend khác cho tới khi completed hoặc failed.
 def wait_for_job(job_url: str, *, poll_interval_seconds: float = 2.0) -> dict:
     while True:
         payload = get_json(job_url)

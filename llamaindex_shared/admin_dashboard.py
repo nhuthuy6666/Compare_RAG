@@ -6,7 +6,7 @@ from typing import Any, Callable
 from llamaindex_shared.admin_cluster import build_cluster_server_urls, get_json, post_json
 
 
-## Thu thập trạng thái của cả 3 hệ RAG để admin UI hiển thị health tổng thể.
+# Thu thập trạng thái của cả 3 hệ RAG để admin UI hiển thị health tổng thể.
 def collect_cluster_status(
     *,
     current_rag_id: str,
@@ -32,7 +32,7 @@ def collect_cluster_status(
     return {"systems": cluster}
 
 
-## Chạy cùng một câu hỏi trên 3 backend để so sánh answer, sources và latency.
+# Chạy cùng một câu hỏi trên 3 backend để so sánh answer, sources và latency.
 def compare_cluster_answers(
     *,
     question: str,
@@ -66,7 +66,7 @@ def compare_cluster_answers(
     return {"question": question, "results": results}
 
 
-## Tách port từ base URL để vẫn hiện được thông tin tối thiểu khi backend offline.
+# Tách port từ base URL để vẫn hiện được thông tin tối thiểu khi backend offline.
 def _extract_port(base_url: str) -> int | None:
     try:
         return int(str(base_url).rsplit(":", 1)[-1])
