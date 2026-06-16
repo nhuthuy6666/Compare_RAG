@@ -139,7 +139,7 @@ def _combine_variant_results(
     combined: dict[str, dict[str, Any]] = {}
     for plan, results in variant_results:
         ranked_results = results[:limit]
-        if mode == "simple":
+        if mode == "simple": # cộng score và count hits
             for item in ranked_results:
                 state = combined.setdefault(item.fact_id, {"fact": item, "score": 0.0, "hits": 0})
                 state["score"] += item.score
@@ -148,11 +148,11 @@ def _combine_variant_results(
 
         for index, item in enumerate(ranked_results, start=1):
             state = combined.setdefault(item.fact_id, {"fact": item, "score": 0.0, "hits": 0})
-            if mode == "reciprocal_rank":
+            if mode == "reciprocal_rank": # cộng 1/(60 + rank (index))
                 state["score"] += 1.0 / (60 + index)
-            elif mode == "relative_score":
+            elif mode == "relative_score": # cộng items.score / rank (index)
                 state["score"] += item.score / max(index, 1)
-            elif mode == "dist_based_score":
+            elif mode == "dist_based_score": # cộng (item.score ^ 2) / rank (index)
                 state["score"] += (item.score * item.score) / max(index, 1)
             state["hits"] += 1
 
