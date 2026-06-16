@@ -11,7 +11,7 @@ def exact_match_score(reference: str, answer: str) -> float:
     return 1.0 if normalize_text(reference) == normalize_text(answer) else 0.0
 
 
-# So khớp ở mức token để đo độ "đúng ý" ngay cả khi wording không hoàn toàn giống nhau.
+# So khớp ở mức token để đo độ đúng ý ngay cả khi wording không hoàn toàn giống nhau.
 def token_f1_score(reference: str, answer: str) -> tuple[float, float, float]:
     # So khớp token-level để đo mức độ “đúng ý” ngay cả khi câu chữ không hoàn toàn giống nhau.
     reference_tokens = tokenize(reference)
