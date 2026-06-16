@@ -13,6 +13,6 @@ def blend_scores_v1(
     return (
         (0.25 * recall_at_k)
         + (0.35 * faithfulness_score)
-        + (0.25 * answer_relevance_score)
-        + (0.15 * context_precision_score)
+        + (0.25 * answer_relevance_score) 
+        + (0.15 * context_precision_score) 
     )

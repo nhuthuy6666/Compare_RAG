@@ -134,32 +134,32 @@ def evaluate_prediction_v1(
         retrieval_quality = hit3
     else:
         answer_quality = (
-            (0.05 * exact)
-            + (0.10 * token_f1)
-            + (0.10 * char_sim)
-            + (0.35 * sem_sim)
-            + (0.25 * answer_keyword_cov)
-            + (0.15 * answer_rel)
+            (0.05 * exact) # exact match giữa câu trả lời và reference (sau chuẩn hóa hoàn toàn giống nhau)
+            + (0.10 * token_f1) # mức trùng token giữa đáp án và câu trả lời
+            + (0.10 * char_sim) # mức giống chuỗi ký tự
+            + (0.35 * sem_sim) # độ giống ngữ nghĩa theo embedding
+            + (0.25 * answer_keyword_cov) # coverage của các keyword quan trọng trong câu trả lời
+            + (0.15 * answer_rel) # câu trả lời có đúng trọng tâm câu hỏi không
         )
         if refusal_predicted:
             answer_quality *= 0.25
 
         retrieval_quality = (
-            (0.20 * context_rel)
-            + (0.15 * p3)
-            + (0.20 * r3)
-            + (0.10 * f1_3)
-            + (0.10 * hit3)
-            + (0.10 * reciprocal_rank)
-            + (0.05 * mean_average_precision)
-            + (0.10 * ndcg3)
+            (0.20 * context_rel) # nguồn truy hồi có liên quan đến câu hỏi/đáp án không
+            + (0.15 * p3) # trung bình relevance score của top 3 nguồn
+            + (0.20 * r3) # top k có bao phủ được bao nhiêu phần nguồn cần có
+            + (0.10 * f1_3) # cân bằng giữa precision và recall ở top k (2 * precision * recall / (precision + recall) ở top k)
+            + (0.10 * hit3) # có ít nhất một nguồn tốt trong top k hay không
+            + (0.10 * reciprocal_rank) # ưu tiên nguồn tốt xuất hiện sớm
+            + (0.05 * mean_average_precision) # average precision với graded relevance
+            + (0.10 * ndcg3) # đánh giá thứ tự top 3 nguồn theo graded relevance
         )
 
     overall = blend_scores_v1(
-        recall_at_k=r3,
-        faithfulness_score=faith,
-        answer_relevance_score=answer_rel,
-        context_precision_score=p3,
+        recall_at_k=r3,  # đầy đủ nguồn cần thiết
+        faithfulness_score=faith,  # độ bám nguồn của câu trả lời
+        answer_relevance_score=answer_rel, # câu trả lời có đúng trọng tâm câu hỏi không
+        context_precision_score=p3, # đánh giá chất lượng top-3 nguồn
     )
 
     return {
